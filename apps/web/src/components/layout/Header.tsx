@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { LogOut, Menu, X, Bell } from 'lucide-react';
+import { useAuth, BrandCode } from '../../context/AuthContext';
+import { LogOut, Menu, X, Bell, Globe } from 'lucide-react';
 
 interface HeaderProps {
   isMobileMenuOpen: boolean;
@@ -51,12 +51,27 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
         </div>
       </div>
 
-      {/* Right: Brand Switcher (For Dual Brand Admins), Notifications, User Info & Logout */}
+      {/* Right: 3-Way Brand Switcher (All / Tata / Hyundai), Notifications, User Info & Logout */}
       <div className="flex items-center gap-2.5 sm:gap-4">
         
-        {/* Dual Brand Switcher for Super Admin */}
-        {(isSuperAdmin || user?.hasDualBrandAccess) && (
+        {/* 3-Way Brand Switcher for Super Admin / Dual Brand Staff */}
+        {(isSuperAdmin || user?.hasDualBrandAccess || user?.brand === 'ALL') && (
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+            
+            {/* 1. All Brands */}
+            <button
+              onClick={() => setBrand('DHOOT-ALL')}
+              className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                currentBrand.code === 'DHOOT-ALL'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Globe className="w-3 h-3" />
+              <span>All Brands</span>
+            </button>
+
+            {/* 2. Autoprime Tata */}
             <button
               onClick={() => setBrand('DHOOT-TATA')}
               className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
@@ -67,6 +82,8 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
             >
               Tata
             </button>
+
+            {/* 3. Raja Hyundai */}
             <button
               onClick={() => setBrand('DHOOT-HYUNDAI')}
               className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type BrandCode = 'DHOOT-TATA' | 'DHOOT-HYUNDAI';
+export type BrandCode = 'DHOOT-ALL' | 'DHOOT-TATA' | 'DHOOT-HYUNDAI';
 
 export interface BrandConfig {
   code: BrandCode;
@@ -17,6 +17,22 @@ export interface BrandConfig {
 }
 
 export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
+  'DHOOT-ALL': {
+    code: 'DHOOT-ALL',
+    name: 'Dhoot Group (All Brands)',
+    shortName: 'ALL BRANDS',
+    tagline: 'Consolidated Automotive Dealership Operations',
+    logoUrl: '/logo.png',
+    primaryColor: '#0F172A',
+    primaryHover: '#1E293B',
+    accentColor: '#6366F1',
+    accentBg: '#EEF2FF',
+    orgId: 'ALL',
+    models: [
+      'Tata Nexon', 'Tata Harrier', 'Tata Safari', 'Tata Curvv.ev', 'Tata Punch', 'Tata Tiago', 'Tata Altroz',
+      'Hyundai Creta', 'Hyundai Venue', 'Hyundai Verna', 'Hyundai Ioniq 5', 'Hyundai Exter', 'Hyundai i20', 'Hyundai Tucson'
+    ],
+  },
   'DHOOT-TATA': {
     code: 'DHOOT-TATA',
     name: 'Autoprime Tata',
@@ -57,7 +73,7 @@ export interface AuthUser {
   branchCode?: string;
   branchId?: string;
   organizationId: string;
-  brand: BrandCode | 'ALL';
+  brand: string;
   hasDualBrandAccess?: boolean;
 }
 
@@ -74,7 +90,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedBrandCode, setSelectedBrandCode] = useState<BrandCode>('DHOOT-TATA');
+  const [selectedBrandCode, setSelectedBrandCode] = useState<BrandCode>('DHOOT-ALL');
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('autoprime_token'));
 
@@ -83,10 +99,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser && token) {
       const parsed = JSON.parse(savedUser) as AuthUser;
       setUser(parsed);
-      if (parsed.brand === 'DHOOT-HYUNDAI') {
+      const b = (parsed.brand || '').toLowerCase();
+      if (b.includes('hyundai') || b === 'dhoot-hyundai') {
         setSelectedBrandCode('DHOOT-HYUNDAI');
-      } else {
+      } else if (b.includes('tata') || b === 'dhoot-tata') {
         setSelectedBrandCode('DHOOT-TATA');
+      } else {
+        setSelectedBrandCode('DHOOT-ALL');
       }
     }
   }, [token]);
@@ -98,10 +117,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = (newToken: string, newUser: AuthUser) => {
     setToken(newToken);
     setUser(newUser);
-    if (newUser.brand === 'DHOOT-HYUNDAI') {
+    const b = (newUser.brand || '').toLowerCase();
+    if (b.includes('hyundai') || b === 'dhoot-hyundai') {
       setSelectedBrandCode('DHOOT-HYUNDAI');
-    } else {
+    } else if (b.includes('tata') || b === 'dhoot-tata') {
       setSelectedBrandCode('DHOOT-TATA');
+    } else {
+      setSelectedBrandCode('DHOOT-ALL');
     }
     localStorage.setItem('autoprime_token', newToken);
     localStorage.setItem('autoprime_user', JSON.stringify(newUser));
@@ -114,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('autoprime_user');
   };
 
-  const currentBrand = BRAND_CONFIGS[selectedBrandCode] || BRAND_CONFIGS['DHOOT-TATA'];
+  const currentBrand = BRAND_CONFIGS[selectedBrandCode] || BRAND_CONFIGS['DHOOT-ALL'];
   const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.employeeId?.toUpperCase() === 'ADMIN' || user?.userCode === 'DG001';
 
   return (

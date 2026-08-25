@@ -109,7 +109,11 @@ export const ChallanInvoicingPage: React.FC = () => {
   const fetchChallans = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8787/api/v1/challans?organization_id=${currentBrand.orgId}`);
+      const url = currentBrand.code === 'DHOOT-ALL'
+        ? 'http://localhost:8787/api/v1/challans'
+        : `http://localhost:8787/api/v1/challans?organization_id=${currentBrand.orgId}`;
+
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         setRecords(json.data || []);
@@ -133,11 +137,15 @@ export const ChallanInvoicingPage: React.FC = () => {
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI' 
+        ? '11111111-1111-1111-1111-111111111112' 
+        : '11111111-1111-1111-1111-111111111111';
+
       const res = await fetch('http://localhost:8787/api/v1/challans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: currentBrand.orgId,
+          organizationId: targetOrg,
           ...newInvoice,
           net: newInvoice.ex_showroom - newInvoice.discount,
           net_amount: calculatedNetOnRoad,
@@ -170,11 +178,15 @@ export const ChallanInvoicingPage: React.FC = () => {
         return record;
       });
 
+      const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI' 
+        ? '11111111-1111-1111-1111-111111111112' 
+        : '11111111-1111-1111-1111-111111111111';
+
       const res = await fetch('http://localhost:8787/api/v1/challans/bulk-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: currentBrand.orgId,
+          organizationId: targetOrg,
           challanRecords: parsedRecords
         })
       });
@@ -250,7 +262,7 @@ export const ChallanInvoicingPage: React.FC = () => {
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Invoiced Units</div>
           <div className="text-2xl font-black text-slate-900 mt-1">{records.length} Vehicles</div>
-          <div className="text-[11px] text-slate-500 mt-1">{currentBrand.name} Deliveries</div>
+          <div className="text-[11px] text-slate-500 mt-1">{currentBrand.name}</div>
         </div>
 
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
@@ -669,7 +681,7 @@ export const ChallanInvoicingPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 2: BULK IMPORT (45 HEADERS) */}
+      {/* MODAL 2: BULK IMPORT */}
       {showImportModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -753,8 +765,6 @@ export const ChallanInvoicingPage: React.FC = () => {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-5 text-xs">
-              
-              {/* Customer & Vehicle Header */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <span className="text-[10px] text-slate-400 block font-bold uppercase">Customer Name</span>
@@ -774,7 +784,6 @@ export const ChallanInvoicingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Financial Bill of Supply */}
               <div>
                 <h4 className="font-bold text-slate-800 uppercase tracking-wider mb-2.5 pb-1 border-b border-slate-100">
                   Comprehensive Billing & Charges Breakdown
@@ -819,7 +828,6 @@ export const ChallanInvoicingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Delivery & Portal Sync Dates */}
               <div>
                 <h4 className="font-bold text-slate-800 uppercase tracking-wider mb-2.5 pb-1 border-b border-slate-100">
                   Registration & Gate Pass Dates

@@ -55,7 +55,11 @@ export const VehiclesPage: React.FC = () => {
   const fetchStock = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8787/api/v1/stock?organization_id=${currentBrand.orgId}`);
+      const url = currentBrand.code === 'DHOOT-ALL'
+        ? 'http://localhost:8787/api/v1/stock'
+        : `http://localhost:8787/api/v1/stock?organization_id=${currentBrand.orgId}`;
+
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         if (json.data && json.data.length > 0) {
@@ -73,15 +77,19 @@ export const VehiclesPage: React.FC = () => {
       setVehicles([
         { id: '1', vin: 'MALC12345C1122334', model: 'Hyundai Creta', variant: 'SX(O) Turbo 1.5 DCT', color: 'Ranger Khaki', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-901', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Sunil Jani', sales_consultant: 'Ramesh Choudhary', accessories_amount: 15000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 51000, purchase_date: '2026-08-15' },
         { id: '2', vin: 'MALC12345V5566778', model: 'Hyundai Venue', variant: 'N Line N8 DCT', color: 'Atlas White / Abyss Black', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-902', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Pooja Agarwal', sales_consultant: 'Kavita Shekhawat', accessories_amount: 8500, delivery_date: '2026-08-29', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 25000, purchase_date: '2026-08-18' },
-        { id: '3', vin: 'MALC12345I9900112', model: 'Hyundai Ioniq 5', variant: 'RWD 72.6 kWh', color: 'Gravity Gold Matte', fuel_type: 'EV', fsc_code: 'FSC-HYN-903', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_APPROVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Vikramaditya Singh', sales_consultant: 'Ramesh Choudhary', accessories_amount: 35000, delivery_date: '2026-08-26', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 150000, purchase_date: '2026-08-10' },
-        { id: '4', vin: 'MALC12345E3344556', model: 'Hyundai Exter', variant: 'SX(O) Connect Dual Tone', color: 'Cosmic Blue', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-904', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'DELIVERY_READY', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Rahul Meena', sales_consultant: 'Kavita Shekhawat', accessories_amount: 12000, delivery_date: '2026-08-25', allocation_date: '2026-08-19', allocated_days: 6, received_amount: 30000, purchase_date: '2026-08-12' },
+      ]);
+    } else if (currentBrand.code === 'DHOOT-TATA') {
+      setVehicles([
+        { id: '3', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', color: 'Daytona Grey', fuel_type: 'PETROL', fsc_code: 'FSC-TAT-801', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Rajesh Sharma', sales_consultant: 'Vikram Malhotra', accessories_amount: 18000, delivery_date: '2026-08-28', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 50000, purchase_date: '2026-08-14' },
+        { id: '4', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', color: 'Oberon Black', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-802', dealer_code: 'DLR-MH02', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Amit Deshmukh', sales_consultant: 'Sneha Kulkarni', accessories_amount: 25000, delivery_date: '2026-08-30', allocation_date: '2026-08-22', allocated_days: 3, received_amount: 100000, purchase_date: '2026-08-16' },
       ]);
     } else {
+      // Consolidated ALL
       setVehicles([
-        { id: '1', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', color: 'Daytona Grey', fuel_type: 'PETROL', fsc_code: 'FSC-TAT-801', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Rajesh Sharma', sales_consultant: 'Vikram Malhotra', accessories_amount: 18000, delivery_date: '2026-08-28', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 50000, purchase_date: '2026-08-14' },
-        { id: '2', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', color: 'Oberon Black', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-802', dealer_code: 'DLR-MH02', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Amit Deshmukh', sales_consultant: 'Sneha Kulkarni', accessories_amount: 25000, delivery_date: '2026-08-30', allocation_date: '2026-08-22', allocated_days: 3, received_amount: 100000, purchase_date: '2026-08-16' },
-        { id: '3', vin: 'MAT612345S9988776', model: 'Tata Safari', variant: 'Accomplished Plus 6S', color: 'Cosmic Gold', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-803', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_IN_PROGRESS', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Anand Shinde', sales_consultant: 'Vikram Malhotra', accessories_amount: 32000, delivery_date: '2026-08-31', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 75000, purchase_date: '2026-08-17' },
-        { id: '4', vin: 'MAT612345C1122334', model: 'Tata Curvv.ev', variant: 'Empowered Plus 55', color: 'Virtual Sunrise', fuel_type: 'EV', fsc_code: 'FSC-TAT-804', dealer_code: 'DLR-MH02', plant_code: 'PLT-SAN', manufacturing_year: 2026, status: 'PDI_APPROVED', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Priya Nair', sales_consultant: 'Sneha Kulkarni', accessories_amount: 14000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 60000, purchase_date: '2026-08-15' },
+        { id: '1', vin: 'MALC12345C1122334', model: 'Hyundai Creta', variant: 'SX(O) Turbo 1.5 DCT', color: 'Ranger Khaki', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-901', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Sunil Jani', sales_consultant: 'Ramesh Choudhary', accessories_amount: 15000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 51000, purchase_date: '2026-08-15' },
+        { id: '2', vin: 'MALC12345V5566778', model: 'Hyundai Venue', variant: 'N Line N8 DCT', color: 'Atlas White / Abyss Black', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-902', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Pooja Agarwal', sales_consultant: 'Kavita Shekhawat', accessories_amount: 8500, delivery_date: '2026-08-29', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 25000, purchase_date: '2026-08-18' },
+        { id: '3', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', color: 'Daytona Grey', fuel_type: 'PETROL', fsc_code: 'FSC-TAT-801', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Rajesh Sharma', sales_consultant: 'Vikram Malhotra', accessories_amount: 18000, delivery_date: '2026-08-28', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 50000, purchase_date: '2026-08-14' },
+        { id: '4', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', color: 'Oberon Black', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-802', dealer_code: 'DLR-MH02', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Amit Deshmukh', sales_consultant: 'Sneha Kulkarni', accessories_amount: 25000, delivery_date: '2026-08-30', allocation_date: '2026-08-22', allocated_days: 3, received_amount: 100000, purchase_date: '2026-08-16' },
       ]);
     }
     setLoading(false);
@@ -104,11 +112,15 @@ export const VehiclesPage: React.FC = () => {
         return record;
       });
 
+      const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI'
+        ? '11111111-1111-1111-1111-111111111112'
+        : '11111111-1111-1111-1111-111111111111';
+
       const res = await fetch('http://localhost:8787/api/v1/stock/bulk-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: currentBrand.orgId,
+          organizationId: targetOrg,
           stockItems: parsedRecords
         })
       });
@@ -157,7 +169,7 @@ export const VehiclesPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-black text-slate-900">{currentBrand.name} Vehicle Stock Inventory</h2>
             <span style={{ backgroundColor: `${currentBrand.primaryColor}15`, color: currentBrand.primaryColor }} className="text-xs font-bold px-2.5 py-0.5 rounded-full">
-              {currentBrand.name} ISOLATED
+              {currentBrand.shortName}
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium">21-Field Authoritative Stockyard Inventory & Allocation Ledger</p>
@@ -325,7 +337,7 @@ export const VehiclesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* BULK IMPORT STOCK MODAL (21 HEADERS) */}
+      {/* BULK IMPORT STOCK MODAL */}
       {isImportModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">

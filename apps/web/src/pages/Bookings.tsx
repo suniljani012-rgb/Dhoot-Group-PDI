@@ -88,7 +88,11 @@ export const BookingsPage: React.FC = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8787/api/v1/bookings?organization_id=${currentBrand.orgId}`);
+      const url = currentBrand.code === 'DHOOT-ALL'
+        ? 'http://localhost:8787/api/v1/bookings'
+        : `http://localhost:8787/api/v1/bookings?organization_id=${currentBrand.orgId}`;
+
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         setBookings(json.data || []);
@@ -103,11 +107,15 @@ export const BookingsPage: React.FC = () => {
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI' 
+        ? '11111111-1111-1111-1111-111111111112' 
+        : '11111111-1111-1111-1111-111111111111';
+
       const res = await fetch('http://localhost:8787/api/v1/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: currentBrand.orgId,
+          organizationId: targetOrg,
           ...newBooking,
           status: newBooking.allocated_vin_no ? 'ALLOCATED' : 'BOOKED'
         })
@@ -138,11 +146,15 @@ export const BookingsPage: React.FC = () => {
         return record;
       });
 
+      const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI' 
+        ? '11111111-1111-1111-1111-111111111112' 
+        : '11111111-1111-1111-1111-111111111111';
+
       const res = await fetch('http://localhost:8787/api/v1/bookings/bulk-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: currentBrand.orgId,
+          organizationId: targetOrg,
           bookings: parsedRecords
         })
       });
@@ -217,7 +229,7 @@ export const BookingsPage: React.FC = () => {
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Bookings</div>
           <div className="text-2xl font-black text-slate-900 mt-1">{bookings.length}</div>
-          <div className="text-[11px] text-slate-500 mt-1">{currentBrand.name} Dealership</div>
+          <div className="text-[11px] text-slate-500 mt-1">{currentBrand.name}</div>
         </div>
 
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
