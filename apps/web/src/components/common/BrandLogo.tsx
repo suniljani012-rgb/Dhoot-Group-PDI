@@ -6,17 +6,17 @@ export const DualBrandHeader: React.FC<{ brand: BrandCode; className?: string }>
 
   return (
     <div className={`flex items-center justify-center gap-4 sm:gap-6 ${className}`}>
-      {/* 1. Dhoot Group Master Emblem - Direct Image (No extra outer background box) */}
+      {/* 1. Dhoot Group Master Emblem - Curved / Rounded Edges */}
       <img
         src="/logo.png"
         alt="Dhoot Group Official Emblem"
-        className="h-16 w-16 sm:h-20 sm:w-20 object-contain hover:scale-105 transition-transform duration-300"
+        className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-2xl sm:rounded-3xl shadow-sm hover:scale-105 transition-transform duration-300"
       />
 
       {/* Sleek Vertical Divider */}
       <div className="h-10 sm:h-12 w-[1.5px] bg-[#CBD5E1]" />
 
-      {/* 2. Dealership Brand Logo - Direct Image (No extra outer background box) */}
+      {/* 2. Dealership Brand Logo - Matching Curved / Rounded Edges */}
       <img
         src={config.logoUrl}
         alt={config.name}
