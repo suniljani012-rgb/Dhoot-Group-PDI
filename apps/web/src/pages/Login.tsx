@@ -396,6 +396,13 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
+          {/* Bottom Attribution */}
+          <div className="pt-4 mt-4 border-t border-[#F1F5F9] text-center">
+            <span className="text-[11px] font-semibold text-[#64748B] tracking-wide">
+              Designed & Developed for Dhoot Group
+            </span>
+          </div>
+
         </div>
 
       </div>
