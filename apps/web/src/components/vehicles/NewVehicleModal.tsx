@@ -1,5 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Car } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface NewVehicleModalProps {
   isOpen: boolean;
@@ -8,11 +9,12 @@ interface NewVehicleModalProps {
 }
 
 export const NewVehicleModal: React.FC<NewVehicleModalProps> = ({ isOpen, onClose, onAdd }) => {
+  const { currentBrand } = useAuth();
   const [vin, setVin] = useState('');
-  const [model, setModel] = useState('Tata Nexon');
-  const [variant, setVariant] = useState('Fearless Plus');
+  const [model, setModel] = useState(currentBrand.models[0] || 'Car');
+  const [variant, setVariant] = useState('Top Spec');
   const [fuelType, setFuelType] = useState('PETROL');
-  const [color, setColor] = useState('Flame Red');
+  const [color, setColor] = useState('White');
 
   if (!isOpen) return null;
 
@@ -36,10 +38,13 @@ export const NewVehicleModal: React.FC<NewVehicleModalProps> = ({ isOpen, onClos
       <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-[#DEE2E8]">
         <div className="flex items-center justify-between pb-4 border-b border-[#DEE2E8]">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-[#1A3A6B] text-white rounded-lg">
+            <div style={{ backgroundColor: currentBrand.primaryColor }} className="p-2 text-white rounded-lg">
               <Car className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-[#1A1A2E]">Register New Vehicle</h3>
+            <div>
+              <h3 className="text-lg font-bold text-[#1A1A2E]">Register New {currentBrand.shortName} Vehicle</h3>
+              <span className="text-[11px] text-[#718096]">{currentBrand.name} Inventory</span>
+            </div>
           </div>
           <button onClick={onClose} className="text-[#718096] hover:text-[#1A1A2E]">
             <X className="w-5 h-5" />
@@ -53,7 +58,7 @@ export const NewVehicleModal: React.FC<NewVehicleModalProps> = ({ isOpen, onClos
               type="text"
               required
               maxLength={17}
-              placeholder="e.g. MAT612345N9988776"
+              placeholder={currentBrand.code === 'DHOOT-TATA' ? 'e.g. MAT612345N9988776' : 'e.g. MALC12345C8877665'}
               value={vin}
               onChange={(e) => setVin(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-[#DEE2E8] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#1A3A6B] uppercase"
@@ -62,18 +67,15 @@ export const NewVehicleModal: React.FC<NewVehicleModalProps> = ({ isOpen, onClos
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1A1A2E] uppercase">Model</label>
+              <label className="block text-xs font-semibold text-[#1A1A2E] uppercase">{currentBrand.shortName} Model</label>
               <select
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-[#DEE2E8] rounded-lg text-sm"
               >
-                <option value="Tata Nexon">Tata Nexon</option>
-                <option value="Tata Harrier">Tata Harrier</option>
-                <option value="Tata Safari">Tata Safari</option>
-                <option value="Tata Curvv.ev">Tata Curvv.ev</option>
-                <option value="Tata Punch">Tata Punch</option>
-                <option value="Tata Altroz">Tata Altroz</option>
+                {currentBrand.models.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -123,7 +125,8 @@ export const NewVehicleModal: React.FC<NewVehicleModalProps> = ({ isOpen, onClos
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 bg-[#1A3A6B] hover:bg-[#2C5298] text-white rounded-lg text-sm font-medium"
+              style={{ backgroundColor: currentBrand.primaryColor }}
+              className="flex-1 py-2.5 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all"
             >
               Save Vehicle
             </button>
