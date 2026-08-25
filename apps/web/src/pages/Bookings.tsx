@@ -4,7 +4,8 @@ import {
   Bookmark, Search, Plus, Car, ChevronRight, 
   FileSpreadsheet, X, Loader2, CheckCircle2, UserCheck,
   Calendar, Phone, DollarSign, Tag, Printer, ArrowRight,
-  FolderOpen, Clock, AlertCircle, Check
+  FolderOpen, Clock, AlertCircle, Check, Factory, FileText,
+  Building2, MapPin, Mail, Copy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -45,6 +46,7 @@ export const BookingsPage: React.FC = () => {
   const [showNewModal, setShowNewModal] = useState(false);
   const [allocatingBooking, setAllocatingBooking] = useState<BookingRecord | null>(null);
   const [voucherBooking, setVoucherBooking] = useState<BookingRecord | null>(null);
+  const [plantIndentBooking, setPlantIndentBooking] = useState<BookingRecord | null>(null);
   const [selectedStockVin, setSelectedStockVin] = useState('');
 
   // Bulk Excel Import State
@@ -242,6 +244,36 @@ export const BookingsPage: React.FC = () => {
     }
   };
 
+  // Dynamic Stock & Booking Lookup Analytics
+  const totalBookingsCount = bookings.length;
+  const allocatedBookingsCount = bookings.filter(b => !!b.allocated_vin_no || b.status === 'ALLOCATED' || b.status === 'DELIVERED').length;
+  const pendingAllocBookingsCount = bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED').length;
+  const totalAdvanceReceived = bookings.reduce((acc, b) => acc + (Number(b.receipt_amt) || 25000), 0);
+
+  // Model-wise Lookup: Check unallocated stock available vs pending demand
+  const unallocatedStockByModel: Record<string, number> = {};
+  stockVehicles.forEach(v => {
+    if (v.status !== 'ALLOCATED' && v.status !== 'DELIVERED') {
+      const m = (v.model || '').trim().toLowerCase();
+      unallocatedStockByModel[m] = (unallocatedStockByModel[m] || 0) + 1;
+    }
+  });
+
+  // Track which bookings need factory reorder
+  const tempStockLookup = { ...unallocatedStockByModel };
+  const bookingsWithDeficit = new Set<string>();
+
+  bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED').forEach(b => {
+    const m = (b.model || '').trim().toLowerCase();
+    if ((tempStockLookup[m] || 0) <= 0) {
+      bookingsWithDeficit.add(b.id);
+    } else {
+      tempStockLookup[m]--;
+    }
+  });
+
+  const plantIndentRequiredCount = bookingsWithDeficit.size;
+
   const filteredBookings = bookings.filter(b => {
     const cust = (b.customer_name || '').toLowerCase();
     const receipt = (b.receipt_no || '').toLowerCase();
@@ -253,33 +285,9 @@ export const BookingsPage: React.FC = () => {
     const matchesSearch = cust.includes(q) || receipt.includes(q) || phone.includes(q) || model.includes(q) || vin.includes(q);
 
     if (statusFilter === 'ALLOCATED') return matchesSearch && (b.status === 'ALLOCATED' || !!b.allocated_vin_no);
-    if (statusFilter === 'PENDING_ALLOCATION') return matchesSearch && !b.allocated_vin_no;
+    if (statusFilter === 'PENDING_ALLOCATION') return matchesSearch && !b.allocated_vin_no && !bookingsWithDeficit.has(b.id);
+    if (statusFilter === 'PLANT_ORDER_REQUIRED') return matchesSearch && !b.allocated_vin_no && bookingsWithDeficit.has(b.id);
     return matchesSearch;
-  });
-
-  // Dynamic Stock & Booking Lookup Analytics
-  const totalBookingsCount = bookings.length;
-  const allocatedBookingsCount = bookings.filter(b => !!b.allocated_vin_no || b.status === 'ALLOCATED' || b.status === 'DELIVERED').length;
-  const pendingAllocBookingsCount = bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED').length;
-  const totalAdvanceReceived = bookings.reduce((acc, b) => acc + (Number(b.receipt_amt) || 25000), 0);
-
-  // Model-wise Lookup: Check unallocated stock available vs pending demand
-  const unallocatedStockByModel: Record<string, number> = {};
-  stockVehicles.forEach(v => {
-    if (v.status !== 'ALLOCATED' && v.status !== 'DELIVERED') {
-      const m = (v.model || '').trim();
-      unallocatedStockByModel[m] = (unallocatedStockByModel[m] || 0) + 1;
-    }
-  });
-
-  let plantIndentRequiredCount = 0;
-  bookings.filter(b => !b.allocated_vin_no).forEach(b => {
-    const m = (b.model || '').trim();
-    if ((unallocatedStockByModel[m] || 0) <= 0) {
-      plantIndentRequiredCount++;
-    } else {
-      unallocatedStockByModel[m]--;
-    }
   });
 
   return (
@@ -319,7 +327,12 @@ export const BookingsPage: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         
         {/* Card 1: Total Bookings */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div 
+          onClick={() => setStatusFilter('ALL')}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
+            statusFilter === 'ALL' ? 'bg-slate-50 border-slate-400 ring-2 ring-slate-400' : 'bg-white border-slate-200 hover:border-slate-300'
+          }`}
+        >
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
             <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalBookingsCount}</span>
@@ -331,7 +344,12 @@ export const BookingsPage: React.FC = () => {
         </div>
 
         {/* Card 2: Allocated Vehicles */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div 
+          onClick={() => setStatusFilter('ALLOCATED')}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
+            statusFilter === 'ALLOCATED' ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-400' : 'bg-white border-slate-200 hover:border-indigo-300'
+          }`}
+        >
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">VIN Allocated</span>
             <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block">{allocatedBookingsCount}</span>
@@ -343,7 +361,12 @@ export const BookingsPage: React.FC = () => {
         </div>
 
         {/* Card 3: Pending Allocation */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div 
+          onClick={() => setStatusFilter('PENDING_ALLOCATION')}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
+            statusFilter === 'PENDING_ALLOCATION' ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400' : 'bg-white border-slate-200 hover:border-amber-300'
+          }`}
+        >
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pending Allocation</span>
             <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{pendingAllocBookingsCount}</span>
@@ -369,11 +392,18 @@ export const BookingsPage: React.FC = () => {
         </div>
 
         {/* Card 5: Plant Indent / Reorder Required */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div 
+          onClick={() => setStatusFilter(statusFilter === 'PLANT_ORDER_REQUIRED' ? 'ALL' : 'PLANT_ORDER_REQUIRED')}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
+            statusFilter === 'PLANT_ORDER_REQUIRED'
+              ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-400'
+              : 'bg-white border-slate-200 hover:border-rose-300'
+          }`}
+        >
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plant Indent Needed</span>
             <span className="text-xl font-black text-rose-600 leading-none mt-0.5 block">{plantIndentRequiredCount}</span>
-            <span className="text-[10px] font-semibold text-rose-700 mt-1 block">OEM Order Required</span>
+            <span className="text-[10px] font-semibold text-rose-700 mt-1 block">Click to View Customers</span>
           </div>
           <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 font-bold">
             <AlertCircle className="w-4 h-4" />
@@ -388,15 +418,20 @@ export const BookingsPage: React.FC = () => {
         {/* Table Filter Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
-            {(['ALL', 'PENDING_ALLOCATION', 'ALLOCATED'] as const).map(tab => (
+            {(['ALL', 'PENDING_ALLOCATION', 'ALLOCATED', 'PLANT_ORDER_REQUIRED'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer text-[11px] font-bold flex items-center gap-1.5 ${
                   statusFilter === tab ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                {tab === 'ALL' ? 'All Bookings' : tab.replace('_', ' ')}
+                <span>{tab === 'ALL' ? 'All Bookings' : tab === 'PLANT_ORDER_REQUIRED' ? '🚨 Plant Indent Needed' : tab.replace('_', ' ')}</span>
+                {tab === 'PLANT_ORDER_REQUIRED' && (
+                  <span className="px-1.5 py-0.2 bg-rose-100 text-rose-800 rounded-full text-[9px] font-extrabold">
+                    {plantIndentRequiredCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -489,24 +524,42 @@ export const BookingsPage: React.FC = () => {
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                         b.allocated_vin_no
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : bookingsWithDeficit.has(b.id)
+                          ? 'bg-rose-50 text-rose-800 border-rose-200'
                           : 'bg-amber-50 text-amber-800 border-amber-200'
                       }`}>
-                        {b.allocated_vin_no ? 'VIN Allocated' : 'Pending Stock'}
+                        {b.allocated_vin_no
+                          ? 'VIN Allocated'
+                          : bookingsWithDeficit.has(b.id)
+                          ? '🚨 Plant Indent Needed'
+                          : 'Stock in Yard • Ready'}
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         {!b.allocated_vin_no ? (
-                          <button
-                            onClick={() => {
-                              setAllocatingBooking(b);
-                              setSelectedStockVin(stockVehicles[0]?.vin || '');
-                            }}
-                            className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                          >
-                            <Tag className="w-3 h-3" />
-                            <span>Allocate VIN</span>
-                          </button>
+                          <>
+                            {bookingsWithDeficit.has(b.id) ? (
+                              <button
+                                onClick={() => setPlantIndentBooking(b)}
+                                className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                              >
+                                <Factory className="w-3 h-3 text-rose-200" />
+                                <span>Plant Indent Docket</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setAllocatingBooking(b);
+                                  setSelectedStockVin(stockVehicles[0]?.vin || '');
+                                }}
+                                className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                              >
+                                <Tag className="w-3 h-3" />
+                                <span>Allocate VIN</span>
+                              </button>
+                            )}
+                          </>
                         ) : (
                           <Link
                             to="/invoicing"
@@ -518,8 +571,8 @@ export const BookingsPage: React.FC = () => {
                         )}
                         <button
                           onClick={() => setVoucherBooking(b)}
-                          className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           title="Print Booking Voucher"
+                          className="p-1 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-all cursor-pointer"
                         >
                           <Printer className="w-3.5 h-3.5" />
                         </button>
@@ -922,6 +975,170 @@ export const BookingsPage: React.FC = () => {
                 <span>Import {parsedRows.length} Bookings to Database</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: CUSTOMER OEM PLANT INDENT & FACTORY REQUISITION DOCKET          */}
+      {/* ========================================================================= */}
+      {plantIndentBooking && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Header */}
+            <div className="p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <Factory className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm leading-tight">OEM Plant Indent & Factory Order Requisition</h3>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    REF: DHOOT-IND-2026-{plantIndentBooking.receipt_no?.replace(/\D/g, '') || '8819'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPlantIndentBooking(null)}
+                className="p-1 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 space-y-4 overflow-y-auto text-xs">
+              
+              {/* Alert Status Banner */}
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-rose-900">Stockyard Inventory Deficit (0 Units in Free Stock)</div>
+                  <div className="text-[11px] text-rose-700 mt-0.5">
+                    This vehicle is not currently available in yard inventory. An official plant indent must be dispatched to the OEM factory to fulfill this customer booking before promised delivery.
+                  </div>
+                </div>
+              </div>
+
+              {/* 1. Customer Details Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Customer & Booking Credentials</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Customer Name</span>
+                    <span className="font-bold text-slate-900 text-xs block">{plantIndentBooking.customer_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Contact Phone</span>
+                    <span className="font-mono font-bold text-slate-900 text-xs block">{plantIndentBooking.mobile_number}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Booking Receipt No</span>
+                    <span className="font-mono font-bold text-indigo-700 text-xs block">{plantIndentBooking.receipt_no}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Advance Collected</span>
+                    <span className="font-mono font-bold text-emerald-700 text-xs block">
+                      ₹{(plantIndentBooking.receipt_amt || 25000).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Sales Consultant</span>
+                    <span className="font-semibold text-slate-800 text-xs block">{plantIndentBooking.sales_consultant || 'Sales Executive'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Promised Delivery Date</span>
+                    <span className="font-mono font-bold text-rose-700 text-xs block">{plantIndentBooking.promise_delivery_date || 'Within 10 Days'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Factory Order Vehicle Specs */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Car className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Factory Production & Configuration Specifications</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Booked Vehicle Model</span>
+                    <span className="font-bold text-slate-900 text-xs block">{plantIndentBooking.model}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Variant / Trim</span>
+                    <span className="font-semibold text-slate-800 text-xs block">{plantIndentBooking.variant}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Exterior Paint Shade</span>
+                    <span className="font-semibold text-slate-800 text-xs block">{plantIndentBooking.colour}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Target Manufacturing Plant</span>
+                    <span className="font-mono font-bold text-slate-900 text-xs block">
+                      {plantIndentBooking.model?.toLowerCase().includes('hyundai') || plantIndentBooking.model?.toLowerCase().includes('creta') || plantIndentBooking.model?.toLowerCase().includes('venue')
+                        ? 'PLT-CHE (Chennai Factory)'
+                        : 'PLT-PUN (Pune Plant)'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Target Dispatch Deadline</span>
+                    <span className="font-mono font-bold text-indigo-700 text-xs block">
+                      {new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0]} (Expedited)
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Carrier Transit Mode</span>
+                    <span className="font-semibold text-slate-800 text-xs block">Dedicated 8-Car Trailer</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const summary = `OEM PLANT INDENT - DHOOT GROUP\nCustomer: ${plantIndentBooking.customer_name} (${plantIndentBooking.mobile_number})\nBooking: ${plantIndentBooking.receipt_no}\nModel: ${plantIndentBooking.model} ${plantIndentBooking.variant}\nColour: ${plantIndentBooking.colour}\nDelivery Date: ${plantIndentBooking.promise_delivery_date}`;
+                  navigator.clipboard.writeText(summary);
+                  alert('Plant order summary copied to clipboard!');
+                }}
+                className="px-3 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Summary</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.print();
+                  }}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Plant Indent</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert(`Plant order marked as placed with OEM factory for ${plantIndentBooking.customer_name}!`);
+                    setPlantIndentBooking(null);
+                  }}
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Mark Factory Order Placed</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
