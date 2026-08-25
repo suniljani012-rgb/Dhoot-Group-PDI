@@ -246,6 +246,22 @@ export const AdminMasterPanel: React.FC = () => {
     gst_rate: 28
   });
 
+  const [modelBrandFilter, setModelBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
+  const [branchBrandFilter, setBranchBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
+
+  useEffect(() => {
+    if (currentBrand.code === 'DHOOT-TATA') {
+      setModelBrandFilter('Tata Motors');
+      setBranchBrandFilter('Tata Motors');
+    } else if (currentBrand.code === 'DHOOT-HYUNDAI') {
+      setModelBrandFilter('Hyundai');
+      setBranchBrandFilter('Hyundai');
+    } else {
+      setModelBrandFilter('ALL');
+      setBranchBrandFilter('ALL');
+    }
+  }, [currentBrand.code]);
+
   // ==========================================
   // HANDLERS: PDI RULES
   // ==========================================
@@ -609,33 +625,52 @@ export const AdminMasterPanel: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'MODELS' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Vehicle Models & Pricing Matrix</h2>
               <p className="text-[11px] text-slate-400">Official catalog for Tata Motors & Hyundai Motor India</p>
             </div>
-            <button
-              onClick={() => {
-                setEditingModel(null);
-                setModelForm({
-                  brand: 'Tata Motors',
-                  model_name: '',
-                  body_type: 'SUV',
-                  base_ex_showroom: 999000,
-                  fuel_types: 'PETROL, DIESEL',
-                  transmission: 'Manual & Automatic',
-                  seating_capacity: '5 Seater',
-                  variants: 'Pure, Adventure, Fearless',
-                  colors: 'Oberon Black, Daytona Grey, White',
-                  gst_rate: 28
-                });
-                setShowModelModal(true);
-              }}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Vehicle Model</span>
-            </button>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
+                {(['ALL', 'Tata Motors', 'Hyundai'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setModelBrandFilter(tab)}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
+                      modelBrandFilter === tab
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    {tab === 'ALL' ? 'All Brands' : tab}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingModel(null);
+                  setModelForm({
+                    brand: modelBrandFilter === 'Hyundai' ? 'Hyundai' : 'Tata Motors',
+                    model_name: '',
+                    body_type: 'SUV',
+                    base_ex_showroom: 999000,
+                    fuel_types: 'PETROL, DIESEL',
+                    transmission: 'Manual & Automatic',
+                    seating_capacity: '5 Seater',
+                    variants: 'Pure, Adventure, Fearless',
+                    colors: 'Oberon Black, Daytona Grey, White',
+                    gst_rate: 28
+                  });
+                  setShowModelModal(true);
+                }}
+                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Vehicle Model</span>
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
@@ -652,7 +687,13 @@ export const AdminMasterPanel: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {vehicleModels.map((m) => (
+                {vehicleModels
+                  .filter(m => {
+                    if (modelBrandFilter === 'Tata Motors') return m.brand?.includes('Tata');
+                    if (modelBrandFilter === 'Hyundai') return m.brand?.includes('Hyundai');
+                    return true;
+                  })
+                  .map((m) => (
                   <tr key={m.id} className="hover:bg-slate-50/80">
                     <td className="py-2.5 px-3 font-bold text-slate-900">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -712,37 +753,56 @@ export const AdminMasterPanel: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'BRANCHES' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Showrooms, 3S Workshops & Central Stockyards</h2>
               <p className="text-[11px] text-slate-400">Manage dealer facilities, stockyard capacity, and regional managers</p>
             </div>
-            <button
-              onClick={() => {
-                setEditingBranch(null);
-                setBranchForm({
-                  id: '',
-                  code: `BR-${Date.now().toString().slice(-4)}`,
-                  name: '',
-                  brand: 'Tata Motors',
-                  type: '3S (Sales, Service, Spares)',
-                  city: 'Pune',
-                  state: 'Maharashtra',
-                  pincode: '411057',
-                  address: '',
-                  capacity: '100 Cars',
-                  phone: '+91 ',
-                  email: '',
-                  manager: '',
-                  status: 'ACTIVE'
-                });
-                setShowBranchModal(true);
-              }}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Showroom / Stockyard</span>
-            </button>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
+                {(['ALL', 'Tata Motors', 'Hyundai'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setBranchBrandFilter(tab)}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
+                      branchBrandFilter === tab
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    {tab === 'ALL' ? 'All Facilities' : tab}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingBranch(null);
+                  setBranchForm({
+                    id: '',
+                    code: `BR-${Date.now().toString().slice(-4)}`,
+                    name: '',
+                    brand: branchBrandFilter === 'Hyundai' ? 'Hyundai' : 'Tata Motors',
+                    type: '3S (Sales, Service, Spares)',
+                    city: 'Pune',
+                    state: 'Maharashtra',
+                    pincode: '411057',
+                    address: '',
+                    capacity: '100 Cars',
+                    phone: '+91 ',
+                    email: '',
+                    manager: '',
+                    status: 'ACTIVE'
+                  });
+                  setShowBranchModal(true);
+                }}
+                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Showroom / Stockyard</span>
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
@@ -760,7 +820,13 @@ export const AdminMasterPanel: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {branches.map((b) => (
+                {branches
+                  .filter(b => {
+                    if (branchBrandFilter === 'Tata Motors') return b.brand?.includes('Tata') || b.brand?.includes('Shared');
+                    if (branchBrandFilter === 'Hyundai') return b.brand?.includes('Hyundai') || b.brand?.includes('Shared');
+                    return true;
+                  })
+                  .map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50/80">
                     <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{b.code}</td>
                     <td className="py-2.5 px-3 font-bold text-slate-900">{b.name}</td>

@@ -83,14 +83,16 @@ export const DashboardPage: React.FC = () => {
     { label: 'In Workshop', value: counts.inRepair, change: `${counts.inRepair} Repairs`, isUp: false, link: '/repairs', color: 'text-rose-700', bg: 'bg-rose-50/50' }
   ];
 
-  // Dynamic Model Distribution
+  // Dynamic Multi-Franchise Model Distribution
   const dynamicModelBreakdown = () => {
     if (fleetList.length === 0) {
-      return (currentBrand.models || []).slice(0, 6).map(m => ({
+      const models = currentBrand.models || [];
+      return models.map((m, idx) => ({
         name: m,
         count: 0,
-        target: 20,
-        color: 'bg-slate-400'
+        brand: m.toLowerCase().includes('hyundai') ? 'Hyundai' : 'Tata',
+        target: 10,
+        color: m.toLowerCase().includes('hyundai') ? 'bg-cyan-600' : 'bg-blue-600'
       }));
     }
 
@@ -100,13 +102,24 @@ export const DashboardPage: React.FC = () => {
       modelMap[name] = (modelMap[name] || 0) + 1;
     });
 
-    const colors = ['bg-blue-600', 'bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-purple-600', 'bg-cyan-600'];
-    return Object.entries(modelMap).slice(0, 6).map(([name, count], idx) => ({
-      name,
-      count,
-      target: Math.max(count + 5, 10),
-      color: colors[idx % colors.length]
-    }));
+    const colors = [
+      'bg-blue-600', 'bg-indigo-600', 'bg-cyan-600', 'bg-teal-600', 
+      'bg-sky-600', 'bg-purple-600', 'bg-amber-600', 'bg-emerald-600',
+      'bg-rose-600', 'bg-violet-600', 'bg-blue-700', 'bg-cyan-700'
+    ];
+
+    return Object.entries(modelMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count], idx) => {
+        const isHyundai = name.toLowerCase().includes('hyundai');
+        return {
+          name,
+          count,
+          brand: isHyundai ? 'Hyundai' : 'Tata',
+          target: Math.max(count + 2, 4),
+          color: isHyundai ? 'bg-cyan-600' : 'bg-blue-600'
+        };
+      });
   };
 
   const modelBreakdown = dynamicModelBreakdown();
@@ -282,14 +295,21 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-mono font-bold text-slate-700">{counts.totalStock} Total</span>
             </div>
 
-            <div className="space-y-2.5 mt-3">
+            <div className="space-y-2 mt-3 max-h-[250px] overflow-y-auto pr-1">
               {modelBreakdown.map((m, idx) => {
                 const pct = m.target > 0 ? Math.round((m.count / m.target) * 100) : 0;
                 return (
                   <div key={idx} className="space-y-0.5">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-slate-800">{m.name}</span>
-                      <span className="font-mono text-slate-500">{m.count} Units</span>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className={`text-[9px] px-1 py-0.2 rounded font-black tracking-wider uppercase ${
+                          m.brand === 'Hyundai' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}>
+                          {m.brand}
+                        </span>
+                        <span className="font-bold text-slate-800 truncate">{m.name}</span>
+                      </div>
+                      <span className="font-mono font-bold text-slate-600 shrink-0">{m.count} {m.count === 1 ? 'Unit' : 'Units'}</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                       <div style={{ width: `${Math.min(pct, 100)}%` }} className={`h-1.5 rounded-full ${m.color}`} />
@@ -300,12 +320,26 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-            <div>
-              <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Dealership Network</span>
-              <div className="text-xs font-bold text-slate-800">Dhoot Group</div>
+          <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between mt-2">
+            <div className="flex items-center gap-3">
+              <div>
+                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider block">Tata Motors</span>
+                <span className="text-xs font-bold font-mono text-blue-700">
+                  {fleetList.filter(f => !f.model?.toLowerCase().includes('hyundai') && (f.brand?.toLowerCase().includes('tata') || f.vin?.startsWith('MAT'))).length} Units
+                </span>
+              </div>
+              <div className="h-6 w-px bg-slate-200" />
+              <div>
+                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider block">Hyundai</span>
+                <span className="text-xs font-bold font-mono text-cyan-700">
+                  {fleetList.filter(f => f.model?.toLowerCase().includes('hyundai') || f.brand?.toLowerCase().includes('hyundai') || f.vin?.startsWith('MAL')).length} Units
+                </span>
+              </div>
             </div>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black text-slate-800">Dhoot Group</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            </div>
           </div>
         </div>
 

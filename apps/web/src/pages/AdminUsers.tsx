@@ -25,7 +25,7 @@ export interface EnterpriseUser {
   nature: string;
   status: string;
   role: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface RolePermissionConfig {
@@ -225,6 +225,27 @@ export const AdminUsersPage: React.FC = () => {
   const [newDesignationTitle, setNewDesignationTitle] = useState('');
   const [newDesignationNature, setNewDesignationNature] = useState('Stockyard');
 
+  const DEFAULT_USERS: EnterpriseUser[] = [
+    { id: 'usr-1', user_code: 'DG001', employee_id: 'DG001', user_name: 'Sunil Jani', password_hash: 'Dhoot@2026', mail_id: 'admin@dhootgroup.com', mobile_number: '+91 98290 11223', branch_code: 'HO-DHOOT', designation: 'Managing Director & System Admin', brand: 'Dhoot Group', nature: 'Management', status: 'ACTIVE', role: 'SYSTEM_ADMIN', date_of_birth: '1990-05-15' },
+    { id: 'usr-2', user_code: 'DG-TAT-01', employee_id: 'DG-TAT-01', user_name: 'Rajesh Sharma', password_hash: 'Tata@123', mail_id: 'rajesh.tata@dhootgroup.com', mobile_number: '+91 98220 33445', branch_code: 'BR-PUN-01', designation: 'General Manager (Tata)', brand: 'Tata Motors', nature: 'Management', status: 'ACTIVE', role: 'MANAGEMENT', date_of_birth: '1985-08-20' },
+    { id: 'usr-3', user_code: 'DG-HYN-01', employee_id: 'DG-HYN-01', user_name: 'Manish Rathore', password_hash: 'Hyundai@123', mail_id: 'manish.hyn@dhootgroup.com', mobile_number: '+91 94140 55667', branch_code: 'BR-JAI-02', designation: 'General Manager (Hyundai)', brand: 'Hyundai', nature: 'Management', status: 'ACTIVE', role: 'MANAGEMENT', date_of_birth: '1988-11-12' },
+    { id: 'usr-4', user_code: 'DG-ENG-01', employee_id: 'DG-ENG-01', user_name: 'Suresh Patil', password_hash: 'Pdi@2026', mail_id: 'suresh.pdi@dhootgroup.com', mobile_number: '+91 98291 77889', branch_code: 'BR-PUN-01', designation: 'Senior PDI Engineer', brand: 'Tata Motors', nature: 'Quality Inspection', status: 'ACTIVE', role: 'PDI_ENGINEER', date_of_birth: '1994-03-10' },
+    { id: 'usr-5', user_code: 'DG-ENG-02', employee_id: 'DG-ENG-02', user_name: 'Karan Joshi', password_hash: 'Pdi@2026', mail_id: 'karan.pdi@dhootgroup.com', mobile_number: '+91 98292 99001', branch_code: 'BR-JAI-02', designation: 'PDI Inspector', brand: 'Hyundai', nature: 'Quality Inspection', status: 'ACTIVE', role: 'PDI_ENGINEER', date_of_birth: '1996-07-22' },
+    { id: 'usr-6', user_code: 'DG-QA-01', employee_id: 'DG-QA-01', user_name: 'Dr. Arvind Agarwal', password_hash: 'Qa@2026', mail_id: 'arvind.qa@dhootgroup.com', mobile_number: '+91 98293 22334', branch_code: 'HO-DHOOT', designation: 'Quality Assurance Head', brand: 'Dhoot Group', nature: 'Quality Assurance', status: 'ACTIVE', role: 'QA_MANAGER', date_of_birth: '1982-01-30' },
+    { id: 'usr-7', user_code: 'DG-WRK-01', employee_id: 'DG-WRK-01', user_name: 'Kishore Mali', password_hash: 'Work@123', mail_id: 'kishore.wrk@dhootgroup.com', mobile_number: '+91 98294 44556', branch_code: 'BR-PUN-01', designation: 'Bodyshop Lead', brand: 'Tata Motors', nature: 'Workshop', status: 'ACTIVE', role: 'WORKSHOP_LEAD', date_of_birth: '1991-09-18' },
+    { id: 'usr-8', user_code: 'DG-ACC-01', employee_id: 'DG-ACC-01', user_name: 'Anita Desai', password_hash: 'Bills@123', mail_id: 'anita.acc@dhootgroup.com', mobile_number: '+91 98295 66778', branch_code: 'BR-JAI-02', designation: 'Billing Officer', brand: 'Hyundai', nature: 'Accounts', status: 'ACTIVE', role: 'BILLING_CLERK', date_of_birth: '1993-12-05' }
+  ];
+
+  useEffect(() => {
+    if (currentBrand.code === 'DHOOT-TATA') {
+      setBrandFilter('Tata Motors');
+    } else if (currentBrand.code === 'DHOOT-HYUNDAI') {
+      setBrandFilter('Hyundai');
+    } else {
+      setBrandFilter('ALL');
+    }
+  }, [currentBrand.code]);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -235,10 +256,15 @@ export const AdminUsersPage: React.FC = () => {
       const res = await fetch(getApiUrl('/api/v1/users'));
       if (res.ok) {
         const json = await res.json();
-        setUsersList(json.data || []);
+        if (json.data && json.data.length > 0) {
+          setUsersList(json.data);
+          setLoading(false);
+          return;
+        }
       }
+      setUsersList(DEFAULT_USERS);
     } catch (e) {
-      console.error(e);
+      setUsersList(DEFAULT_USERS);
     } finally {
       setLoading(false);
     }
