@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
-import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ChevronDown, ShieldCheck } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ChevronDown, ShieldCheck, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { DualBrandHeader } from '../components/common/BrandLogo';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
 
@@ -11,8 +11,14 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login, setBrand } = useAuth();
 
+  // Forgot Password State
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const { login, setBrand } = useAuth();
   const currentConfig = BRAND_CONFIGS[brand];
 
   const handleBrandChange = (newBrand: BrandCode) => {
@@ -20,7 +26,7 @@ export const LoginPage: React.FC = () => {
     setBrand(newBrand);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -42,6 +48,22 @@ export const LoginPage: React.FC = () => {
     }, 500);
   };
 
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setError(null);
+
+    setTimeout(() => {
+      if (forgotEmail) {
+        setForgotSuccess(true);
+        setForgotLoading(false);
+      } else {
+        setError('Please enter your registered User ID or Email.');
+        setForgotLoading(false);
+      }
+    }, 600);
+  };
+
   return (
     <div className="min-h-screen bg-[#F0F4F8] relative flex flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 overflow-hidden select-none">
       
@@ -60,7 +82,7 @@ export const LoginPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Floating Glassmorphic Login Card */}
+        {/* Floating Glassmorphic Login / Forgot Password Card */}
         <div className="w-full bg-white/95 backdrop-blur-xl py-8 px-6 sm:px-10 rounded-[2.2rem] shadow-[0_20px_50px_rgba(15,23,42,0.1)] border border-white ring-1 ring-slate-900/5 relative overflow-hidden transition-all duration-300 hover:shadow-[0_25px_60px_rgba(15,23,42,0.14)]">
           
           {/* Top Brand Accent Line */}
@@ -76,105 +98,204 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* 1. BRAND SELECTOR DROPDOWN */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
-                Dealership Brand
-              </label>
-              <div className="relative rounded-2xl group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <select
-                  value={brand}
-                  onChange={(e) => handleBrandChange(e.target.value as BrandCode)}
-                  className="block w-full pl-11 pr-10 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm cursor-pointer appearance-none"
-                >
-                  <option value="DHOOT-TATA">Autoprime Tata</option>
-                  <option value="DHOOT-HYUNDAI">Raja Hyundai</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#94A3B8]">
-                  <ChevronDown className="h-4 w-4" />
+          {!isForgotPassword ? (
+            /* --- 1. SIGN IN FORM --- */
+            <form className="space-y-5" onSubmit={handleLoginSubmit}>
+              {/* BRAND SELECTOR DROPDOWN */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
+                  Dealership Brand
+                </label>
+                <div className="relative rounded-2xl group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                  <select
+                    value={brand}
+                    onChange={(e) => handleBrandChange(e.target.value as BrandCode)}
+                    className="block w-full pl-11 pr-10 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm cursor-pointer appearance-none"
+                  >
+                    <option value="DHOOT-TATA">Autoprime Tata</option>
+                    <option value="DHOOT-HYUNDAI">Raja Hyundai</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#94A3B8]">
+                    <ChevronDown className="h-4 w-4" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* 2. USER ID FIELD */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
-                Username
-              </label>
-              <div className="relative rounded-2xl group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
-                  <User className="h-5 w-5" />
+              {/* USER ID FIELD */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
+                  Username
+                </label>
+                <div className="relative rounded-2xl group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter User ID"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                  />
                 </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter User ID"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
-                />
               </div>
-            </div>
 
-            {/* 3. PASSWORD FIELD WITH 'Enter Password' PLACEHOLDER & TOGGLE */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
-                Password
-              </label>
-              <div className="relative rounded-2xl group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
-                  <Lock className="h-5 w-5" />
+              {/* PASSWORD FIELD */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null);
+                      setIsForgotPassword(true);
+                    }}
+                    style={{ color: currentConfig.primaryColor }}
+                    className="text-[11px] font-bold hover:underline focus:outline-none cursor-pointer"
+                  >
+                    Forgot Password?
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="Enter Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
-                />
+                <div className="relative rounded-2xl group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Enter Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center text-[#64748B] hover:text-[#0F172A] transition-colors focus:outline-none cursor-pointer"
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                    aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-[#475569] hover:text-[#0F172A]" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-[#64748B] hover:text-[#0F172A]" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* SECURE SIGN IN BUTTON */}
+              <div className="pt-2">
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center text-[#64748B] hover:text-[#0F172A] transition-colors focus:outline-none cursor-pointer"
-                  title={showPassword ? 'Hide Password' : 'Show Password'}
-                  aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                  type="submit"
+                  disabled={loading}
+                  style={{ backgroundColor: currentConfig.primaryColor }}
+                  className="w-full flex justify-center items-center gap-2 py-4 px-6 rounded-2xl text-sm font-extrabold text-white shadow-lg hover:shadow-xl hover:opacity-95 focus:outline-none transform active:scale-[0.99] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-[#475569] hover:text-[#0F172A]" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Authenticating...
+                    </>
                   ) : (
-                    <Eye className="h-5 w-5 text-[#64748B] hover:text-[#0F172A]" />
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      Secure Sign In
+                    </>
                   )}
                 </button>
               </div>
-            </div>
+            </form>
+          ) : (
+            /* --- 2. FORGOT PASSWORD FLOW --- */
+            <div className="space-y-5">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setForgotSuccess(false);
+                    setError(null);
+                  }}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-[#64748B] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <h2 className="text-base font-bold text-[#0F172A]">Reset Password</h2>
+                  <p className="text-xs text-[#64748B]">Recover access for {currentConfig.name}</p>
+                </div>
+              </div>
 
-            {/* SECURE SIGN IN BUTTON */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                style={{ backgroundColor: currentConfig.primaryColor }}
-                className="w-full flex justify-center items-center gap-2 py-4 px-6 rounded-2xl text-sm font-extrabold text-white shadow-lg hover:shadow-xl hover:opacity-95 focus:outline-none transform active:scale-[0.99] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Authenticating...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    Secure Sign In
-                  </>
-                )}
-              </button>
+              {forgotSuccess ? (
+                <div className="space-y-4 text-center py-4">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-inner">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0F172A]">Reset Instructions Sent!</h3>
+                    <p className="text-xs text-[#64748B] mt-1 leading-relaxed">
+                      A password recovery link has been dispatched to your official email and notified to IT Support.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPassword(false);
+                      setForgotSuccess(false);
+                    }}
+                    style={{ backgroundColor: currentConfig.primaryColor }}
+                    className="w-full py-3.5 px-4 rounded-2xl text-xs font-bold text-white shadow hover:opacity-90 transition-all cursor-pointer"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              ) : (
+                <form className="space-y-4" onSubmit={handleForgotSubmit}>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
+                      Registered User ID / Email
+                    </label>
+                    <div className="relative rounded-2xl group">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
+                        <Mail className="h-5 w-5" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter User ID or Official Email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    style={{ backgroundColor: currentConfig.primaryColor }}
+                    className="w-full flex justify-center items-center py-3.5 px-4 rounded-2xl text-sm font-bold text-white shadow-lg hover:opacity-95 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {forgotLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending Link...
+                      </>
+                    ) : (
+                      'Request Password Reset'
+                    )}
+                  </button>
+                </form>
+              )}
             </div>
-          </form>
+          )}
 
           {/* Bottom Attribution */}
           <div className="pt-4 border-t border-[#F1F5F9] text-center">
