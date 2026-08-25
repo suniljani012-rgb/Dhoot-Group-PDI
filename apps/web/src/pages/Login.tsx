@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
-import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ChevronDown, ShieldCheck, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { DualBrandHeader } from '../components/common/BrandLogo';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
 
 export const LoginPage: React.FC = () => {
-  const [brand, setLocalBrand] = useState<BrandCode>('DHOOT-TATA');
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,13 +17,8 @@ export const LoginPage: React.FC = () => {
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  const { login, setBrand } = useAuth();
-  const currentConfig = BRAND_CONFIGS[brand];
-
-  const handleBrandChange = (newBrand: BrandCode) => {
-    setLocalBrand(newBrand);
-    setBrand(newBrand);
-  };
+  const { login, setBrand, currentBrand } = useAuth();
+  const currentConfig = BRAND_CONFIGS[currentBrand.code || 'DHOOT-TATA'];
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,14 +26,28 @@ export const LoginPage: React.FC = () => {
     setError(null);
 
     setTimeout(() => {
-      if (employeeId && password) {
-        login('demo_token_' + brand, {
+      const cleanId = employeeId.trim().toUpperCase();
+      
+      if (cleanId && password) {
+        // Automatic Brand Detection based on User ID / Credentials
+        let detectedBrand: BrandCode = 'DHOOT-TATA';
+        
+        if (cleanId.includes('HYN') || cleanId.includes('HYUNDAI') || cleanId.includes('RAJA') || cleanId.startsWith('H-')) {
+          detectedBrand = 'DHOOT-HYUNDAI';
+        } else {
+          detectedBrand = 'DHOOT-TATA';
+        }
+
+        const brandCfg = BRAND_CONFIGS[detectedBrand];
+        setBrand(detectedBrand);
+
+        login('token_' + detectedBrand + '_' + Date.now(), {
           id: crypto.randomUUID(),
-          employeeId: employeeId.trim().toUpperCase(),
-          email: `${employeeId.toLowerCase()}@${brand === 'DHOOT-TATA' ? 'autoprimetata.com' : 'rajahyundai.com'}`,
+          employeeId: cleanId,
+          email: `${cleanId.toLowerCase()}@${detectedBrand === 'DHOOT-TATA' ? 'autoprimetata.com' : 'rajahyundai.com'}`,
           role: 'BRANCH_MANAGER',
-          organizationId: currentConfig.orgId,
-          brand: brand,
+          organizationId: brandCfg.orgId,
+          brand: detectedBrand,
         });
       } else {
         setError('Please enter your User ID and Password.');
@@ -75,14 +83,14 @@ export const LoginPage: React.FC = () => {
         
         {/* Header: Dual Brand Logos + Welcome Heading */}
         <div className="text-center space-y-2.5 mb-5">
-          <DualBrandHeader brand={brand} className="mb-2" />
+          <DualBrandHeader brand={currentBrand.code || 'DHOOT-TATA'} className="mb-2" />
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0F172A]">
             Welcome to <span style={{ color: currentConfig.primaryColor }} className="transition-colors duration-300">Dhoot Group</span>
           </h1>
         </div>
 
-        {/* Adjusted Floating Card with Enhanced Proportions */}
+        {/* Clean 2-Field Floating Card */}
         <div className="w-full bg-white py-7 px-6 sm:py-9 sm:px-9 rounded-[2rem] sm:rounded-[2.4rem] shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
           
           {/* Top Brand Accent Line */}
@@ -99,31 +107,9 @@ export const LoginPage: React.FC = () => {
           )}
 
           {!isForgotPassword ? (
-            /* --- 1. SIGN IN FORM --- */
+            /* --- 1. CLEAN 2-FIELD SIGN IN FORM --- */
             <form className="space-y-4 sm:space-y-5" onSubmit={handleLoginSubmit}>
-              {/* DEALERSHIP BRAND DROPDOWN */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
-                  Dealership Brand
-                </label>
-                <div className="relative rounded-2xl group">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
-                    <Building2 className="h-5 w-5" />
-                  </div>
-                  <select
-                    value={brand}
-                    onChange={(e) => handleBrandChange(e.target.value as BrandCode)}
-                    className="block w-full pl-11 pr-10 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm cursor-pointer appearance-none"
-                  >
-                    <option value="DHOOT-TATA">Autoprime Tata</option>
-                    <option value="DHOOT-HYUNDAI">Raja Hyundai</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#94A3B8]">
-                    <ChevronDown className="h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-
+              
               {/* USERNAME FIELD */}
               <div>
                 <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
@@ -228,7 +214,7 @@ export const LoginPage: React.FC = () => {
                 </button>
                 <div>
                   <h2 className="text-base font-bold text-[#0F172A]">Reset Password</h2>
-                  <p className="text-xs text-[#64748B]">Recover access for {currentConfig.name}</p>
+                  <p className="text-xs text-[#64748B]">Recover access for your Dhoot Group ID</p>
                 </div>
               </div>
 
