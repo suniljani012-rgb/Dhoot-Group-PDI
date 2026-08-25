@@ -4,6 +4,8 @@ import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
 import { branchesRouter } from './routes/branches';
 import { devicesRouter } from './routes/devices';
+import { vehiclesRouter } from './routes/vehicles';
+import { assignmentsRouter } from './routes/assignments';
 import { errorHandler } from './middleware/error';
 import { correlationId } from './middleware/correlation';
 import { structuredLogger } from './middleware/logger';
@@ -35,6 +37,8 @@ v1.route('/auth', authRouter);
 v1.route('/users', usersRouter);
 v1.route('/branches', branchesRouter);
 v1.route('/devices', devicesRouter);
+v1.route('/vehicles', vehiclesRouter);
+v1.route('/assignments', assignmentsRouter);
 
 app.route('/api/v1', v1);
 
