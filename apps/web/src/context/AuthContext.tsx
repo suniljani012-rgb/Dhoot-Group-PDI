@@ -45,14 +45,20 @@ export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
   },
 };
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   employeeId: string;
+  userCode: string;
+  userName: string;
   email: string;
   role: string;
+  designation?: string;
+  nature?: string;
+  branchCode?: string;
   branchId?: string;
   organizationId: string;
-  brand: BrandCode;
+  brand: BrandCode | 'ALL';
+  hasDualBrandAccess?: boolean;
 }
 
 interface AuthContextType {
@@ -62,6 +68,7 @@ interface AuthContextType {
   setBrand: (brand: BrandCode) => void;
   login: (token: string, user: AuthUser) => void;
   logout: () => void;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,8 +83,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser && token) {
       const parsed = JSON.parse(savedUser) as AuthUser;
       setUser(parsed);
-      if (parsed.brand) {
-        setSelectedBrandCode(parsed.brand);
+      if (parsed.brand === 'DHOOT-HYUNDAI') {
+        setSelectedBrandCode('DHOOT-HYUNDAI');
+      } else {
+        setSelectedBrandCode('DHOOT-TATA');
       }
     }
   }, [token]);
@@ -89,7 +98,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = (newToken: string, newUser: AuthUser) => {
     setToken(newToken);
     setUser(newUser);
-    setSelectedBrandCode(newUser.brand);
+    if (newUser.brand === 'DHOOT-HYUNDAI') {
+      setSelectedBrandCode('DHOOT-HYUNDAI');
+    } else {
+      setSelectedBrandCode('DHOOT-TATA');
+    }
     localStorage.setItem('autoprime_token', newToken);
     localStorage.setItem('autoprime_user', JSON.stringify(newUser));
   };
@@ -102,9 +115,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const currentBrand = BRAND_CONFIGS[selectedBrandCode] || BRAND_CONFIGS['DHOOT-TATA'];
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.employeeId?.toUpperCase() === 'ADMIN' || user?.userCode === 'DG001';
 
   return (
-    <AuthContext.Provider value={{ user, token, currentBrand, setBrand, login, logout }}>
+    <AuthContext.Provider value={{ user, token, currentBrand, setBrand, login, logout, isSuperAdmin }}>
       {children}
     </AuthContext.Provider>
   );

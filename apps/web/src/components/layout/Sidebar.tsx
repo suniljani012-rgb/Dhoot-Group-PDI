@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, ShieldCheck, FileText, FileCheck, ChevronRight } from 'lucide-react';
+import { 
+  LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, 
+  ShieldCheck, FileText, FileCheck, ChevronRight, Users, Settings
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
@@ -9,7 +12,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const location = useLocation();
-  const { currentBrand, user } = useAuth();
+  const { currentBrand, user, isSuperAdmin } = useAuth();
 
   const navItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
@@ -20,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     { label: 'QA Approvals', path: '/qa', icon: ShieldCheck },
     { label: 'Challans & Invoicing', path: '/invoicing', icon: FileText },
     { label: 'PDI Certificates', path: '/certificates/cert-101', icon: FileCheck },
+    { label: 'Admin User Desk', path: '/admin/users', icon: Users },
   ];
 
   return (
@@ -84,11 +88,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold flex items-center justify-center text-xs shrink-0">
-              {user?.employeeId?.substring(0, 2) || 'US'}
+              {user?.userCode ? user.userCode.substring(0, 2) : 'DG'}
             </div>
             <div className="overflow-hidden">
-              <div className="text-xs font-bold text-white truncate">{user?.employeeId || 'STAFF'}</div>
-              <div className="text-[10px] text-slate-400 font-medium truncate">{user?.role?.replace('_', ' ') || 'Engineer'}</div>
+              <div className="text-xs font-bold text-white truncate">{user?.userName || user?.employeeId || 'STAFF'}</div>
+              <div className="text-[10px] text-slate-400 font-medium truncate">
+                {user?.designation || user?.role?.replace('_', ' ') || 'Staff'} ({user?.userCode || 'DG001'})
+              </div>
             </div>
           </div>
           <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online" />

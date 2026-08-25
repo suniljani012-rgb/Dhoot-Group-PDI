@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { LogOut, Menu, X, Bell } from 'lucide-react';
+import { useAuth, BrandCode } from '../../context/AuthContext';
+import { LogOut, Menu, X, Bell, Repeat } from 'lucide-react';
 
 interface HeaderProps {
   isMobileMenuOpen: boolean;
@@ -8,7 +8,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobileMenu }) => {
-  const { user, currentBrand, logout } = useAuth();
+  const { user, currentBrand, setBrand, logout, isSuperAdmin } = useAuth();
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
@@ -57,8 +57,35 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
         </div>
       </div>
 
-      {/* Right: Notifications, User Info & Logout */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      {/* Right: Brand Switcher (For Dual Brand Admins), Notifications, User Info & Logout */}
+      <div className="flex items-center gap-2.5 sm:gap-4">
+        
+        {/* Dual Brand Switcher for Super Admin */}
+        {(isSuperAdmin || user?.hasDualBrandAccess) && (
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+            <button
+              onClick={() => setBrand('DHOOT-TATA')}
+              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                currentBrand.code === 'DHOOT-TATA'
+                  ? 'bg-[#1A3A6B] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tata
+            </button>
+            <button
+              onClick={() => setBrand('DHOOT-HYUNDAI')}
+              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                currentBrand.code === 'DHOOT-HYUNDAI'
+                  ? 'bg-[#002C6C] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Hyundai
+            </button>
+          </div>
+        )}
+
         {/* Notification Bell */}
         <button 
           className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors relative"
@@ -70,8 +97,17 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
 
         {/* User Badge */}
         <div className="hidden md:block text-right">
-          <div className="text-xs font-bold text-slate-800">{user?.employeeId || 'STAFF'}</div>
-          <div className="text-[10px] text-slate-500 uppercase font-semibold">{user?.role?.replace('_', ' ') || 'Officer'}</div>
+          <div className="text-xs font-bold text-slate-800 flex items-center gap-1 justify-end">
+            <span>{user?.userName || user?.employeeId || 'STAFF'}</span>
+            {isSuperAdmin && (
+              <span className="px-1.5 py-0.2 bg-purple-100 text-purple-700 text-[9px] font-extrabold rounded">
+                ADMIN
+              </span>
+            )}
+          </div>
+          <div className="text-[10px] text-slate-500 uppercase font-semibold">
+            {user?.designation || user?.role?.replace('_', ' ') || 'Officer'} • {user?.userCode || 'DG001'}
+          </div>
         </div>
 
         {/* Sign Out Button */}

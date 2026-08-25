@@ -12,6 +12,7 @@ import { RepairsPage } from './pages/Repairs';
 import { QaQueuePage } from './pages/QaQueue';
 import { ChallanInvoicingPage } from './pages/ChallanInvoicing';
 import { CertificateViewPage } from './pages/CertificateView';
+import { AdminUsersPage } from './pages/AdminUsers';
 import { AppShell } from './components/layout/AppShell';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -97,6 +98,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <ChallanInvoicingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsersPage />
               </ProtectedRoute>
             }
           />
