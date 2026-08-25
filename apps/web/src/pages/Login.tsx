@@ -36,7 +36,7 @@ export const LoginPage: React.FC = () => {
           brand: brand,
         });
       } else {
-        setError('Please enter your Employee ID and Password.');
+        setError('Please enter your Username and Password.');
         setLoading(false);
       }
     }, 500);
@@ -45,7 +45,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F0F4F8] relative flex flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 overflow-hidden select-none">
       
-      {/* Automotive Icon Package & Dhoot Group Winged Wheel Background */}
+      {/* 100% Authentic Dhoot Group Logo Watermark Background */}
       <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
 
       {/* Main Content Area */}
@@ -100,10 +100,10 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. USERNAME / EMPLOYEE ID */}
+            {/* 2. USERNAME (CLEAN SINGLE LABEL) */}
             <div>
               <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
-                Username / Employee ID
+                Username
               </label>
               <div className="relative rounded-2xl group">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
@@ -120,7 +120,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 3. PASSWORD FIELD WITH TOGGLE */}
+            {/* 3. PASSWORD FIELD WITH HIGH-VISIBILITY SHOW/HIDE EYE ICON */}
             <div>
               <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
                 Password
@@ -135,15 +135,20 @@ export const LoginPage: React.FC = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-11 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                  className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#94A3B8] hover:text-[#0F172A] transition-colors focus:outline-none cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center text-[#64748B] hover:text-[#0F172A] transition-colors focus:outline-none cursor-pointer"
                   title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-[#475569] hover:text-[#0F172A]" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-[#64748B] hover:text-[#0F172A]" />
+                  )}
                 </button>
               </div>
             </div>
