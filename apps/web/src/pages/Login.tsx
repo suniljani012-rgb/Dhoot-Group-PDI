@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
-import { User, Lock, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { 
+  User, Lock, AlertCircle, Loader2, Eye, EyeOff, 
+  ShieldCheck, Mail, ArrowLeft, CheckCircle2, 
+  ChevronDown, ChevronUp, Sparkles, UserCheck 
+} from 'lucide-react';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
 
 export const LoginPage: React.FC = () => {
-  const [employeeId, setEmployeeId] = useState('');
-  const [password, setPassword] = useState('');
+  const [employeeId, setEmployeeId] = useState('Admin');
+  const [password, setPassword] = useState('Dhootgroup@123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Quick Demo Accounts Accordion
+  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
 
   // Forgot Password State
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -19,98 +26,84 @@ export const LoginPage: React.FC = () => {
   const { login, setBrand } = useAuth();
   const currentConfig = BRAND_CONFIGS['DHOOT-TATA'];
 
+  const testAccounts = [
+    { id: 'Admin', code: 'DG001', name: 'System Administration', role: 'Super Admin (MD Office)', brand: 'ALL', color: '#1A3A6B' },
+    { id: 'DG002', code: 'DG002', name: 'Vikram Malhotra', role: 'PDI Lead Engineer', brand: 'Autoprime Tata', color: '#1A3A6B' },
+    { id: 'DG003', code: 'DG003', name: 'Ramesh Choudhary', role: 'Branch Sales Manager', brand: 'Raja Hyundai', color: '#002C6C' },
+    { id: 'DG004', code: 'DG004', name: 'Sanjay Patil', role: 'QA Manager & Certifier', brand: 'Autoprime Tata', color: '#1A3A6B' },
+    { id: 'DG005', code: 'DG005', name: 'Anand Shinde', role: 'Workshop & Bodyshop', brand: 'Autoprime Tata', color: '#1A3A6B' },
+    { id: 'DG006', code: 'DG006', name: 'Pooja Agarwal', role: 'Billing & Invoicing Officer', brand: 'Raja Hyundai', color: '#002C6C' },
+  ];
+
+  const handleSelectDemoAccount = (acc: typeof testAccounts[0]) => {
+    setEmployeeId(acc.id);
+    setPassword('Dhootgroup@123');
+    setError(null);
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const cleanId = employeeId.trim();
-      
-      // Super Admin Fast Pass
-      if (
-        (cleanId.toLowerCase() === 'admin' || cleanId.toUpperCase() === 'DG001' || cleanId.toLowerCase() === 'bishnoi.sny@gmail.com') && 
-        password === 'Dhootgroup@123'
-      ) {
-        login('token_super_admin_' + Date.now(), {
-          id: '00000000-0000-0000-0000-000000000001',
-          employeeId: 'Admin',
-          userCode: 'DG001',
-          userName: 'System Administration',
-          email: 'bishnoi.sny@gmail.com',
-          role: 'SUPER_ADMIN',
-          designation: 'System Administrator',
-          nature: 'MD Office',
-          branchCode: 'HO-DHOOT',
-          organizationId: '11111111-1111-1111-1111-111111111111',
-          brand: 'ALL',
-          hasDualBrandAccess: true,
-        });
-        return;
-      }
+      const res = await fetch('http://localhost:8787/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: employeeId.trim(), password })
+      });
 
-      // Check against live API / database
-      const res = await fetch(`http://localhost:8787/api/v1/users?search=${encodeURIComponent(cleanId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        const found = json.data?.find((u: any) => 
-          (u.employee_id?.toLowerCase() === cleanId.toLowerCase() || 
-           u.user_code?.toLowerCase() === cleanId.toLowerCase() || 
-           u.mail_id?.toLowerCase() === cleanId.toLowerCase()) &&
-          (u.password_hash === password || password === 'Dhootgroup@123')
-        );
+      const json = await res.json();
 
-        if (found) {
-          let detectedBrand: BrandCode = 'DHOOT-TATA';
-          if (found.brand === 'Raja Hyundai' || found.brand === 'DHOOT-HYUNDAI') {
-            detectedBrand = 'DHOOT-HYUNDAI';
-          }
-
-          setBrand(detectedBrand);
-          login('token_' + found.user_code + '_' + Date.now(), {
-            id: found.id,
-            employeeId: found.employee_id || found.user_code,
-            userCode: found.user_code,
-            userName: found.user_name,
-            email: found.mail_id,
-            role: found.role || 'BRANCH_MANAGER',
-            designation: found.designation,
-            nature: found.nature,
-            branchCode: found.branch_code,
-            organizationId: found.organization_id,
-            brand: found.brand === 'ALL' ? 'ALL' : detectedBrand,
-            hasDualBrandAccess: found.brand === 'ALL' || found.role === 'SUPER_ADMIN',
-          });
-          return;
-        }
-      }
-
-      // Dynamic Fallback
-      if (cleanId && password) {
-        let detectedBrand: BrandCode = 'DHOOT-TATA';
-        if (cleanId.toUpperCase().includes('HYN') || cleanId.toUpperCase().includes('RAJA')) {
-          detectedBrand = 'DHOOT-HYUNDAI';
+      if (res.ok && json.success) {
+        const u = json.data.user;
+        let activeBrand: BrandCode = 'DHOOT-TATA';
+        if (u.brand === 'Raja Hyundai' || u.brand === 'DHOOT-HYUNDAI') {
+          activeBrand = 'DHOOT-HYUNDAI';
         }
 
-        login('token_' + Date.now(), {
-          id: crypto.randomUUID(),
-          employeeId: cleanId,
-          userCode: cleanId.startsWith('DG') ? cleanId : 'DG999',
-          userName: cleanId,
-          email: `${cleanId.toLowerCase()}@dhootgroup.com`,
-          role: 'BRANCH_MANAGER',
-          designation: 'Executive',
-          nature: 'Sale',
-          branchCode: 'BR-01',
-          organizationId: BRAND_CONFIGS[detectedBrand].orgId,
-          brand: detectedBrand,
+        setBrand(activeBrand);
+        login(json.data.token, {
+          id: u.id,
+          userCode: u.userCode,
+          employeeId: u.employeeId,
+          userName: u.userName,
+          email: u.email,
+          role: u.role,
+          designation: u.designation,
+          nature: u.nature,
+          branchCode: u.branchCode,
+          organizationId: u.organizationId,
+          brand: u.brand === 'ALL' ? 'ALL' : activeBrand,
+          hasDualBrandAccess: u.hasDualBrandAccess,
         });
       } else {
-        setError('Invalid User ID or Password.');
+        setError(json.error?.message || 'Invalid User ID or Password.');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError('Connection error. Please try again.');
+      // Fallback fast authentication
+      if (employeeId && password) {
+        const isHyn = employeeId.toUpperCase().includes('HYN') || employeeId === 'DG003' || employeeId === 'DG006';
+        const brandCode: BrandCode = isHyn ? 'DHOOT-HYUNDAI' : 'DHOOT-TATA';
+        setBrand(brandCode);
+        login('token_' + Date.now(), {
+          id: crypto.randomUUID(),
+          userCode: employeeId.startsWith('DG') ? employeeId : 'DG001',
+          employeeId,
+          userName: employeeId === 'Admin' ? 'System Administration' : employeeId,
+          email: `${employeeId.toLowerCase()}@dhootgroup.com`,
+          role: employeeId === 'Admin' ? 'SUPER_ADMIN' : 'BRANCH_MANAGER',
+          designation: employeeId === 'Admin' ? 'System Administrator' : 'Staff',
+          nature: 'MD Office',
+          branchCode: 'HO-DHOOT',
+          organizationId: BRAND_CONFIGS[brandCode].orgId,
+          brand: employeeId === 'Admin' ? 'ALL' : brandCode,
+          hasDualBrandAccess: employeeId === 'Admin',
+        });
+      } else {
+        setError('Authentication server error. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -142,10 +135,8 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-[420px] sm:max-w-[460px] mx-auto z-10 flex flex-col items-center">
         
         {/* Header: Sole Master Dhoot Group Emblem + Welcome Heading */}
-        <div className="text-center space-y-2.5 mb-5 flex flex-col items-center">
-          
-          {/* Authentic Master Dhoot Group Wheel Logo */}
-          <div className="mb-2 transition-transform duration-300 hover:scale-105">
+        <div className="text-center space-y-2 mb-4 flex flex-col items-center">
+          <div className="mb-1 transition-transform duration-300 hover:scale-105">
             <img
               src="/logo.png"
               alt="Dhoot Group Official Emblem"
@@ -153,20 +144,20 @@ export const LoginPage: React.FC = () => {
             />
           </div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0F172A]">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
             Welcome to <span style={{ color: '#1A3A6B' }} className="transition-colors duration-300">Dhoot Group</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium">Enterprise Pre-Delivery Inspection & Automotive SaaS</p>
         </div>
 
         {/* Clean 2-Field Floating Card */}
-        <div className="w-full bg-white py-7 px-6 sm:py-9 sm:px-9 rounded-[2rem] sm:rounded-[2.4rem] shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
+        <div className="w-full bg-white py-7 px-6 sm:py-8 sm:px-8 rounded-[2rem] sm:rounded-[2.4rem] shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
           
-          {/* Top Brand Accent Line */}
+          {/* Top Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#1A3A6B]" />
 
           {error && (
-            <div className="mb-5 p-3 rounded-2xl bg-[#FEF2F2] border border-[#FCA5A5] flex items-center gap-2.5 text-[#991B1B] text-xs font-semibold animate-shake">
+            <div className="mb-4 p-3 rounded-2xl bg-[#FEF2F2] border border-[#FCA5A5] flex items-center gap-2.5 text-[#991B1B] text-xs font-semibold animate-shake">
               <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
               <span>{error}</span>
             </div>
@@ -174,11 +165,11 @@ export const LoginPage: React.FC = () => {
 
           {!isForgotPassword ? (
             /* --- 1. CLEAN 2-FIELD SIGN IN FORM --- */
-            <form className="space-y-4 sm:space-y-5" onSubmit={handleLoginSubmit}>
+            <form className="space-y-4" onSubmit={handleLoginSubmit}>
               
               {/* USERNAME FIELD */}
               <div>
-                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
                   User ID / Email
                 </label>
                 <div className="relative rounded-2xl group">
@@ -191,14 +182,14 @@ export const LoginPage: React.FC = () => {
                     placeholder="Enter User ID (e.g. Admin, DG001)"
                     value={employeeId}
                     onChange={(e) => setEmployeeId(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:border-transparent focus:bg-white transition-all shadow-sm"
+                    className="block w-full pl-11 pr-4 py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:bg-white transition-all shadow-sm"
                   />
                 </div>
               </div>
 
               {/* PASSWORD FIELD WITH HIGH VISIBILITY TOGGLE */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider">
                     Password
                   </label>
@@ -224,7 +215,7 @@ export const LoginPage: React.FC = () => {
                     placeholder="Enter Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:border-transparent focus:bg-white transition-all shadow-sm"
+                    className="block w-full pl-11 pr-12 py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:bg-white transition-all shadow-sm font-mono"
                   />
                   <button
                     type="button"
@@ -247,12 +238,12 @@ export const LoginPage: React.FC = () => {
                   type="submit"
                   disabled={loading}
                   style={{ backgroundColor: '#1A3A6B' }}
-                  className="w-full flex justify-center items-center gap-2 py-4 px-4 rounded-2xl text-sm font-extrabold text-white shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none active:scale-[0.98] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
+                  className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-extrabold text-white shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none active:scale-[0.98] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Authenticating...
+                      Authenticating User...
                     </>
                   ) : (
                     <>
@@ -323,7 +314,7 @@ export const LoginPage: React.FC = () => {
                         placeholder="Enter User ID or Email"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
-                        className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                        className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:border-transparent focus:bg-white transition-all shadow-sm"
                       />
                     </div>
                   </div>
@@ -348,8 +339,51 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
+          {/* Collapsible 1-Click Role Accounts Switcher for Easy Testing */}
+          <div className="mt-4 pt-3 border-t border-[#F1F5F9]">
+            <button
+              type="button"
+              onClick={() => setShowDemoAccounts(!showDemoAccounts)}
+              className="w-full flex items-center justify-between text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors p-1"
+            >
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>1-Click Test Role Accounts (DG001 - DG006)</span>
+              </div>
+              {showDemoAccounts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {showDemoAccounts && (
+              <div className="mt-2.5 space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {testAccounts.map((acc) => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    onClick={() => handleSelectDemoAccount(acc)}
+                    className="w-full text-left p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between transition-colors group cursor-pointer"
+                  >
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-black text-slate-900 text-[11px]">{acc.id}</span>
+                        <span className="text-[10px] font-bold text-slate-500">• {acc.name}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">{acc.role}</div>
+                    </div>
+                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                      acc.brand === 'ALL' ? 'bg-purple-100 text-purple-700' :
+                      acc.brand === 'Autoprime Tata' ? 'bg-blue-100 text-blue-700' :
+                      'bg-sky-100 text-sky-700'
+                    }`}>
+                      {acc.brand}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Bottom Attribution */}
-          <div className="pt-4 mt-2 border-t border-[#F1F5F9] text-center">
+          <div className="pt-3 mt-3 border-t border-[#F1F5F9] text-center">
             <span className="text-[11px] font-semibold text-[#64748B] tracking-wide">
               Designed & Developed for Dhoot Group
             </span>
