@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
-import { User, Lock, AlertCircle, Loader2, Building2, ShieldCheck } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, Building2 } from 'lucide-react';
 import { DualBrandHeader } from '../components/common/BrandLogo';
 
 export const LoginPage: React.FC = () => {
@@ -44,17 +44,12 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#F8F9FA] to-[#EDF2F7] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3">
         {/* Dual Brand Logos Display */}
-        <DualBrandHeader brand={brand} className="mb-2" />
+        <DualBrandHeader brand={brand} className="mb-3" />
 
-        {/* Premium Welcome Typography */}
-        <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#1A1A2E] sm:text-4xl">
-            Welcome to <span className="text-[#1A3A6B]">Dhoot Group</span>
-          </h1>
-          <p className="text-sm font-medium text-[#718096] tracking-wide">
-            Pre-Delivery Inspection & Operations Portal
-          </p>
-        </div>
+        {/* Clean Welcome Heading */}
+        <h1 className="text-3xl font-extrabold tracking-tight text-[#1A1A2E] sm:text-4xl">
+          Welcome to <span className="text-[#1A3A6B]">Dhoot Group</span>
+        </h1>
       </div>
 
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
@@ -112,7 +107,7 @@ export const LoginPage: React.FC = () => {
               <label className="block text-xs font-bold text-[#1A1A2E] uppercase tracking-wider mb-1.5">
                 Password
               </label>
-              <div className="relative rounded-xl shadow-sm">
+              <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-[#718096]" />
                 </div>
