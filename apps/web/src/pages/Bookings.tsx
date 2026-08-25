@@ -47,6 +47,13 @@ export const BookingsPage: React.FC = () => {
   const [voucherBooking, setVoucherBooking] = useState<BookingRecord | null>(null);
   const [selectedStockVin, setSelectedStockVin] = useState('');
 
+  // Bulk Excel Import State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [parsedRows, setParsedRows] = useState<any[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
   // New Booking Form State
   const [newBooking, setNewBooking] = useState({
     receipt_no: `BK-${Date.now().toString().slice(-6)}`,
@@ -148,6 +155,93 @@ export const BookingsPage: React.FC = () => {
     setSelectedStockVin('');
   };
 
+  // Download Sample Customer Bookings Excel Template
+  const handleDownloadSampleBookings = () => {
+    const headers = [
+      'Receipt Date', 'Receipt No', 'Customer Name', 'Mobile Number', 
+      'Sales Consultant', 'Team Leader', 'Model', 'Variant', 'Colour', 
+      'Booking Date', 'Promise Delivery Date', 'Receipt Amt', 'Docket No', 'PAN No'
+    ];
+    const sampleRows = [
+      headers.join(','),
+      '2026-08-25,BK-009981,Sunil Jani,+91 98290 12345,Ramesh Choudhary,Rajesh Nair,Tata Safari,Accomplished Plus 6S,Oberon Black,2026-08-25,2026-09-05,50000,DOC-9912,ABCDE1234F',
+      '2026-08-25,BK-009982,Pooja Agarwal,+91 98291 54321,Manish Rathore,Suresh Sharma,Hyundai Creta,SX (O) Turbo DCT,Ranger Khaki,2026-08-25,2026-09-08,50000,DOC-9913,PQRS5678G'
+    ].join('\n');
+
+    const blob = new Blob([sampleRows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Dhoot_Group_Customer_Bookings_Template.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Parse Excel / CSV Text
+  const handleParseBookingsText = (text: string) => {
+    setCsvText(text);
+    setImportError(null);
+
+    const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
+    if (lines.length <= 1) {
+      setParsedRows([]);
+      return;
+    }
+
+    const separator = lines[0].includes('\t') ? '\t' : ',';
+    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+    
+    const rows = lines.slice(1).map((line, idx) => {
+      const cols = line.split(separator).map(c => c.trim().replace(/^"|"$/g, ''));
+      const obj: any = { _id: `row-${idx}` };
+      headers.forEach((h, hIdx) => {
+        obj[h] = cols[hIdx] || '';
+      });
+      return {
+        _id: `row-${idx}`,
+        receipt_no: obj['Receipt No'] || obj['receipt_no'] || cols[1] || `BK-${Date.now()}${idx}`,
+        customer_name: obj['Customer Name'] || obj['customer_name'] || cols[2] || 'Customer',
+        mobile_number: obj['Mobile Number'] || obj['mobile_number'] || cols[3] || '+91 98000 00000',
+        sales_consultant: obj['Sales Consultant'] || cols[4] || 'Sales Consultant',
+        model: obj['Model'] || cols[6] || 'Tata Nexon',
+        variant: obj['Variant'] || cols[7] || 'Standard',
+        colour: obj['Colour'] || cols[8] || 'White',
+        receipt_amt: parseFloat(obj['Receipt Amt'] || cols[11] || '25000') || 25000,
+        promise_delivery_date: obj['Promise Delivery Date'] || cols[10] || '2026-09-10'
+      };
+    });
+
+    setParsedRows(rows);
+  };
+
+  // Confirm Bulk Import
+  const handleConfirmBulkImport = async () => {
+    if (parsedRows.length === 0) return;
+    setIsImporting(true);
+    try {
+      const res = await fetch('http://localhost:8787/api/v1/bookings/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId: currentBrand.orgId,
+          bookings: parsedRows
+        })
+      });
+
+      if (res.ok) {
+        setIsImportModalOpen(false);
+        setCsvText('');
+        setParsedRows([]);
+        fetchBookingsAndStock();
+      }
+    } catch (e: any) {
+      setImportError(e.message || 'Import failed.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const filteredBookings = bookings.filter(b => {
     const cust = (b.customer_name || '').toLowerCase();
     const receipt = (b.receipt_no || '').toLowerCase();
@@ -203,6 +297,14 @@ export const BookingsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import Excel Bookings</span>
+          </button>
+
           <button
             onClick={() => setShowNewModal(true)}
             className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
@@ -707,6 +809,119 @@ export const BookingsPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: BULK EXCEL BOOKING IMPORTER                                       */}
+      {/* ========================================================================= */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <h3 className="font-bold">Bulk Import Customer Bookings from Excel / CSV</h3>
+              </div>
+              <button onClick={() => setIsImportModalOpen(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div>
+                  <div className="font-bold text-slate-800">Download Standard Format Template</div>
+                  <div className="text-[10px] text-slate-400">Official 14-column retail customer booking template</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadSampleBookings}
+                  className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-xs cursor-pointer hover:bg-slate-800"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Download Sample CSV</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">
+                  Paste Excel / CSV Data (or Copy from Spreadsheet):
+                </label>
+                <textarea
+                  rows={6}
+                  placeholder="Paste rows from Excel (Receipt Date, Receipt No, Customer Name, Mobile Number, Sales Consultant, Team Leader, Model, Variant, Colour...)"
+                  value={csvText}
+                  onChange={(e) => handleParseBookingsText(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-slate-900"
+                />
+              </div>
+
+              {parsedRows.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Parsed {parsedRows.length} Bookings Ready for Import:
+                    </span>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-[10px]">
+                      <thead className="bg-slate-100 font-bold text-slate-700 sticky top-0">
+                        <tr>
+                          <th className="p-2">Receipt No</th>
+                          <th className="p-2">Customer Name</th>
+                          <th className="p-2">Phone</th>
+                          <th className="p-2">Model & Variant</th>
+                          <th className="p-2">Colour</th>
+                          <th className="p-2">Advance</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {parsedRows.map((r, i) => (
+                          <tr key={i} className="hover:bg-slate-50">
+                            <td className="p-2 font-mono font-bold text-slate-900">{r.receipt_no}</td>
+                            <td className="p-2 font-bold">{r.customer_name}</td>
+                            <td className="p-2 font-mono text-slate-600">{r.mobile_number}</td>
+                            <td className="p-2">{r.model} {r.variant}</td>
+                            <td className="p-2">{r.colour}</td>
+                            <td className="p-2 font-mono font-bold text-emerald-700">₹{r.receipt_amt}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {importError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{importError}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={parsedRows.length === 0 || isImporting}
+                onClick={handleConfirmBulkImport}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                <span>Import {parsedRows.length} Bookings to Database</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

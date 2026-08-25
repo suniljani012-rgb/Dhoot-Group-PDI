@@ -4,7 +4,8 @@ import {
   FileText, Search, Plus, Car, ChevronRight, 
   FileSpreadsheet, X, Loader2, DollarSign, CheckCircle2, 
   Receipt, Building, ShieldCheck, Printer, Calendar,
-  Key, UserCheck, Truck, ArrowRight, FolderOpen, Clock
+  Key, UserCheck, Truck, ArrowRight, FolderOpen, Clock,
+  AlertCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -135,6 +136,93 @@ export const ChallanInvoicingPage: React.FC = () => {
     setShowNewModal(false);
   };
 
+  // Bulk Excel Import State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [parsedRows, setParsedRows] = useState<any[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  // Download Sample Invoicing CSV Template
+  const handleDownloadSampleChallans = () => {
+    const headers = [
+      'Challan No', 'Invoice No', 'Challan Date', 'Invoice Date', 'Customer Name', 
+      'Mobile No', 'Model', 'Variant', 'Colour', 'VIN Number', 'Ex-Showroom', 
+      'Insurance Amount', 'RTO Amount', 'Discount', 'Net Amount', 'Financier'
+    ];
+    const sampleRows = [
+      headers.join(','),
+      'CHL-009981,INV-009981,2026-08-25,2026-08-25,Ramesh Chandra Sharma,+91 98290 11223,Tata Safari,Accomplished Plus,Oberon Black,MAT612345S9988771,1950000,85000,195000,50000,2180000,HDFC Bank Ltd',
+      'CHL-009982,INV-009982,2026-08-25,2026-08-25,Rajesh Kumar Verma,+91 94140 55667,Hyundai Creta,SX (O) Turbo,Ranger Khaki,MALC12345C1122331,1540000,65000,154000,30000,1729000,State Bank of India'
+    ].join('\n');
+
+    const blob = new Blob([sampleRows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Dhoot_Group_Tax_Invoicing_Template.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Parse Invoices Text
+  const handleParseChallanText = (text: string) => {
+    setCsvText(text);
+    setImportError(null);
+
+    const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
+    if (lines.length <= 1) {
+      setParsedRows([]);
+      return;
+    }
+
+    const separator = lines[0].includes('\t') ? '\t' : ',';
+    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+
+    const rows = lines.slice(1).map((line, idx) => {
+      const cols = line.split(separator).map(c => c.trim().replace(/^"|"$/g, ''));
+      const obj: any = {};
+      headers.forEach((h, hIdx) => {
+        obj[h] = cols[hIdx] || '';
+      });
+
+      return {
+        id: `chl-imp-${Date.now()}-${idx}`,
+        challan_no: obj['Challan No'] || cols[0] || `CHL-00${Date.now()}${idx}`,
+        invoice_no: obj['Invoice No'] || cols[1] || `INV-00${Date.now()}${idx}`,
+        challan_date: obj['Challan Date'] || cols[2] || '2026-08-25',
+        invoice_date: obj['Invoice Date'] || cols[3] || '2026-08-25',
+        customer_name: obj['Customer Name'] || cols[4] || 'Retail Customer',
+        mobile_no: obj['Mobile No'] || cols[5] || '+91 98000 00000',
+        model: obj['Model'] || cols[6] || 'Tata Nexon',
+        variant: obj['Variant'] || cols[7] || 'Standard',
+        colour: obj['Colour'] || cols[8] || 'White',
+        vin_no: obj['VIN Number'] || cols[9] || `MAT612345${Date.now()}${idx}`,
+        ex_showroom: parseFloat(obj['Ex-Showroom'] || cols[10] || '1000000') || 1000000,
+        insurance_amount: parseFloat(obj['Insurance Amount'] || cols[11] || '50000') || 50000,
+        rto_amount: parseFloat(obj['RTO Amount'] || cols[12] || '100000') || 100000,
+        discount: parseFloat(obj['Discount'] || cols[13] || '25000') || 25000,
+        net_amount: parseFloat(obj['Net Amount'] || cols[14] || '1125000') || 1125000,
+        financier_name: obj['Financier'] || cols[15] || 'Self Financed',
+        challan_type: 'TAX_INVOICE',
+        status: 'INVOICED',
+        created_at: new Date().toISOString()
+      };
+    });
+
+    setParsedRows(rows);
+  };
+
+  // Confirm Bulk Invoices Import
+  const handleConfirmBulkImport = () => {
+    if (parsedRows.length === 0) return;
+    setRecords([...parsedRows, ...records]);
+    setIsImportModalOpen(false);
+    setCsvText('');
+    setParsedRows([]);
+  };
+
   const handleConfirmDelivery = (recordId: string) => {
     setRecords(prev => prev.map(r => r.id === recordId ? { ...r, status: 'DELIVERED' } : r));
     setGatepassRecord(null);
@@ -176,6 +264,14 @@ export const ChallanInvoicingPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import Excel Invoices</span>
+          </button>
+
           <button
             onClick={() => setShowNewModal(true)}
             className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
@@ -688,6 +784,120 @@ export const ChallanInvoicingPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: BULK EXCEL INVOICE & CHALLAN IMPORTER                             */}
+      {/* ========================================================================= */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <h3 className="font-bold">Bulk Import Dealership Tax Invoices & Pre-Challans</h3>
+              </div>
+              <button onClick={() => setIsImportModalOpen(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div>
+                  <div className="font-bold text-slate-800">Download Official Invoicing Template</div>
+                  <div className="text-[10px] text-slate-400">Standard 16-field commercial billing structure</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadSampleChallans}
+                  className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-xs cursor-pointer hover:bg-slate-800"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Download Sample CSV</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">
+                  Paste Excel / CSV Billing Data:
+                </label>
+                <textarea
+                  rows={6}
+                  placeholder="Paste rows from Excel (Challan No, Invoice No, Challan Date, Invoice Date, Customer Name, Mobile No, Model, Variant, Colour, VIN Number, Ex-Showroom...)"
+                  value={csvText}
+                  onChange={(e) => handleParseChallanText(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-slate-900"
+                />
+              </div>
+
+              {parsedRows.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Parsed {parsedRows.length} Commercial Invoices Ready for Upload:
+                    </span>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-[10px]">
+                      <thead className="bg-slate-100 font-bold text-slate-700 sticky top-0">
+                        <tr>
+                          <th className="p-2">Challan / Invoice</th>
+                          <th className="p-2">Customer</th>
+                          <th className="p-2">Model & VIN</th>
+                          <th className="p-2">Net Deal Amount</th>
+                          <th className="p-2">Financier</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {parsedRows.map((r, i) => (
+                          <tr key={i} className="hover:bg-slate-50">
+                            <td className="p-2 font-mono font-bold text-slate-900">{r.challan_no} / {r.invoice_no}</td>
+                            <td className="p-2 font-bold">{r.customer_name}</td>
+                            <td className="p-2">
+                              <span className="font-semibold block">{r.model}</span>
+                              <span className="font-mono text-[9px] text-slate-500">{r.vin_no}</span>
+                            </td>
+                            <td className="p-2 font-mono font-bold text-indigo-700">₹{r.net_amount?.toLocaleString()}</td>
+                            <td className="p-2 text-slate-600">{r.financier_name}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {importError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{importError}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={parsedRows.length === 0 || isImporting}
+                onClick={handleConfirmBulkImport}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                <span>Import {parsedRows.length} Invoices to Ledger</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

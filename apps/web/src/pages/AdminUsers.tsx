@@ -788,23 +788,25 @@ export const AdminUsersPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="p-6 space-y-3 text-xs">
+            <form onSubmit={handleCreateUser} className="p-6 space-y-3 text-xs overflow-y-auto max-h-[80vh]">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Full Name *</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Full Staff Name *</label>
                   <input
                     type="text"
                     required
+                    placeholder="e.g. Rahul Sharma"
                     value={newUser.userName}
                     onChange={(e) => setNewUser({ ...newUser, userName: e.target.value })}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Official Email *</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Official Email Address *</label>
                   <input
                     type="email"
                     required
+                    placeholder="e.g. rahul.sharma@dhootgroup.com"
                     value={newUser.mailId}
                     onChange={(e) => setNewUser({ ...newUser, mailId: e.target.value })}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
@@ -814,17 +816,72 @@ export const AdminUsersPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Mobile Number *</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Mobile Contact No *</label>
                   <input
                     type="text"
                     required
+                    placeholder="+91 98000 00000"
                     value={newUser.mobileNumber}
                     onChange={(e) => setNewUser({ ...newUser, mobileNumber: e.target.value })}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Assigned Role *</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={newUser.dateOfBirth}
+                    onChange={(e) => setNewUser({ ...newUser, dateOfBirth: e.target.value })}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Brand Franchise Access *</label>
+                  <select
+                    value={newUser.brand}
+                    onChange={(e) => setNewUser({ ...newUser, brand: e.target.value })}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    <option value="Dhoot Group">Dhoot Group (All Franchises)</option>
+                    <option value="Autoprime Tata">Tata Motors</option>
+                    <option value="Raja Hyundai">Hyundai</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Department Nature *</label>
+                  <select
+                    value={newUser.nature}
+                    onChange={(e) => setNewUser({ ...newUser, nature: e.target.value })}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    <option value="Corporate HQ">Corporate HQ & Management</option>
+                    <option value="Stockyard">Stockyard & Inward Logistics</option>
+                    <option value="Showroom">Showroom & Retail Sales</option>
+                    <option value="Workshop">Workshop & Bodyshop Repairs</option>
+                    <option value="Quality">Quality Assurance & Certification</option>
+                    <option value="Accounts">Accounts, Billing & Invoicing</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Assigned Designation *</label>
+                  <select
+                    value={newUser.designation}
+                    onChange={(e) => setNewUser({ ...newUser, designation: e.target.value })}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    {designations.map(d => (
+                      <option key={d.id} value={d.title}>{d.title} ({d.nature})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">RBAC Security Role *</label>
                   <select
                     value={newUser.role}
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
@@ -839,23 +896,21 @@ export const AdminUsersPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Designation *</label>
-                  <select
-                    value={newUser.designation}
-                    onChange={(e) => setNewUser({ ...newUser, designation: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
-                  >
-                    {designations.map(d => (
-                      <option key={d.id} value={d.title}>{d.title} ({d.nature})</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Branch Code</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Branch Code / Yard Location</label>
                   <input
                     type="text"
+                    placeholder="e.g. BR-PUN-01"
                     value={newUser.branchCode}
                     onChange={(e) => setNewUser({ ...newUser, branchCode: e.target.value })}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Initial Password</label>
+                  <input
+                    type="text"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
                   />
                 </div>
@@ -865,8 +920,8 @@ export const AdminUsersPage: React.FC = () => {
                 <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
-                  Create User
+                <button type="submit" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs">
+                  Create Staff Account
                 </button>
               </div>
             </form>
