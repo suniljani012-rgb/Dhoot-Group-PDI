@@ -42,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       roles: ['ALL'] 
     },
     { 
-      label: 'PDI Inspection Queue', 
+      label: 'Vehicle Inspections', 
       path: '/pdi', 
       icon: CheckSquare, 
       count: counts.pdiPending,
@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] 
     },
     { 
-      label: 'QA Review & Approvals', 
+      label: 'Quality Approvals', 
       path: '/qa', 
       icon: ShieldCheck, 
       count: counts.qaPending,
@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'SALES_CONSULTANT', 'ACCOUNTS_EXECUTIVE'] 
     },
     { 
-      label: 'Workshop Rectification', 
+      label: 'Workshop & Rectification', 
       path: '/repairs', 
       icon: Wrench, 
       count: counts.inRepair,
@@ -80,13 +80,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'ACCOUNTS_EXECUTIVE', 'SALES_CONSULTANT'] 
     },
     { 
-      label: 'PDI Certificates', 
+      label: 'Vehicle Certificates', 
       path: '/certificates/cert-101', 
       icon: FileCheck,
       roles: ['ALL'] 
     },
     { 
-      label: 'Dealership Admin HQ', 
+      label: 'Dealership Administration', 
       path: '/admin', 
       icon: Building2,
       roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER'] 
