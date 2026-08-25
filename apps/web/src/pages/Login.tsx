@@ -65,27 +65,27 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F0F4F8] relative flex flex-col justify-center items-center px-4 sm:px-6 overflow-hidden select-none">
+    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F4F6F9] relative flex flex-col justify-center items-center px-4 sm:px-6 overflow-hidden select-none">
       
-      {/* Background Watermarks (Hidden on Mobile) */}
+      {/* Background Watermarks (Active on Desktop/Tablet, Hidden on Mobile) */}
       <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
 
-      {/* Main Single Card Container: 100% Focused on Mobile */}
+      {/* Main Single Card Container */}
       <div className="w-full max-w-[390px] sm:max-w-md mx-auto z-10 flex flex-col items-center">
         
-        {/* Header: Dual Brand Logos + Welcome Heading */}
-        <div className="text-center space-y-2 mb-3.5 sm:mb-5">
-          <DualBrandHeader brand={brand} className="mb-1.5" />
+        {/* Header: Dual Brand Logos + Clean Title */}
+        <div className="text-center space-y-2 mb-4 sm:mb-5">
+          <DualBrandHeader brand={brand} className="mb-2" />
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0F172A]">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
             Welcome to <span style={{ color: currentConfig.primaryColor }} className="transition-colors duration-300">Dhoot Group</span>
           </h1>
         </div>
 
-        {/* Floating Glassmorphic Login Card (Exact Card Focus) */}
-        <div className="w-full bg-white/95 backdrop-blur-xl py-6 px-5 sm:py-8 sm:px-8 rounded-3xl sm:rounded-[2.2rem] shadow-[0_15px_45px_rgba(15,23,42,0.09)] border border-white ring-1 ring-slate-900/5 relative overflow-hidden transition-all duration-300">
+        {/* Native-App Feel Floating Card Container */}
+        <div className="w-full bg-white py-6 px-5 sm:py-8 sm:px-8 rounded-[1.75rem] sm:rounded-[2.2rem] shadow-[0_10px_35px_rgba(15,23,42,0.06)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
           
-          {/* Top Brand Accent Line */}
+          {/* Top Brand Accent Line Indicator */}
           <div 
             className="absolute top-0 left-0 right-0 h-1.5 transition-colors duration-500"
             style={{ backgroundColor: currentConfig.primaryColor }}
@@ -100,10 +100,10 @@ export const LoginPage: React.FC = () => {
 
           {!isForgotPassword ? (
             /* --- 1. SIGN IN FORM --- */
-            <form className="space-y-4 sm:space-y-4.5" onSubmit={handleLoginSubmit}>
-              {/* BRAND SELECTOR DROPDOWN */}
+            <form className="space-y-4" onSubmit={handleLoginSubmit}>
+              {/* DEALERSHIP BRAND DROPDOWN */}
               <div>
-                <label className="block text-[10px] sm:text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
                   Dealership Brand
                 </label>
                 <div className="relative rounded-2xl group">
@@ -113,7 +113,7 @@ export const LoginPage: React.FC = () => {
                   <select
                     value={brand}
                     onChange={(e) => handleBrandChange(e.target.value as BrandCode)}
-                    className="block w-full pl-10 pr-9 py-2.5 sm:py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm cursor-pointer appearance-none"
+                    className="block w-full pl-10 pr-9 py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm cursor-pointer appearance-none"
                   >
                     <option value="DHOOT-TATA">Autoprime Tata</option>
                     <option value="DHOOT-HYUNDAI">Raja Hyundai</option>
@@ -124,9 +124,9 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* USER ID FIELD */}
+              {/* USERNAME FIELD */}
               <div>
-                <label className="block text-[10px] sm:text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
+                <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
                   Username
                 </label>
                 <div className="relative rounded-2xl group">
@@ -139,15 +139,15 @@ export const LoginPage: React.FC = () => {
                     placeholder="Enter User ID"
                     value={employeeId}
                     onChange={(e) => setEmployeeId(e.target.value)}
-                    className="block w-full pl-10 pr-4 py-2.5 sm:py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                    className="block w-full pl-10 pr-4 py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
                   />
                 </div>
               </div>
 
-              {/* PASSWORD FIELD */}
+              {/* PASSWORD FIELD WITH HIGH CONTRAST SHOW/HIDE TOGGLE */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-[10px] sm:text-[11px] font-bold text-[#475569] uppercase tracking-wider">
+                  <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider">
                     Password
                   </label>
                   <button
@@ -157,7 +157,7 @@ export const LoginPage: React.FC = () => {
                       setIsForgotPassword(true);
                     }}
                     style={{ color: currentConfig.primaryColor }}
-                    className="text-[10px] sm:text-[11px] font-bold hover:underline focus:outline-none cursor-pointer"
+                    className="text-[11px] font-bold hover:underline focus:outline-none cursor-pointer"
                   >
                     Forgot Password?
                   </button>
@@ -172,7 +172,7 @@ export const LoginPage: React.FC = () => {
                     placeholder="Enter Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-10 pr-11 py-2.5 sm:py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                    className="block w-full pl-10 pr-11 py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
                   />
                   <button
                     type="button"
@@ -190,12 +190,12 @@ export const LoginPage: React.FC = () => {
               </div>
 
               {/* SECURE SIGN IN BUTTON */}
-              <div className="pt-1.5">
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={loading}
                   style={{ backgroundColor: currentConfig.primaryColor }}
-                  className="w-full flex justify-center items-center gap-2 py-3 sm:py-3.5 px-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-extrabold text-white shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none transform active:scale-[0.99] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
+                  className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-extrabold text-white shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none active:scale-[0.98] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -258,7 +258,7 @@ export const LoginPage: React.FC = () => {
               ) : (
                 <form className="space-y-3.5" onSubmit={handleForgotSubmit}>
                   <div>
-                    <label className="block text-[10px] sm:text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
+                    <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
                       Registered User ID / Email
                     </label>
                     <div className="relative rounded-2xl group">
@@ -271,7 +271,7 @@ export const LoginPage: React.FC = () => {
                         placeholder="Enter User ID or Email"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
-                        className="block w-full pl-10 pr-4 py-2.5 sm:py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                        className="block w-full pl-10 pr-4 py-3 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
                       />
                     </div>
                   </div>
@@ -280,7 +280,7 @@ export const LoginPage: React.FC = () => {
                     type="submit"
                     disabled={forgotLoading}
                     style={{ backgroundColor: currentConfig.primaryColor }}
-                    className="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white shadow-md hover:opacity-95 transition-all disabled:opacity-50 cursor-pointer"
+                    className="w-full flex justify-center items-center py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-bold text-white shadow-md hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {forgotLoading ? (
                       <>
@@ -297,8 +297,8 @@ export const LoginPage: React.FC = () => {
           )}
 
           {/* Bottom Attribution */}
-          <div className="pt-3 sm:pt-4 mt-1 border-t border-[#F1F5F9] text-center">
-            <span className="text-[10px] sm:text-[11px] font-semibold text-[#64748B] tracking-wide">
+          <div className="pt-4 mt-2 border-t border-[#F1F5F9] text-center">
+            <span className="text-[11px] font-semibold text-[#64748B] tracking-wide">
               Designed & Developed for Dhoot Group
             </span>
           </div>
