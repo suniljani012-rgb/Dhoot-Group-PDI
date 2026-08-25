@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Ban, ShieldCheck, CheckCircle2, 
   Camera, Video, Upload, Trash2, AlertTriangle, Play,
-  ChevronRight, Car, Eye, Sparkles, Layers, RefreshCw, FileText
+  ChevronRight, Car, Eye, Sparkles, Layers, RefreshCw, 
+  FileText, StopCircle, Maximize2, Image as ImageIcon,
+  FolderOpen, HelpCircle, CheckSquare
 } from 'lucide-react';
 
 interface ChecklistItem {
@@ -11,9 +13,7 @@ interface ChecklistItem {
   code: string;
   title: string;
   desc: string;
-  photo1Label: string;
-  photo2Label: string;
-  hasVideo?: boolean;
+  hasVideoSuggestion?: boolean;
   videoLabel?: string;
   isEV?: boolean;
 }
@@ -25,587 +25,425 @@ interface ChecklistCategory {
   items: ChecklistItem[];
 }
 
+interface ItemMedia {
+  photos: string[]; // up to 2-3 photos flexibly
+  video?: string;
+}
+
+// Client-Side High Performance Image Compressor (< 2MB)
+const compressImageFile = async (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDimension = 1920; // Crisp Full HD
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Compress to ensure under 2 MB
+        let quality = 0.85;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        while (dataUrl.length * 0.75 > 2 * 1024 * 1024 && quality > 0.4) {
+          quality -= 0.1;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        resolve(dataUrl);
+      };
+    };
+  });
+};
+
 export const PdiSessionPage: React.FC = () => {
   const { id } = useParams();
   const [activeCategory, setActiveCategory] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [filterMode, setFilterMode] = useState<'ALL' | 'PENDING' | 'FAILED'>('ALL');
 
-  // Official Tata Motors PDI Master Checklist with 2 Photos + Video on required steps
+  // Camera & Video Capture Modal State
+  const [captureModal, setCaptureModal] = useState<{
+    isOpen: boolean;
+    itemId: string;
+    mode: 'PHOTO' | 'VIDEO';
+  }>({ isOpen: false, itemId: '', mode: 'PHOTO' });
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+
+  // Master Tata Motors Checklist (54 Checkpoints)
   const categories: ChecklistCategory[] = [
     {
       id: 'cat-1',
-      name: '1. Exterior, Body Panels & Paint',
+      name: '1. Exterior, Body & Paint',
       icon: '🚗',
       items: [
-        {
-          id: 'ext-1',
-          code: 'EXT-01',
-          title: 'VIN Plate, Chassis & Engine Number Verification',
-          desc: 'Verify VIN stamped on bottom windshield, B-pillar badge and under-hood chassis punch matches invoice.',
-          photo1Label: 'Photo 1: B-Pillar VIN Badge',
-          photo2Label: 'Photo 2: Engine Bay Chassis Stamp'
-        },
-        {
-          id: 'ext-2',
-          code: 'EXT-02',
-          title: 'Paint Finish, Gloss & Scratch / Dent Inspection',
-          desc: 'Inspect entire clear-coat in direct daylight for transport transit scratches, paint chips, or swirl marks.',
-          photo1Label: 'Photo 1: Left Side Paint Gloss',
-          photo2Label: 'Photo 2: Right Side Paint Gloss'
-        },
-        {
-          id: 'ext-3',
-          code: 'EXT-03',
-          title: 'Panel Gaps & Flush Alignment',
-          desc: 'Measure uniform 3.5mm-4.5mm gaps around hood, front fenders, doors and rear tailgate.',
-          photo1Label: 'Photo 1: Hood & Fender Gap',
-          photo2Label: 'Photo 2: Tailgate & Quarter Panel Gap'
-        },
-        {
-          id: 'ext-4',
-          code: 'EXT-04',
-          title: 'Front Bumper, Grille & Chrome Humanity Line',
-          desc: 'Check front bumper clip fitment, lower air dam, fog lamp bezels and Tata Humanity line.',
-          photo1Label: 'Photo 1: Front Grille & Chrome Line',
-          photo2Label: 'Photo 2: Lower Bumper & Skid Plate'
-        },
-        {
-          id: 'ext-5',
-          code: 'EXT-05',
-          title: 'Rear Bumper, Skid Plate & Tailgate Badging',
-          desc: 'Ensure rear monogram (Safari/Harrier/Nexon/Punch), parking sensor bezels, and rear bumper fitment.',
-          photo1Label: 'Photo 1: Tailgate Badging & Fitment',
-          photo2Label: 'Photo 2: Rear Bumper & Sensors'
-        },
-        {
-          id: 'ext-6',
-          code: 'EXT-06',
-          title: 'Windshield, Rear Glass & Side Windows (DOT Code)',
-          desc: 'Inspect all 6/8 glasses for chips, cracks, stress lines, and matching manufacturing year/month code.',
-          photo1Label: 'Photo 1: Front Windshield Glass & Stamp',
-          photo2Label: 'Photo 2: Rear Defogger Glass & Stamp'
-        },
-        {
-          id: 'ext-7',
-          code: 'EXT-07',
-          title: 'ORVM Glass, Housing Caps & Electric Fold',
-          desc: 'Check side mirrors for scratches, auto-folding motor smoothness, and integrated LED blinkers.',
-          photo1Label: 'Photo 1: Driver Side ORVM Cap & Glass',
-          photo2Label: 'Photo 2: Passenger Side ORVM Cap & Glass'
-        },
-        {
-          id: 'ext-8',
-          code: 'EXT-08',
-          title: 'Door Handles & Keyless Entry Request Sensors',
-          desc: 'Inspect all 4 exterior door handles, welcome lights, and capacitive touch entry sensors.',
-          photo1Label: 'Photo 1: Front Door Sensor Handles',
-          photo2Label: 'Photo 2: Rear Door Handles'
-        },
-        {
-          id: 'ext-9',
-          code: 'EXT-09',
-          title: 'Diamond Cut Alloy Wheels & Lug Nuts Torque',
-          desc: 'Verify zero curb rash on diamond-cut alloys, center Tata logo caps and tightened lug nuts.',
-          photo1Label: 'Photo 1: Front Right Alloy Wheel',
-          photo2Label: 'Photo 2: Rear Right Alloy Wheel'
-        },
-        {
-          id: 'ext-10',
-          code: 'EXT-10',
-          title: 'All 4 Tyres + Spare Wheel (DOT Mfg Date & Tread)',
-          desc: 'Confirm tyre brand matching (MRF/Apollo/Goodyear), 33-36 PSI pressure and DOT week/year stamp.',
-          photo1Label: 'Photo 1: Tyre DOT Date & Tread Mark',
-          photo2Label: 'Photo 2: Boot Spare Wheel & Jack Kit'
-        },
-        {
-          id: 'ext-11',
-          code: 'EXT-11',
-          title: 'Fuel Lid / EV Charging Flap & Seal Mechanism',
-          desc: 'Check push-to-open latch, inner rubber weather strip and fuel cap tether / CCS2 flap.',
-          photo1Label: 'Photo 1: Outer Fuel / EV Flap Fitment',
-          photo2Label: 'Photo 2: Inner Seal & Cap Mechanism'
-        },
-        {
-          id: 'ext-12',
-          code: 'EXT-12',
-          title: 'Roof Rails, Shark Fin Antenna & Roof Panel',
-          desc: 'Inspect roof rails load-mounts, shark fin antenna seal and panoramic roof external frame.',
-          photo1Label: 'Photo 1: Roof Panel & Rails Fitment',
-          photo2Label: 'Photo 2: Shark Fin Antenna Fitment'
-        }
+        { id: 'ext-1', code: 'EXT-01', title: 'VIN Plate, Chassis & Engine Number', desc: 'Verify VIN stamped on bottom windshield, B-pillar badge and under-hood chassis punch.' },
+        { id: 'ext-2', code: 'EXT-02', title: 'Paint Finish, Gloss & Scratch / Dent Check', desc: 'Inspect entire clear-coat in direct daylight for scratches, paint chips, or swirl marks.' },
+        { id: 'ext-3', code: 'EXT-03', title: 'Panel Gaps & Flush Alignment', desc: 'Measure uniform 3.5mm-4.5mm gaps around hood, front fenders, doors and rear tailgate.' },
+        { id: 'ext-4', code: 'EXT-04', title: 'Front Bumper, Grille & Humanity Line', desc: 'Check front bumper fitment, lower air dam, fog lamp bezels and Tata Humanity line.' },
+        { id: 'ext-5', code: 'EXT-05', title: 'Rear Bumper, Skid Plate & Badging', desc: 'Ensure rear monogram, parking sensor bezels, and rear bumper fitment.' },
+        { id: 'ext-6', code: 'EXT-06', title: 'Windshield, Rear Glass & Side Windows', desc: 'Inspect all 6/8 glasses for chips, cracks, stress lines, and matching DOT code.' },
+        { id: 'ext-7', code: 'EXT-07', title: 'ORVM Glass, Housing Caps & Electric Fold', desc: 'Check side mirrors for scratches, auto-folding motor smoothness, and blinkers.' },
+        { id: 'ext-8', code: 'EXT-08', title: 'Door Handles & Keyless Entry Sensors', desc: 'Inspect all 4 exterior door handles, welcome lights, and capacitive touch sensors.' },
+        { id: 'ext-9', code: 'EXT-09', title: 'Diamond Cut Alloy Wheels & Lug Nuts', desc: 'Verify zero curb rash on diamond-cut alloys, center logo caps and tightened lug nuts.' },
+        { id: 'ext-10', code: 'EXT-10', title: 'All 4 Tyres + Spare Wheel (DOT Date)', desc: 'Confirm matching tyre brand, 33-36 PSI pressure and DOT week/year stamp.' },
+        { id: 'ext-11', code: 'EXT-11', title: 'Fuel Lid / EV Charging Flap & Seal', desc: 'Check push-to-open latch, inner rubber weather strip and fuel cap / CCS2 flap.' },
+        { id: 'ext-12', code: 'EXT-12', title: 'Roof Rails, Shark Fin Antenna & Roof', desc: 'Inspect roof rails load-mounts, shark fin antenna seal and panoramic roof external frame.' }
       ]
     },
     {
       id: 'cat-2',
-      name: '2. Lighting, Signals & Electricals',
+      name: '2. Lighting & Electricals',
       icon: '💡',
       items: [
-        {
-          id: 'lgt-1',
-          code: 'LGT-01',
-          title: 'LED DRLs & Headlamp High/Low Beam + Fog Lamps',
-          desc: 'Test signature bi-LED projector throw, leveler switch, and cornering fog lamp activation.',
-          photo1Label: 'Photo 1: DRLs & Low Beam Active',
-          photo2Label: 'Photo 2: High Beam & Fog Lamps Active'
-        },
-        {
-          id: 'lgt-2',
-          code: 'LGT-02',
-          title: 'Sequential Turn Indicators & Hazard Warning Flashers',
-          desc: 'Check front and rear sequential LED swipe animation and 4-way hazard flasher sync.',
-          photo1Label: 'Photo 1: Front Indicator Illumination',
-          photo2Label: 'Photo 2: Rear Indicator Illumination',
-          hasVideo: true,
-          videoLabel: 'Video: Sequential Indicator & Hazard Swipe Video (5-10s)'
-        },
-        {
-          id: 'lgt-3',
-          code: 'LGT-03',
-          title: 'Connected LED Tail Lightbar & High Mount Stop Lamp',
-          desc: 'Verify edge-to-edge rear lightbar illumination, reversing lamps and 3rd brake light.',
-          photo1Label: 'Photo 1: Running Lightbar Illumination',
-          photo2Label: 'Photo 2: Brake Stop Lamp Illumination'
-        },
-        {
-          id: 'lgt-4',
-          code: 'LGT-04',
-          title: 'Dual Horn Tone & Sound Output',
-          desc: 'Test high-low dual trumpet horn output for clear, non-muffled acoustic response.',
-          photo1Label: 'Photo 1: Steering Horn Pad Fitment',
-          photo2Label: 'Photo 2: Engine Bay Dual Horn Unit',
-          hasVideo: true,
-          videoLabel: 'Video: Horn Sound Output Recording (3-5s)'
-        },
-        {
-          id: 'lgt-5',
-          code: 'LGT-05',
-          title: 'Front & Rear Wiper Blades, Motor & Washer Jet Spray',
-          desc: 'Test intermittent, slow, fast speeds and twin spray nozzle fan pattern onto windshield.',
-          photo1Label: 'Photo 1: Wiper Rubber Blade Condition',
-          photo2Label: 'Photo 2: Washer Fluid Spray Pattern',
-          hasVideo: true,
-          videoLabel: 'Video: Wiper Motor & Washer Spray Sweep Video (5-10s)'
-        },
-        {
-          id: 'lgt-6',
-          code: 'LGT-06',
-          title: 'Power Windows One-Touch Up/Down & Anti-Pinch',
-          desc: 'Inspect all 4 door windows for smooth travel without friction, glass shudder, or motor noise.',
-          photo1Label: 'Photo 1: Driver Master Switch Console',
-          photo2Label: 'Photo 2: Rear Window Glass Full Up'
-        },
-        {
-          id: 'lgt-7',
-          code: 'LGT-07',
-          title: 'Smart Key Fobs (Lock, Unlock, Boot, Follow-Me-Home)',
-          desc: 'Check both OEM smart keys range, mechanical backup key release, and battery health.',
-          photo1Label: 'Photo 1: Primary Smart Key Fob',
-          photo2Label: 'Photo 2: Spare Smart Key Fob'
-        },
-        {
-          id: 'lgt-8',
-          code: 'LGT-08',
-          title: '360° Surround Camera & Reverse Parking Sensors',
-          desc: 'Test rear camera lens clarity, dynamic steering guidelines and ultrasonic distance beep.',
-          photo1Label: 'Photo 1: Infotainment 360°/Reverse Screen',
-          photo2Label: 'Photo 2: Rear Tailgate Camera Lens',
-          hasVideo: true,
-          videoLabel: 'Video: Reverse Camera Dynamic Steering Line Video (5-10s)'
-        }
+        { id: 'lgt-1', code: 'LGT-01', title: 'LED DRLs & Headlamp High/Low Beam', desc: 'Test bi-LED projector throw, leveler switch, and cornering fog lamp activation.' },
+        { id: 'lgt-2', code: 'LGT-02', title: 'Sequential Turn Indicators & Hazard Lamps', desc: 'Check front and rear sequential LED swipe animation and 4-way hazard flasher.', hasVideoSuggestion: true, videoLabel: 'Sequential Indicator / Hazard Sweep Video' },
+        { id: 'lgt-3', code: 'LGT-03', title: 'Connected LED Tail Lightbar & Brake Light', desc: 'Verify edge-to-edge rear lightbar illumination, reversing lamps and 3rd brake light.' },
+        { id: 'lgt-4', code: 'LGT-04', title: 'Dual Horn Tone & Sound Output', desc: 'Test high-low dual trumpet horn output for clear, non-muffled acoustic response.', hasVideoSuggestion: true, videoLabel: 'Horn Sound Recording' },
+        { id: 'lgt-5', code: 'LGT-05', title: 'Wiper Blades, Motor & Washer Jet Spray', desc: 'Test intermittent, slow, fast speeds and twin spray nozzle fan pattern.', hasVideoSuggestion: true, videoLabel: 'Wiper Sweep & Spray Video' },
+        { id: 'lgt-6', code: 'LGT-06', title: 'Power Windows One-Touch & Anti-Pinch', desc: 'Inspect all 4 door windows for smooth travel without friction or motor noise.' },
+        { id: 'lgt-7', code: 'LGT-07', title: 'Smart Key Fobs (Lock, Unlock, Boot Release)', desc: 'Check both OEM smart keys range, mechanical backup key release, and battery.' },
+        { id: 'lgt-8', code: 'LGT-08', title: '360° Surround Camera & Reverse Guidelines', desc: 'Test rear camera lens clarity, dynamic steering guidelines and ultrasonic beep.', hasVideoSuggestion: true, videoLabel: 'Reverse Camera & Dynamic Lines Video' }
       ]
     },
     {
       id: 'cat-3',
-      name: '3. Interior Cabin, Dashboard & Infotainment',
+      name: '3. Interior & Infotainment',
       icon: '💺',
       items: [
-        {
-          id: 'int-1',
-          code: 'INT-01',
-          title: 'Dashboard Leatherette/Soft Touch & AC Vents Fitment',
-          desc: 'Inspect dashboard fitment, center console alignment, and chrome air-vent louvers movement.',
-          photo1Label: 'Photo 1: Full Cockpit Dashboard View',
-          photo2Label: 'Photo 2: Center Console & Gear Surround'
-        },
-        {
-          id: 'int-2',
-          code: 'INT-02',
-          title: 'Full Digital Instrument Cluster & Odometer (< 50 km)',
-          desc: 'Verify self-test sequence, zero error warning lights, and confirm factory stockyard odometer.',
-          photo1Label: 'Photo 1: Digital Cluster Self-Test Screen',
-          photo2Label: 'Photo 2: Odometer Reading Proof (< 50 km)'
-        },
-        {
-          id: 'int-3',
-          code: 'INT-03',
-          title: 'Touchscreen Infotainment (Harman, Apple CarPlay & Android Auto)',
-          desc: 'Test 10.25"/12.3" display touch responsiveness, Bluetooth pairing, FM radio, and audio balance.',
-          photo1Label: 'Photo 1: Infotainment System Home Screen',
-          photo2Label: 'Photo 2: Audio & Connectivity Status',
-          hasVideo: true,
-          videoLabel: 'Video: Touchscreen Responsiveness & Sound Test (10s)'
-        },
-        {
-          id: 'int-4',
-          code: 'INT-04',
-          title: 'Automatic Climate Control (HVAC Blower & Cooling Test)',
-          desc: 'Test cooling at lowest temperature (16°C), blower fan speeds 1-7, and air recirculation flap.',
-          photo1Label: 'Photo 1: AC Digital Touch Control Panel',
-          photo2Label: 'Photo 2: Rear AC Vents & Controls',
-          hasVideo: true,
-          videoLabel: 'Video: AC Blower & Chilling Performance Video (10s)'
-        },
-        {
-          id: 'int-5',
-          code: 'INT-05',
-          title: 'Voice-Assisted Panoramic Sunroof & Sunblind Mechanism',
-          desc: 'Test one-touch open, tilt, slide, anti-pinch safety obstruction stop and sunblind retraction.',
-          photo1Label: 'Photo 1: Sunroof Open / Tilt Position',
-          photo2Label: 'Photo 2: Sunblind Fabric & Rail Tracks',
-          hasVideo: true,
-          videoLabel: 'Video: Sunroof Opening & Closing Operation Video (10s)'
-        },
-        {
-          id: 'int-6',
-          code: 'INT-06',
-          title: 'Seats Upholstery, Ventilated Seats & Electronic Adjust',
-          desc: 'Inspect Benecke-Kaliko leatherette upholstery, headrests, armrests, and 6-way power seat adjust.',
-          photo1Label: 'Photo 1: Front Ventilated Seats',
-          photo2Label: 'Photo 2: 2nd / 3rd Row Seats & Armrest'
-        },
-        {
-          id: 'int-7',
-          code: 'INT-07',
-          title: 'Seatbelts (All 3-Point ELR & Pre-Tensioner Retract)',
-          desc: 'Pull all 5/6/7 seatbelts firmly to verify inertial reel lock, smooth retraction, and buckle click.',
-          photo1Label: 'Photo 1: Front Seatbelt Latches',
-          photo2Label: 'Photo 2: Rear 3-Point Seatbelt Anchors'
-        },
-        {
-          id: 'int-8',
-          code: 'INT-08',
-          title: 'Steering Controls, Tilt/Telescopic & Illuminated Logo',
-          desc: 'Check 4-spoke illuminated steering logo, audio/cruise switches and steering lock lever.',
-          photo1Label: 'Photo 1: Illuminated Tata Logo Steering',
-          photo2Label: 'Photo 2: Column Tilt/Telescopic Lock'
-        },
-        {
-          id: 'int-9',
-          code: 'INT-09',
-          title: 'Cabin Ambient Lighting, Vanity Mirrors & Cooled Glovebox',
-          desc: 'Inspect multi-color mood lighting strips, vanity mirror lights and glovebox cooling duct.',
-          photo1Label: 'Photo 1: Cabin Ambient Mood Lighting',
-          photo2Label: 'Photo 2: Cooled Glovebox Compartment'
-        },
-        {
-          id: 'int-10',
-          code: 'INT-10',
-          title: 'Floor Carpets, Toolkit, Jack & Warning Triangle',
-          desc: 'Verify OEM floor mats, boot parcel tray, spare jack, wheel spanner, tow hook and emergency triangle.',
-          photo1Label: 'Photo 1: Boot Floor & Parcel Shelf',
-          photo2Label: 'Photo 2: Complete Emergency Toolkit & Jack'
-        }
+        { id: 'int-1', code: 'INT-01', title: 'Dashboard Leatherette & AC Vents Fitment', desc: 'Inspect dashboard fitment, center console alignment, and chrome air-vent louvers.' },
+        { id: 'int-2', code: 'INT-02', title: 'Digital Instrument Cluster & Odometer (<50km)', desc: 'Verify self-test sequence, zero error warning lights, and confirm factory odometer.' },
+        { id: 'int-3', code: 'INT-03', title: 'Touchscreen Infotainment (Harman Audio)', desc: 'Test touchscreen responsiveness, Bluetooth pairing, Apple CarPlay & Android Auto.', hasVideoSuggestion: true, videoLabel: 'Touchscreen Responsiveness & Sound Video' },
+        { id: 'int-4', code: 'INT-04', title: 'Automatic Climate Control (HVAC Cooling)', desc: 'Test cooling at 16°C, blower fan speeds 1-7, and air recirculation flap.', hasVideoSuggestion: true, videoLabel: 'AC Blower & Cooling Performance Video' },
+        { id: 'int-5', code: 'INT-05', title: 'Panoramic Sunroof & Sunblind Operation', desc: 'Test one-touch open, tilt, slide, anti-pinch safety obstruction stop.', hasVideoSuggestion: true, videoLabel: 'Sunroof Slide & Anti-Pinch Video' },
+        { id: 'int-6', code: 'INT-06', title: 'Seats Upholstery & Ventilated Seats', desc: 'Inspect leatherette upholstery, headrests, armrests, and power seat adjust.' },
+        { id: 'int-7', code: 'INT-07', title: 'Seatbelts (All 3-Point ELR & Pre-Tensioner)', desc: 'Pull all seatbelts firmly to verify inertial reel lock and smooth retraction.' },
+        { id: 'int-8', code: 'INT-08', title: 'Steering Wheel Controls & Illuminated Logo', desc: 'Check 4-spoke illuminated steering logo, audio switches and column lock.' },
+        { id: 'int-9', code: 'INT-09', title: 'Cabin Ambient Lighting & Cooled Glovebox', desc: 'Inspect multi-color mood lighting strips and glovebox cooling duct.' },
+        { id: 'int-10', code: 'INT-10', title: 'Floor Carpets, Toolkit, Jack & Warning Triangle', desc: 'Verify OEM floor mats, spare jack, wheel spanner, tow hook and triangle.' }
       ]
     },
     {
       id: 'cat-4',
-      name: '4. Under-the-Hood & Fluids',
+      name: '4. Under-Hood & Fluids',
       icon: '⚙️',
       items: [
-        {
-          id: 'eng-1',
-          code: 'ENG-01',
-          title: 'Engine Oil Level & Dipstick Inspection',
-          desc: 'Check oil level on dipstick between MIN and MAX. Oil should be clear amber with no burn smell.',
-          photo1Label: 'Photo 1: Dipstick Oil Level Mark',
-          photo2Label: 'Photo 2: Engine Oil Filler Cap Underside'
-        },
-        {
-          id: 'eng-2',
-          code: 'ENG-02',
-          title: 'Engine Coolant Reservoir & Radiator Hoses',
-          desc: 'Verify coolant level in expansion tank, cap seal tightness, and zero hose seepage.',
-          photo1Label: 'Photo 1: Coolant Expansion Tank Level',
-          photo2Label: 'Photo 2: Radiator Upper/Lower Hoses'
-        },
-        {
-          id: 'eng-3',
-          code: 'ENG-03',
-          title: 'Brake & Clutch Fluid Master Cylinder Reservoir',
-          desc: 'Check DOT4 brake fluid level at MAX mark with no moisture contamination or reservoir leak.',
-          photo1Label: 'Photo 1: Brake Fluid Reservoir Level',
-          photo2Label: 'Photo 2: Master Cylinder Line Fittings'
-        },
-        {
-          id: 'eng-4',
-          code: 'ENG-04',
-          title: '12V Auxiliary Battery Health & Terminal Tightness',
-          desc: 'Check battery terminal clamps, acid vent seal, and measure open-circuit voltage (> 12.6V).',
-          photo1Label: 'Photo 1: Battery Terminals & Clamps',
-          photo2Label: 'Photo 2: Battery Multimeter Voltage Display'
-        },
-        {
-          id: 'eng-5',
-          code: 'ENG-05',
-          title: 'Engine Wire Harness, Relays & Fuse Box Cover',
-          desc: 'Verify complete harness taping, no rodent nibbles, secure fuse box lid and connector locks.',
-          photo1Label: 'Photo 1: Main Engine Bay Harness',
-          photo2Label: 'Photo 2: Fuse Box & Relay Housing'
-        },
-        {
-          id: 'eng-6',
-          code: 'ENG-06',
-          title: 'Windshield Washer Fluid Tank Full Check',
-          desc: 'Ensure washer reservoir is filled with clean washer fluid and strainer is present.',
-          photo1Label: 'Photo 1: Washer Fluid Reservoir Cap',
-          photo2Label: 'Photo 2: Fluid Level Visible'
-        },
-        {
-          id: 'eng-7',
-          code: 'ENG-07',
-          title: 'Engine Cold Start & Idling Sound (No Knock/Rattle)',
-          desc: 'Crank engine on cold start. Verify instant start, steady 800-900 RPM idle without belt squeal.',
-          photo1Label: 'Photo 1: Running Engine Compartment',
-          photo2Label: 'Photo 2: Engine Bay Heat Shield',
-          hasVideo: true,
-          videoLabel: 'Video: Engine Cold Start & Smooth Idling Sound Video (10-15s)'
-        },
-        {
-          id: 'eng-8',
-          code: 'ENG-08',
-          title: 'Exhaust Gas & Emissions Check (No Smoke at Rev)',
-          desc: 'Inspect tailpipe exhaust at idle and 2500 RPM rev. Must have zero white, black or blue smoke.',
-          photo1Label: 'Photo 1: Exhaust Tailpipe at Idle',
-          photo2Label: 'Photo 2: Exhaust Silencer Mounting',
-          hasVideo: true,
-          videoLabel: 'Video: Exhaust Pipe Revving Smoke Test Video (5-10s)'
-        }
+        { id: 'eng-1', code: 'ENG-01', title: 'Engine Oil Level & Dipstick Inspection', desc: 'Check oil level on dipstick between MIN and MAX. Oil should be clear amber.' },
+        { id: 'eng-2', code: 'ENG-02', title: 'Coolant Expansion Reservoir & Hoses', desc: 'Verify coolant level in expansion tank, cap seal tightness, and zero hose seepage.' },
+        { id: 'eng-3', code: 'ENG-03', title: 'Brake & Clutch Fluid Master Reservoir', desc: 'Check DOT4 brake fluid level at MAX mark with no moisture contamination.' },
+        { id: 'eng-4', code: 'ENG-04', title: '12V Auxiliary Battery Health & Voltage', desc: 'Check battery terminal clamps, acid vent seal, and measure voltage (>12.6V).' },
+        { id: 'eng-5', code: 'ENG-05', title: 'Engine Wire Harness, Relays & Fuse Box', desc: 'Verify complete harness taping, no rodent bites, and secure fuse box lid.' },
+        { id: 'eng-6', code: 'ENG-06', title: 'Windshield Washer Fluid Tank Full', desc: 'Ensure washer reservoir is filled with clean washer fluid and strainer is present.' },
+        { id: 'eng-7', code: 'ENG-07', title: 'Engine Cold Start & Idling Sound', desc: 'Crank engine on cold start. Verify instant start, steady 800-900 RPM idle.', hasVideoSuggestion: true, videoLabel: 'Engine Cold Start & Idling Sound Video' },
+        { id: 'eng-8', code: 'ENG-08', title: 'Exhaust Gas & Tailpipe Emissions', desc: 'Inspect tailpipe exhaust at idle and 2500 RPM rev. Must have zero smoke.', hasVideoSuggestion: true, videoLabel: 'Exhaust Pipe Smoke Test Video' }
       ]
     },
     {
       id: 'cat-5',
-      name: '5. Under-Chassis, Suspension & Brakes',
+      name: '5. Under-Chassis & Brakes',
       icon: '🔧',
       items: [
-        {
-          id: 'und-1',
-          code: 'UND-01',
-          title: 'Underbody Anti-Rust Coating & Crossmembers',
-          desc: 'Inspect floor pan on lift for transit scraping, dented crossmembers, and uniform black anti-rust coating.',
-          photo1Label: 'Photo 1: Front Subframe & Floor Pan',
-          photo2Label: 'Photo 2: Rear Crossmember & Floor'
-        },
-        {
-          id: 'und-2',
-          code: 'UND-02',
-          title: 'Front & Rear Suspension (Struts, Springs & Bushings)',
-          desc: 'Check MacPherson struts, coil springs, rubber bump stops and anti-roll bar link bushings.',
-          photo1Label: 'Photo 1: Front Left/Right Suspension Struts',
-          photo2Label: 'Photo 2: Rear Suspension Twist Beam / Multi-Link'
-        },
-        {
-          id: 'und-3',
-          code: 'UND-03',
-          title: 'Brake Discs, Calipers & Hydraulic Fluid Lines',
-          desc: 'Inspect front ventilated brake discs for scoring, caliper pins grease seal, and rigid brake lines.',
-          photo1Label: 'Photo 1: Front Brake Disc & Caliper',
-          photo2Label: 'Photo 2: Rear Brake Disc / Drum Line'
-        },
-        {
-          id: 'und-4',
-          code: 'UND-04',
-          title: 'Steering Rack, Tie Rod Ends & CV Axle Rubber Boots',
-          desc: 'Verify rubber bellows on steering rack and drive axle CV joints have zero grease leakage or tears.',
-          photo1Label: 'Photo 1: Left CV Axle Boot & Tie Rod',
-          photo2Label: 'Photo 2: Right CV Axle Boot & Tie Rod'
-        },
-        {
-          id: 'und-5',
-          code: 'UND-05',
-          title: 'Fuel Tank / High-Voltage Battery Protective Shielding',
-          desc: 'Check fuel tank guard / EV underbody aluminum ballistic shield for impact marks.',
-          photo1Label: 'Photo 1: Protective Shield Underside',
-          photo2Label: 'Photo 2: Shield Mounting Bolts & Brackets'
-        },
-        {
-          id: 'und-6',
-          code: 'UND-06',
-          title: 'Underbody Fluid Leakage Inspection',
-          desc: 'Check engine sump plug, gearbox casing, steering rack and radiator bottom for fluid drops.',
-          photo1Label: 'Photo 1: Engine Oil Sump & Drain Plug',
-          photo2Label: 'Photo 2: Transmission Lower Housing',
-          hasVideo: true,
-          videoLabel: 'Video: Under-Chassis Full Sweep Video (10-15s)'
-        }
+        { id: 'und-1', code: 'UND-01', title: 'Underbody Anti-Rust Coating & Crossmembers', desc: 'Inspect floor pan on lift for transit scraping, dented crossmembers, and coating.' },
+        { id: 'und-2', code: 'UND-02', title: 'Front & Rear Suspension (Struts & Springs)', desc: 'Check MacPherson struts, coil springs, bump stops and anti-roll bar bushings.' },
+        { id: 'und-3', code: 'UND-03', title: 'Brake Discs, Calipers & Hydraulic Lines', desc: 'Inspect front brake discs for scoring, caliper pins grease seal, and rigid lines.' },
+        { id: 'und-4', code: 'UND-04', title: 'Steering Rack, Tie Rods & CV Axle Boots', desc: 'Verify rubber bellows on steering rack and drive axle CV joints have zero tears.' },
+        { id: 'und-5', code: 'UND-05', title: 'Fuel Tank / High-Voltage Battery Shield', desc: 'Check fuel tank guard / EV underbody ballistic shield for impact marks.' },
+        { id: 'und-6', code: 'UND-06', title: 'Underbody Fluid Leakage Full Inspection', desc: 'Check engine sump plug, gearbox casing, and radiator bottom for fluid drops.', hasVideoSuggestion: true, videoLabel: 'Underbody Inspection Sweep Video' }
       ]
     },
     {
       id: 'cat-6',
-      name: '6. EV Battery & High Voltage (For EV Lineup)',
+      name: '6. EV Battery & High Voltage',
       icon: '⚡',
       items: [
-        {
-          id: 'ev-1',
-          code: 'EV-01',
-          title: 'High Voltage Battery State of Health (SoH) & State of Charge (SoC)',
-          desc: 'Verify instrument cluster SoC is > 90% and run diagnostic OBD-II scan to confirm 100% battery SoH.',
-          photo1Label: 'Photo 1: Cluster SoC % & Range Display',
-          photo2Label: 'Photo 2: Diagnostic Scan SoH Report (100%)',
-          isEV: true
-        },
-        {
-          id: 'ev-2',
-          code: 'EV-02',
-          title: 'AC Slow Charging & Portable Charging Cable Lock',
-          desc: 'Plug in 3.3kW / 7.2kW AC charging gun. Confirm motorized port lock, green LED and dash charging indicator.',
-          photo1Label: 'Photo 1: AC Charger Gun Connected & Green LED',
-          photo2Label: 'Photo 2: Portable Charging Box (15A Cable)',
-          isEV: true
-        },
-        {
-          id: 'ev-3',
-          code: 'EV-03',
-          title: 'DC Fast Charging Port (CCS2 Pins & Dust Seal Cap)',
-          desc: 'Inspect 2 high-current DC pins, orange HV cables insulation, and rubber weather sealing cap.',
-          photo1Label: 'Photo 1: CCS2 Fast Charging Port Pins',
-          photo2Label: 'Photo 2: Weather Seal Cap & Latch',
-          isEV: true
-        },
-        {
-          id: 'ev-4',
-          code: 'EV-04',
-          title: 'Regen Braking Paddle Shifters & Drive Mode Selector',
-          desc: 'Test Level 0, 1, 2, 3 paddle regen changes and Eco/City/Sport rotary dial engagement.',
-          photo1Label: 'Photo 1: Rotary EV Drive Mode Dial',
-          photo2Label: 'Photo 2: Regen Paddle Shifter Display',
-          hasVideo: true,
-          videoLabel: 'Video: Drive Mode Dial & Regen Paddle Switch Video (10s)',
-          isEV: true
-        }
+        { id: 'ev-1', code: 'EV-01', title: 'High Voltage Battery SoH & SoC (>90%)', desc: 'Verify cluster SoC is > 90% and run diagnostic scan to confirm 100% SoH.', isEV: true },
+        { id: 'ev-2', code: 'EV-02', title: 'AC Slow Charging & Portable Cable Lock', desc: 'Confirm motorized port lock, green LED and dash charging indicator.', isEV: true },
+        { id: 'ev-3', code: 'EV-03', title: 'DC Fast Charging Port (CCS2 Pins & Cap)', desc: 'Inspect 2 high-current DC pins, orange HV cables, and rubber weather cap.', isEV: true },
+        { id: 'ev-4', code: 'EV-04', title: 'Regen Braking Paddles & Drive Selector', desc: 'Test Level 0, 1, 2, 3 paddle regen changes and Eco/City/Sport dial engagement.', hasVideoSuggestion: true, videoLabel: 'Drive Mode & Regen Paddle Video', isEV: true }
       ]
     },
     {
       id: 'cat-7',
-      name: '7. Road Test, Handover Kit & Final Sign-Off',
+      name: '7. Road Test & Handover',
       icon: '📋',
       items: [
-        {
-          id: 'dyn-1',
-          code: 'DYN-01',
-          title: 'Transmission & Clutch Operation (Smooth Shift Engagement)',
-          desc: 'Check manual 6-speed / DCA dual clutch / EV drive selector engagement without judder.',
-          photo1Label: 'Photo 1: Gear Shift Lever in Neutral',
-          photo2Label: 'Photo 2: Gear Indicator on Cluster Display',
-          hasVideo: true,
-          videoLabel: 'Video: Gear Shift Engagement & Transition Video (10s)'
-        },
-        {
-          id: 'dyn-2',
-          code: 'DYN-02',
-          title: 'Braking Performance, Auto-Hold & Electronic Parking Brake',
-          desc: 'Test progressive pedal bite, emergency stop straight-line tracking, and EPB hill-hold test.',
-          photo1Label: 'Photo 1: Electronic Parking Brake Switch',
-          photo2Label: 'Photo 2: Vehicle Stopped on Test Incline'
-        },
-        {
-          id: 'dyn-3',
-          code: 'DYN-03',
-          title: 'Steering Wheel Alignment & Straight Line Tracking',
-          desc: 'Verify vehicle tracks dead straight with steering centered on smooth asphalt without drift.',
-          photo1Label: 'Photo 1: Centered Steering Wheel on Track',
-          photo2Label: 'Photo 2: Front Wheels Straight Alignment'
-        },
-        {
-          id: 'dyn-4',
-          code: 'DYN-04',
-          title: 'Cabin NVH Squeak & Rattle Road Test',
-          desc: 'Drive on yard rumble strips to confirm zero dashboard squeaks, door rattles or suspension thuds.',
-          photo1Label: 'Photo 1: Post-Test Drive Odometer',
-          photo2Label: 'Photo 2: PDI Inspection Route Sheet'
-        },
-        {
-          id: 'dyn-5',
-          code: 'DYN-05',
-          title: 'Documentation Kit (Owner Manual, Warranty, Fastag & Service Book)',
-          desc: 'Ensure owner manual, warranty handbook, battery warranty card and Fastag RFID are inside glovebox.',
-          photo1Label: 'Photo 1: Fastag Barcode on Windshield',
-          photo2Label: 'Photo 2: Complete Manual & Warranty Docket'
-        },
-        {
-          id: 'dyn-6',
-          code: 'DYN-06',
-          title: 'Vehicle Final Grooming, Washing & Delivery Ready Shine',
-          desc: 'Confirm exterior wash, tyre dressing polish, cabin vacuuming and paper floor mats installed.',
-          photo1Label: 'Photo 1: Finished Front 3/4 Customer Angle',
-          photo2Label: 'Photo 2: Pristine Interior Cleanliness'
-        }
+        { id: 'dyn-1', code: 'DYN-01', title: 'Transmission & Clutch Operation', desc: 'Check manual 6-speed / DCA dual clutch engagement without judder.', hasVideoSuggestion: true, videoLabel: 'Gear Shift Engagement Video' },
+        { id: 'dyn-2', code: 'DYN-02', title: 'Braking Performance & Auto-Hold / EPB', desc: 'Test progressive pedal bite, emergency stop straight-line tracking, and EPB.' },
+        { id: 'dyn-3', code: 'DYN-03', title: 'Steering Wheel Alignment & Road Tracking', desc: 'Verify vehicle tracks dead straight with steering centered on smooth road.' },
+        { id: 'dyn-4', code: 'DYN-04', title: 'Cabin NVH Squeak & Rattle Road Test', desc: 'Drive on yard rumble strips to confirm zero dashboard squeaks or door rattles.' },
+        { id: 'dyn-5', code: 'DYN-05', title: 'Documentation Kit (Manual, Fastag, Book)', desc: 'Ensure owner manual, warranty handbook, battery warranty and Fastag RFID are present.' },
+        { id: 'dyn-6', code: 'DYN-06', title: 'Final Grooming, Washing & Delivery Polish', desc: 'Confirm exterior wash, tyre dressing polish, cabin vacuuming and paper floor mats.' }
       ]
     }
   ];
 
-  // Inspection item state (status, photos, videos, notes)
+  // Responses state
   const [responses, setResponses] = useState<Record<string, {
     status: 'PASS' | 'FAIL' | 'NA';
-    photo1?: string;
-    photo2?: string;
+    photos: string[];
     video?: string;
     notes?: string;
   }>>({
-    'ext-1': { status: 'PASS', photo1: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400', photo2: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=400' },
-    'ext-2': { status: 'PASS', photo1: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400', photo2: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400' },
-    'ext-3': { status: 'PASS', photo1: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400', photo2: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=400' },
-    'lgt-1': { status: 'PASS', photo1: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400', photo2: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=400' }
+    'ext-1': { 
+      status: 'PASS', 
+      photos: ['https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=500', 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=500'] 
+    },
+    'ext-2': { 
+      status: 'PASS', 
+      photos: ['https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500'] 
+    },
+    'lgt-1': { 
+      status: 'PASS', 
+      photos: ['https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=500'] 
+    }
   });
 
   const handleStatusChange = (itemId: string, status: 'PASS' | 'FAIL' | 'NA') => {
     setResponses((prev) => ({
       ...prev,
-      [itemId]: { ...prev[itemId], status }
+      [itemId]: { 
+        ...prev[itemId], 
+        status, 
+        photos: prev[itemId]?.photos || [] 
+      }
     }));
   };
 
-  const handleMediaUpload = (itemId: string, field: 'photo1' | 'photo2' | 'video', e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload Photo from Gallery with Auto-Compress under 2 MB
+  const handlePhotoUpload = async (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setResponses((prev) => ({
+    if (!file) return;
+
+    const compressed = await compressImageFile(file);
+    setResponses((prev) => {
+      const existingPhotos = prev[itemId]?.photos || [];
+      const updatedPhotos = existingPhotos.length >= 2 
+        ? [existingPhotos[0], compressed] 
+        : [...existingPhotos, compressed];
+
+      return {
         ...prev,
         [itemId]: {
           ...prev[itemId],
           status: prev[itemId]?.status || 'PASS',
-          [field]: url
+          photos: updatedPhotos
         }
-      }));
-    }
+      };
+    });
   };
 
-  const handleRemoveMedia = (itemId: string, field: 'photo1' | 'photo2' | 'video') => {
+  // Upload Video from Gallery with Size Check (< 5 MB)
+  const handleVideoUpload = async (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit (< 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Video file exceeds 5 MB. Please select a shorter video or record directly using the in-app camera.');
+    }
+
+    const url = URL.createObjectURL(file);
     setResponses((prev) => ({
       ...prev,
       [itemId]: {
         ...prev[itemId],
-        [field]: undefined
+        status: prev[itemId]?.status || 'PASS',
+        photos: prev[itemId]?.photos || [],
+        video: url
       }
+    }));
+  };
+
+  const removePhoto = (itemId: string, index: number) => {
+    setResponses((prev) => {
+      const photos = [...(prev[itemId]?.photos || [])];
+      photos.splice(index, 1);
+      return {
+        ...prev,
+        [itemId]: { ...prev[itemId], photos }
+      };
+    });
+  };
+
+  const removeVideo = (itemId: string) => {
+    setResponses((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], video: undefined }
     }));
   };
 
   const handleNotesChange = (itemId: string, notes: string) => {
     setResponses((prev) => ({
       ...prev,
-      [itemId]: { ...prev[itemId], notes }
+      [itemId]: { 
+        ...prev[itemId], 
+        status: prev[itemId]?.status || 'PASS',
+        photos: prev[itemId]?.photos || [],
+        notes 
+      }
     }));
   };
 
-  // Calculations
+  // --------------------------------------------------------------------------
+  // IN-APP CAMERA & VIDEO RECORDER HANDLERS
+  // --------------------------------------------------------------------------
+  const openCameraModal = async (itemId: string, mode: 'PHOTO' | 'VIDEO') => {
+    setCaptureModal({ isOpen: true, itemId, mode });
+    setIsRecording(false);
+    setRecordSeconds(0);
+    recordedChunksRef.current = [];
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: mode === 'VIDEO'
+      });
+      mediaStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.warn('Camera access error:', err);
+    }
+  };
+
+  const closeCameraModal = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(t => t.stop());
+    }
+    setCaptureModal({ isOpen: false, itemId: '', mode: 'PHOTO' });
+    setIsRecording(false);
+  };
+
+  // Capture Photo from Live Camera Viewfinder
+  const capturePhotoSnapshot = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth || 1280;
+    canvas.height = videoRef.current.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    const itemId = captureModal.itemId;
+    setResponses((prev) => {
+      const existingPhotos = prev[itemId]?.photos || [];
+      const updatedPhotos = existingPhotos.length >= 2 
+        ? [existingPhotos[0], photoDataUrl] 
+        : [...existingPhotos, photoDataUrl];
+
+      return {
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          status: prev[itemId]?.status || 'PASS',
+          photos: updatedPhotos
+        }
+      };
+    });
+
+    closeCameraModal();
+  };
+
+  // Start Video Recording in Live Viewfinder
+  const startVideoRecording = () => {
+    if (!mediaStreamRef.current) return;
+    recordedChunksRef.current = [];
+    const mediaRecorder = new MediaRecorder(mediaStreamRef.current, { mimeType: 'video/webm' });
+    mediaRecorderRef.current = mediaRecorder;
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        recordedChunksRef.current.push(e.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      const videoUrl = URL.createObjectURL(blob);
+      const itemId = captureModal.itemId;
+      setResponses((prev) => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          status: prev[itemId]?.status || 'PASS',
+          photos: prev[itemId]?.photos || [],
+          video: videoUrl
+        }
+      }));
+      closeCameraModal();
+    };
+
+    mediaRecorder.start();
+    setIsRecording(true);
+    setRecordSeconds(0);
+  };
+
+  // Stop Recording
+  const stopVideoRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // Timer effect during recording
+  useEffect(() => {
+    let timer: any;
+    if (isRecording) {
+      timer = setInterval(() => {
+        setRecordSeconds(s => {
+          if (s >= 30) { // Max 30s video to keep < 5MB
+            stopVideoRecording();
+            return 30;
+          }
+          return s + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isRecording]);
+
+  // Clean up media streams
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
+
+  // Stats
   const allItems = categories.flatMap(c => c.items);
   const totalCount = allItems.length;
   const answeredCount = Object.keys(responses).length;
   const passedCount = Object.values(responses).filter(r => r.status === 'PASS').length;
   const failedCount = Object.values(responses).filter(r => r.status === 'FAIL').length;
+  const totalPhotos = Object.values(responses).reduce((acc, curr) => acc + (curr.photos?.length || 0), 0);
+  const totalVideos = Object.values(responses).filter(r => r.video).length;
   const progressPct = Math.round((answeredCount / totalCount) * 100);
 
-  // Active items based on filter
+  // Filtered items
   const currentCategoryItems = categories[activeCategory].items.filter(item => {
     if (filterMode === 'PENDING') return !responses[item.id];
     if (filterMode === 'FAILED') return responses[item.id]?.status === 'FAIL';
@@ -624,22 +462,26 @@ export const PdiSessionPage: React.FC = () => {
           </span>
           <h2 className="text-2xl font-black text-[#0F172A]">Tata PDI Master Submitted!</h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            All 54 inspection points verified with mandatory 2-angle photos and functional videos. Digital dossier has been submitted to <strong>QA Manager Review Queue</strong>.
+            All 54 checkpoints recorded with high-res photos and video proof. The inspection dossier has been submitted to <strong>QA Manager Review Queue</strong>.
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+        <div className="grid grid-cols-4 gap-2.5 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
           <div>
             <span className="text-[10px] font-bold uppercase text-slate-400">Total Checked</span>
-            <div className="text-lg font-black text-[#0F172A]">{answeredCount}</div>
+            <div className="text-base font-black text-[#0F172A]">{answeredCount}</div>
           </div>
           <div>
             <span className="text-[10px] font-bold uppercase text-emerald-600">Passed</span>
-            <div className="text-lg font-black text-emerald-600">{passedCount}</div>
+            <div className="text-base font-black text-emerald-600">{passedCount}</div>
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase text-rose-600">Flagged</span>
-            <div className="text-lg font-black text-rose-600">{failedCount}</div>
+            <span className="text-[10px] font-bold uppercase text-blue-600">Photos</span>
+            <div className="text-base font-black text-blue-600">{totalPhotos}</div>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase text-amber-600">Videos</span>
+            <div className="text-base font-black text-amber-600">{totalVideos}</div>
           </div>
         </div>
 
@@ -662,7 +504,7 @@ export const PdiSessionPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 pb-20 select-none">
       
       {/* Top Header Card */}
       <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -674,9 +516,9 @@ export const PdiSessionPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-extrabold uppercase tracking-widest bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                Tata Motors OEM PDI Protocol
+                Tata Motors PDI Protocol
               </span>
               <span className="text-xs font-mono font-bold text-slate-400">VIN: MAT612345S9988776</span>
             </div>
@@ -688,7 +530,7 @@ export const PdiSessionPage: React.FC = () => {
         {/* Progress & Submit Action */}
         <div className="flex items-center gap-5 shrink-0">
           <div className="text-right">
-            <span className="text-xs font-bold text-slate-400 block">Overall Progress</span>
+            <span className="text-xs font-bold text-slate-400 block">Inspection Progress</span>
             <div className="flex items-center gap-2">
               <span className="text-lg font-black text-[#0F172A] font-mono">{progressPct}%</span>
               <span className="text-xs font-semibold text-slate-400">({answeredCount}/{totalCount})</span>
@@ -757,14 +599,18 @@ export const PdiSessionPage: React.FC = () => {
             })}
           </div>
 
-          {/* Quick Stats Widget */}
-          <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-xs space-y-3">
+          {/* Guidelines Box */}
+          <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-xs space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400">Media Compliance</span>
-              <span className="text-xs font-extrabold text-emerald-400">2 Photos + Video Required</span>
+              <span className="text-xs font-bold text-slate-400">Media Guidelines</span>
+              <span className="text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md">
+                Auto-Compressed
+              </span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Tata OEM standard requires minimum 2 high-resolution angle photos per step and video upload on mechanical/electrical components.
+              • <strong>Photos:</strong> Max 2 MB (Auto-compressed to Full HD).<br/>
+              • <strong>Videos:</strong> Max 5 MB / 30s clips.<br/>
+              • Capture live from in-app camera or upload from device gallery.
             </p>
           </div>
         </div>
@@ -778,7 +624,7 @@ export const PdiSessionPage: React.FC = () => {
               <span className="text-2xl p-2.5 bg-slate-100 rounded-2xl">{categories[activeCategory].icon}</span>
               <div>
                 <h2 className="text-base font-black text-[#0F172A]">{categories[activeCategory].name}</h2>
-                <p className="text-xs text-slate-500">{categories[activeCategory].items.length} Checkpoints • Mandatory Dual Photo Evidence</p>
+                <p className="text-xs text-slate-500">{categories[activeCategory].items.length} Checkpoints</p>
               </div>
             </div>
 
@@ -806,6 +652,7 @@ export const PdiSessionPage: React.FC = () => {
               const isPass = currentStatus === 'PASS';
               const isFail = currentStatus === 'FAIL';
               const isNA = currentStatus === 'NA';
+              const photos = resp?.photos || [];
 
               return (
                 <div 
@@ -818,22 +665,22 @@ export const PdiSessionPage: React.FC = () => {
                         : 'border-[#E2E8F0]'
                   }`}
                 >
-                  {/* Top Bar: Code, Title, and Action Buttons */}
+                  {/* Item Header & Pass/Fail Actions */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono font-extrabold px-2.5 py-0.5 bg-slate-100 text-[#0F172A] rounded-lg border border-slate-200">
                           {item.code}
                         </span>
-                        {item.hasVideo && (
+                        {item.hasVideoSuggestion && (
                           <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 bg-amber-100 text-amber-900 rounded-md flex items-center gap-1 border border-amber-200">
                             <Video className="w-3 h-3" />
-                            Video Required
+                            Video Option
                           </span>
                         )}
                         {item.isEV && (
                           <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-900 rounded-md border border-emerald-200">
-                            EV Component
+                            EV Point
                           </span>
                         )}
                       </div>
@@ -841,7 +688,7 @@ export const PdiSessionPage: React.FC = () => {
                       <p className="text-xs text-slate-500 leading-relaxed max-w-xl">{item.desc}</p>
                     </div>
 
-                    {/* PASS / FAIL / NA Buttons */}
+                    {/* Status Toggle Buttons */}
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
@@ -884,124 +731,114 @@ export const PdiSessionPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* MANDATORY 2 PHOTOS + VIDEO CAPTURE SECTION */}
+                  {/* MEDIA CONTROLS & GALLERY (LIVE CAMERA + FILE UPLOAD) */}
                   <div className="pt-3 border-t border-slate-100 space-y-3">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      <span className="flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-[#0F172A]" />
-                        Mandatory Media Proofs (2 Photos {item.hasVideo ? '+ 1 Video' : ''})
-                      </span>
-                      {resp?.photo1 && resp?.photo2 && (
-                        <span className="text-emerald-600 flex items-center gap-1">
-                          <Check className="w-3 h-3 stroke-[3]" />
-                          Photos Uploaded
-                        </span>
-                      )}
+                    
+                    {/* Action Bar for Media */}
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5 text-[#0F172A]" />
+                        <span>Media Attachments ({photos.length} Photo{photos.length !== 1 ? 's' : ''}{resp?.video ? ', 1 Video' : ''})</span>
+                      </div>
+
+                      {/* Add Media Buttons */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* 1. Live Camera Photo */}
+                        {photos.length < 2 && (
+                          <button
+                            type="button"
+                            onClick={() => openCameraModal(item.id, 'PHOTO')}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F172A] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                            <span>Take Photo</span>
+                          </button>
+                        )}
+
+                        {/* 2. Gallery Photo Upload */}
+                        {photos.length < 2 && (
+                          <label className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F172A] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+                            <FolderOpen className="w-3.5 h-3.5" />
+                            <span>Upload Photo</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handlePhotoUpload(item.id, e)} 
+                            />
+                          </label>
+                        )}
+
+                        {/* 3. Record Video */}
+                        {!resp?.video && (
+                          <button
+                            type="button"
+                            onClick={() => openCameraModal(item.id, 'VIDEO')}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Video className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Record Video</span>
+                          </button>
+                        )}
+
+                        {/* 4. Gallery Video Upload */}
+                        {!resp?.video && (
+                          <label className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+                            <Upload className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Upload Video</span>
+                            <input 
+                              type="file" 
+                              accept="video/*" 
+                              className="hidden" 
+                              onChange={(e) => handleVideoUpload(item.id, e)} 
+                            />
+                          </label>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      
-                      {/* PHOTO 1 SLOT */}
-                      <div className="border border-slate-200 bg-slate-50/70 rounded-2xl p-3 flex flex-col justify-between space-y-2 relative overflow-hidden group">
-                        <span className="text-[10px] font-extrabold uppercase text-slate-600 truncate">
-                          {item.photo1Label}
-                        </span>
-
-                        {resp?.photo1 ? (
-                          <div className="relative rounded-xl overflow-hidden aspect-video bg-black/5 flex items-center justify-center">
-                            <img src={resp.photo1} alt="Proof 1" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveMedia(item.id, 'photo1')}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-md transition-all cursor-pointer"
-                              title="Delete Photo"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="border-2 border-dashed border-slate-300 hover:border-[#0F172A] rounded-xl aspect-video flex flex-col items-center justify-center text-slate-400 hover:text-[#0F172A] bg-white transition-all cursor-pointer">
-                            <Camera className="w-5 h-5 mb-1" />
-                            <span className="text-[10px] font-bold">Capture / Upload Photo 1</span>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={(e) => handleMediaUpload(item.id, 'photo1', e)} 
-                            />
-                          </label>
-                        )}
-                      </div>
-
-                      {/* PHOTO 2 SLOT */}
-                      <div className="border border-slate-200 bg-slate-50/70 rounded-2xl p-3 flex flex-col justify-between space-y-2 relative overflow-hidden group">
-                        <span className="text-[10px] font-extrabold uppercase text-slate-600 truncate">
-                          {item.photo2Label}
-                        </span>
-
-                        {resp?.photo2 ? (
-                          <div className="relative rounded-xl overflow-hidden aspect-video bg-black/5 flex items-center justify-center">
-                            <img src={resp.photo2} alt="Proof 2" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveMedia(item.id, 'photo2')}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-md transition-all cursor-pointer"
-                              title="Delete Photo"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="border-2 border-dashed border-slate-300 hover:border-[#0F172A] rounded-xl aspect-video flex flex-col items-center justify-center text-slate-400 hover:text-[#0F172A] bg-white transition-all cursor-pointer">
-                            <Camera className="w-5 h-5 mb-1" />
-                            <span className="text-[10px] font-bold">Capture / Upload Photo 2</span>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={(e) => handleMediaUpload(item.id, 'photo2', e)} 
-                            />
-                          </label>
-                        )}
-                      </div>
-
-                      {/* VIDEO SLOT (IF REQUIRED) */}
-                      {item.hasVideo && (
-                        <div className="border border-amber-200 bg-amber-50/40 rounded-2xl p-3 flex flex-col justify-between space-y-2 relative overflow-hidden group">
-                          <span className="text-[10px] font-extrabold uppercase text-amber-900 truncate flex items-center gap-1">
-                            <Video className="w-3 h-3 text-amber-600" />
-                            {item.videoLabel || 'Functional Video Proof'}
-                          </span>
-
-                          {resp?.video ? (
-                            <div className="relative rounded-xl overflow-hidden aspect-video bg-black flex items-center justify-center">
-                              <video src={resp.video} controls className="w-full h-full object-cover" />
+                    {/* Media Previews Grid */}
+                    {(photos.length > 0 || resp?.video) && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-1">
+                        
+                        {/* Render Attached Photos */}
+                        {photos.map((photoUrl, idx) => (
+                          <div key={idx} className="relative rounded-2xl overflow-hidden aspect-video bg-slate-100 border border-slate-200 group">
+                            <img src={photoUrl} alt={`Proof ${idx + 1}`} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <span className="text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded">
+                                Photo {idx + 1}
+                              </span>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveMedia(item.id, 'video')}
-                                className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-md transition-all cursor-pointer z-10"
-                                title="Delete Video"
+                                onClick={() => removePhoto(item.id, idx)}
+                                className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-all cursor-pointer"
+                                title="Delete Photo"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                          ) : (
-                            <label className="border-2 border-dashed border-amber-300 hover:border-amber-600 rounded-xl aspect-video flex flex-col items-center justify-center text-amber-700 hover:text-amber-900 bg-white transition-all cursor-pointer">
-                              <Video className="w-6 h-6 mb-1 text-amber-600 animate-pulse" />
-                              <span className="text-[10px] font-bold">Record / Upload Video</span>
-                              <span className="text-[9px] text-slate-400">MP4, WEBM (Max 30s)</span>
-                              <input 
-                                type="file" 
-                                accept="video/*" 
-                                className="hidden" 
-                                onChange={(e) => handleMediaUpload(item.id, 'video', e)} 
-                              />
-                            </label>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        ))}
 
-                    </div>
+                        {/* Render Attached Video */}
+                        {resp?.video && (
+                          <div className="relative rounded-2xl overflow-hidden aspect-video bg-black border border-amber-300 group flex items-center justify-center">
+                            <video src={resp.video} controls className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeVideo(item.id)}
+                              className="absolute top-2 right-2 p-1.5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-lg shadow transition-all cursor-pointer z-10"
+                              title="Delete Video"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+
+                      </div>
+                    )}
+
                   </div>
 
                   {/* Notes / Observation Input */}
@@ -1022,7 +859,7 @@ export const PdiSessionPage: React.FC = () => {
             })}
           </div>
 
-          {/* Bottom Next/Prev Category Navigator */}
+          {/* Bottom Module Pagination */}
           <div className="flex items-center justify-between p-4 bg-white border border-[#E2E8F0] rounded-3xl shadow-xs">
             <button
               disabled={activeCategory === 0}
@@ -1056,6 +893,93 @@ export const PdiSessionPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* IN-APP CAMERA & VIDEO RECORDING MODAL VIEWPORT                           */}
+      {/* ========================================================================= */}
+      {captureModal.isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] text-white w-full max-w-lg rounded-3xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {captureModal.mode === 'PHOTO' ? (
+                  <Camera className="w-5 h-5 text-emerald-400" />
+                ) : (
+                  <Video className="w-5 h-5 text-amber-400" />
+                )}
+                <span className="text-sm font-black">
+                  {captureModal.mode === 'PHOTO' ? 'Live Camera Snapshot' : 'Record Video Proof (Max 30s)'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={closeCameraModal}
+                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Live Camera Viewfinder */}
+            <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+
+              {/* Recording Indicator */}
+              {isRecording && (
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-rose-600/90 text-white px-3 py-1 rounded-full text-xs font-bold font-mono animate-pulse">
+                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                  <span>REC 00:{recordSeconds < 10 ? `0${recordSeconds}` : recordSeconds} / 00:30</span>
+                </div>
+              )}
+            </div>
+
+            {/* Viewfinder Actions */}
+            <div className="p-5 border-t border-slate-800 flex items-center justify-center gap-4">
+              {captureModal.mode === 'PHOTO' ? (
+                <button
+                  type="button"
+                  onClick={capturePhotoSnapshot}
+                  className="px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0F172A] rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Camera className="w-5 h-5" />
+                  <span>Capture Photo</span>
+                </button>
+              ) : (
+                <>
+                  {!isRecording ? (
+                    <button
+                      type="button"
+                      onClick={startVideoRecording}
+                      className="px-8 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <div className="w-3.5 h-3.5 bg-white rounded-full" />
+                      <span>Start Recording</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={stopVideoRecording}
+                      className="px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0F172A] rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <StopCircle className="w-5 h-5 text-rose-600" />
+                      <span>Stop & Save Video</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
