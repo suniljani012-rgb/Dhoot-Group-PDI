@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut } from 'lucide-react';
-import { TataLogoSvg, HyundaiLogoSvg } from '../common/BrandLogo';
 
 export const Header: React.FC = () => {
   const { user, currentBrand, logout } = useAuth();
@@ -16,14 +15,12 @@ export const Header: React.FC = () => {
           className="h-10 w-10 object-contain rounded-md"
         />
 
-        {/* OEM Brand Badge */}
-        <div className="h-8 w-12 flex items-center justify-center p-1 bg-[#F8F9FA] rounded border border-[#DEE2E8]">
-          {currentBrand.code === 'DHOOT-TATA' ? (
-            <TataLogoSvg className="h-6 w-auto" />
-          ) : (
-            <HyundaiLogoSvg className="h-6 w-auto" />
-          )}
-        </div>
+        {/* Selected Brand Logo (Autoprime Tata / Raja Hyundai) */}
+        <img 
+          src={currentBrand.logoUrl} 
+          alt={currentBrand.name} 
+          className="h-10 w-10 object-contain rounded-md border border-[#DEE2E8] p-0.5"
+        />
 
         <div>
           <div className="flex items-center gap-2">

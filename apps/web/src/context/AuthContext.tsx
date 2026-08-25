@@ -7,6 +7,7 @@ export interface BrandConfig {
   name: string;
   shortName: string;
   tagline: string;
+  logoUrl: string;
   primaryColor: string;
   primaryHover: string;
   accentColor: string;
@@ -21,6 +22,7 @@ export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
     name: 'Autoprime Tata',
     shortName: 'TATA',
     tagline: 'Authorized Tata Motors Dealership',
+    logoUrl: '/logo-tata.jpg',
     primaryColor: '#1A3A6B',
     primaryHover: '#2C5298',
     accentColor: '#C8102E',
@@ -33,6 +35,7 @@ export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
     name: 'Raja Hyundai',
     shortName: 'HYUNDAI',
     tagline: 'Authorized Hyundai Motor Dealership',
+    logoUrl: '/logo-hyundai.jpg',
     primaryColor: '#002C6C',
     primaryHover: '#0047AB',
     accentColor: '#00AAD2',
