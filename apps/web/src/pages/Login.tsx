@@ -65,16 +65,16 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F4F6F9] sm:bg-[#F0F4F8] relative flex flex-col justify-between items-center p-0 sm:py-10 sm:px-6 overflow-hidden select-none">
+    <div className="min-h-screen bg-[#F0F4F8] relative flex flex-col justify-center items-center py-6 px-4 sm:px-6 overflow-hidden select-none">
       
-      {/* Background Watermarks (Active on Desktop/Tablet, Hidden on Mobile) */}
+      {/* Background Watermarks (Desktop & Tablet only) */}
       <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
 
-      {/* Main Container: Full-height native app on mobile, centered card on desktop */}
-      <div className="w-full sm:max-w-md h-full sm:h-auto flex flex-col justify-between sm:justify-center z-10 p-5 sm:p-0">
+      {/* Main Single Centered Block: Logos + Title + Card strictly together */}
+      <div className="w-full max-w-[390px] sm:max-w-md mx-auto z-10 flex flex-col items-center">
         
-        {/* Top Section: Dual Brand Logos + Heading */}
-        <div className="text-center space-y-2 pt-4 sm:pt-0 mb-3 sm:mb-5">
+        {/* Header: Dual Brand Logos + Welcome Title */}
+        <div className="text-center space-y-2 mb-4">
           <DualBrandHeader brand={brand} className="mb-2" />
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
@@ -82,8 +82,8 @@ export const LoginPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Core Form Card: Seamlessly fills mobile screen without excessive blank spaces */}
-        <div className="w-full bg-white my-auto sm:my-0 py-6 px-5 sm:py-8 sm:px-8 rounded-3xl sm:rounded-[2.2rem] shadow-[0_4px_25px_rgba(15,23,42,0.06)] sm:shadow-[0_20px_50px_rgba(15,23,42,0.1)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
+        {/* Clean Focused Floating Card */}
+        <div className="w-full bg-white py-6 px-5 sm:py-8 sm:px-8 rounded-3xl sm:rounded-[2rem] shadow-[0_15px_40px_rgba(15,23,42,0.08)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
           
           {/* Top Brand Accent Line */}
           <div 
@@ -100,7 +100,7 @@ export const LoginPage: React.FC = () => {
 
           {!isForgotPassword ? (
             /* --- 1. SIGN IN FORM --- */
-            <form className="space-y-4 sm:space-y-4.5" onSubmit={handleLoginSubmit}>
+            <form className="space-y-4" onSubmit={handleLoginSubmit}>
               {/* DEALERSHIP BRAND DROPDOWN */}
               <div>
                 <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
@@ -303,12 +303,6 @@ export const LoginPage: React.FC = () => {
             </span>
           </div>
         </div>
-
-        {/* Bottom Mobile Safe Spacing */}
-        <div className="pb-3 text-center sm:hidden">
-          <span className="text-[10px] font-medium text-slate-400">PDI Management Platform</span>
-        </div>
-
       </div>
     </div>
   );
