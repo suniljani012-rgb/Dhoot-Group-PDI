@@ -1,13 +1,13 @@
 import React from 'react';
-import { Gauge, Zap, Disc, Cpu, Sliders, ShieldCheck, Key, Wrench, BatteryCharging, Radio, Compass, Fuel, CircleDot } from 'lucide-react';
+import { Gauge, Disc, Cpu, Sliders, ShieldCheck, Key, Wrench, BatteryCharging, Car, Fuel, Zap } from 'lucide-react';
 
 export const AutomotiveBackground: React.FC<{ primaryColor: string }> = ({ primaryColor }) => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
       
       {/* 1. Large Dhoot Group Winged Wheel Stylized Watermark in Center Background */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] opacity-[0.035] transition-all duration-700 pointer-events-none">
-        <svg viewBox="0 0 400 400" className="w-full h-full animate-spin-slow">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-[0.035] transition-all duration-700 pointer-events-none">
+        <svg viewBox="0 0 400 400" className="w-full h-full">
           {/* Outer Wheel Rim */}
           <circle cx="200" cy="200" r="160" stroke="#000" strokeWidth="18" fill="none" />
           <circle cx="200" cy="200" r="140" stroke="#000" strokeWidth="4" fill="none" strokeDasharray="8 8" />
@@ -42,108 +42,60 @@ export const AutomotiveBackground: React.FC<{ primaryColor: string }> = ({ prima
         </svg>
       </div>
 
-      {/* 2. Precision Isometric Engineering Grid */}
+      {/* 2. Precision Dot Matrix Texture */}
       <div 
-        className="absolute inset-0 opacity-[0.4]"
+        className="absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage: 'radial-gradient(#94A3B8 1.2px, transparent 1.2px)',
           backgroundSize: '32px 32px',
         }}
       />
 
-      {/* 3. Floating Automotive Diagnostics & Precision Engineering Icon Nodes */}
+      {/* 3. Pure Floating Automotive Icons (No Text Boxes) */}
       
-      {/* Top Left: Tachometer & EV Battery */}
-      <div className="absolute top-12 left-10 lg:left-24 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform -rotate-3 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-          <Gauge className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">OBD-II Diagnostic</div>
-          <div className="text-[10px] text-slate-500 font-semibold">ECU & Powertrain Test</div>
-        </div>
+      {/* Top Left Icons */}
+      <div className="absolute top-12 left-12 lg:left-24 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-[#1A3A6B] transform -rotate-6 hover:rotate-0 transition-transform">
+        <Car className="w-6 h-6" />
       </div>
 
-      <div className="absolute top-44 left-6 lg:left-14 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform rotate-2 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
-          <BatteryCharging className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">EV High-Voltage</div>
-          <div className="text-[10px] text-slate-500 font-semibold">State of Health (SoH)</div>
-        </div>
+      <div className="absolute top-44 left-8 lg:left-14 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-blue-600 transform rotate-3 hover:rotate-0 transition-transform">
+        <Gauge className="w-6 h-6" />
       </div>
 
-      {/* Bottom Left: Brake Disc & Suspension */}
-      <div className="absolute bottom-24 left-10 lg:left-24 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform rotate-3 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
-          <Disc className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Brake & Tyres</div>
-          <div className="text-[10px] text-slate-500 font-semibold">Tread Depth & Torque</div>
-        </div>
+      {/* Bottom Left Icons */}
+      <div className="absolute bottom-48 left-8 lg:left-14 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-purple-600 transform -rotate-3 hover:rotate-0 transition-transform">
+        <Sliders className="w-6 h-6" />
       </div>
 
-      <div className="absolute bottom-52 left-6 lg:left-12 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform -rotate-2 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-          <Sliders className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Wheel Alignment</div>
-          <div className="text-[10px] text-slate-500 font-semibold">Suspension Geometry</div>
-        </div>
+      <div className="absolute bottom-16 left-14 lg:left-24 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-amber-600 transform rotate-6 hover:rotate-0 transition-transform">
+        <Disc className="w-6 h-6" />
       </div>
 
-      {/* Top Right: Safety Sensor & Smart Key */}
-      <div className="absolute top-12 right-10 lg:right-24 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform rotate-3 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-          <Cpu className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">ADAS & Radar</div>
-          <div className="text-[10px] text-slate-500 font-semibold">Sensor Calibration</div>
-        </div>
+      {/* Top Right Icons */}
+      <div className="absolute top-12 right-12 lg:right-24 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-indigo-600 transform rotate-6 hover:rotate-0 transition-transform">
+        <Cpu className="w-6 h-6" />
       </div>
 
-      <div className="absolute top-44 right-6 lg:right-14 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform -rotate-2 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-cyan-50 text-cyan-600">
-          <Key className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Smart Key & Immobilizer</div>
-          <div className="text-[10px] text-slate-500 font-semibold">Fob Pairing Verified</div>
-        </div>
+      <div className="absolute top-44 right-8 lg:right-14 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-emerald-600 transform -rotate-3 hover:rotate-0 transition-transform">
+        <BatteryCharging className="w-6 h-6" />
       </div>
 
-      {/* Bottom Right: Quality Inspection & Workshop */}
-      <div className="absolute bottom-24 right-10 lg:right-24 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform -rotate-3 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-rose-50 text-rose-600">
-          <ShieldCheck className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">PDI Quality Pass</div>
-          <div className="text-[10px] text-slate-500 font-semibold">Zero-Defect Audit</div>
-        </div>
+      {/* Bottom Right Icons */}
+      <div className="absolute bottom-48 right-8 lg:right-14 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-cyan-600 transform rotate-3 hover:rotate-0 transition-transform">
+        <Key className="w-6 h-6" />
       </div>
 
-      <div className="absolute bottom-52 right-6 lg:right-12 flex items-center gap-3 p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.04)] transform rotate-2 hover:rotate-0 transition-transform">
-        <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
-          <Wrench className="w-5 h-5" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Pre-Delivery Service</div>
-          <div className="text-[10px] text-slate-500 font-semibold">Fluid Levels & Checklist</div>
-        </div>
+      <div className="absolute bottom-16 right-14 lg:right-24 p-3.5 bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.05)] text-rose-600 transform -rotate-6 hover:rotate-0 transition-transform">
+        <ShieldCheck className="w-6 h-6" />
       </div>
 
-      {/* Ambient Radial Color Glows */}
+      {/* Ambient Color Glows */}
       <div 
-        className="absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full opacity-20 blur-[130px] transition-all duration-700 pointer-events-none"
+        className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full opacity-20 blur-[130px] transition-all duration-700 pointer-events-none"
         style={{ backgroundColor: primaryColor }}
       />
       <div 
-        className="absolute -bottom-32 -right-32 w-[550px] h-[550px] rounded-full opacity-20 blur-[130px] transition-all duration-700 pointer-events-none"
+        className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full opacity-20 blur-[130px] transition-all duration-700 pointer-events-none"
         style={{ backgroundColor: primaryColor }}
       />
     </div>
