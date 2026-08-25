@@ -13,10 +13,10 @@ export const AutomotiveBackground: React.FC<{ primaryColor: string }> = () => {
         }}
       />
 
-      {/* 2. Pure Authentic Dhoot Group Logo Watermark (NO color overlays, NO muddy blue blur) */}
+      {/* 2. Authentic Dhoot Group Logo Watermarks — Brought Closer to the Center Card */}
       
-      {/* Top-Left Crisp Watermark */}
-      <div className="hidden md:block absolute top-6 -left-10 lg:top-10 lg:-left-12 w-64 h-64 lg:w-80 lg:h-80 opacity-[0.14] transition-all duration-700 pointer-events-none">
+      {/* Left Flank Logo (Brought in closer to the center card) */}
+      <div className="hidden lg:block absolute top-1/2 -translate-y-1/2 left-8 xl:left-24 2xl:left-48 w-60 h-60 xl:w-72 xl:h-72 opacity-[0.18] transition-all duration-700 pointer-events-none">
         <img
           src="/logo.png"
           alt="Dhoot Group Logo"
@@ -24,8 +24,8 @@ export const AutomotiveBackground: React.FC<{ primaryColor: string }> = () => {
         />
       </div>
 
-      {/* Bottom-Right Crisp Watermark */}
-      <div className="hidden md:block absolute bottom-6 -right-10 lg:bottom-10 lg:-right-12 w-64 h-64 lg:w-80 lg:h-80 opacity-[0.14] transition-all duration-700 pointer-events-none">
+      {/* Right Flank Logo (Brought in closer to the center card) */}
+      <div className="hidden lg:block absolute top-1/2 -translate-y-1/2 right-8 xl:right-24 2xl:right-48 w-60 h-60 xl:w-72 xl:h-72 opacity-[0.18] transition-all duration-700 pointer-events-none">
         <img
           src="/logo.png"
           alt="Dhoot Group Logo"
