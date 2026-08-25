@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
 import { User, Lock, AlertCircle, Loader2, Building2 } from 'lucide-react';
+import { DualBrandHeader } from '../components/common/BrandLogo';
 
 export const LoginPage: React.FC = () => {
   const [brand, setLocalBrand] = useState<BrandCode>('DHOOT-TATA');
@@ -42,14 +43,8 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        {/* Brand Logo */}
-        <div className="relative inline-block">
-          <img
-            src="/logo.png"
-            alt="Dhoot Group Logo"
-            className="h-16 w-16 mx-auto object-contain mb-3 drop-shadow-sm"
-          />
-        </div>
+        {/* DUAL LOGO: Dhoot Group + Selected Brand (Tata / Hyundai) */}
+        <DualBrandHeader brand={brand} className="mb-4" />
 
         <h1 className="text-2xl font-black tracking-tight text-[#1A1A2E]">
           {currentConfig.name.toUpperCase()}
@@ -60,7 +55,7 @@ export const LoginPage: React.FC = () => {
         <p className="text-[11px] text-[#A0AEC0] mt-0.5">{currentConfig.tagline}</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-md border border-[#DEE2E8] rounded-2xl sm:px-10 space-y-6">
           {error && (
             <div className="p-4 rounded-xl bg-[#FEECEC] border border-[#F5A8A8] flex items-center gap-3">

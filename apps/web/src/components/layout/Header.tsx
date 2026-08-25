@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Building2 } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import { TataLogoSvg, HyundaiLogoSvg } from '../common/BrandLogo';
 
 export const Header: React.FC = () => {
   const { user, currentBrand, logout } = useAuth();
@@ -8,11 +9,22 @@ export const Header: React.FC = () => {
   return (
     <header className="h-16 bg-white border-b border-[#DEE2E8] px-6 flex items-center justify-between sticky top-0 z-10">
       <div className="flex items-center gap-3">
+        {/* Dhoot Group Logo */}
         <img 
           src="/logo.png" 
           alt="Dhoot Group Logo" 
           className="h-10 w-10 object-contain rounded-md"
         />
+
+        {/* OEM Brand Badge */}
+        <div className="h-8 w-12 flex items-center justify-center p-1 bg-[#F8F9FA] rounded border border-[#DEE2E8]">
+          {currentBrand.code === 'DHOOT-TATA' ? (
+            <TataLogoSvg className="h-6 w-auto" />
+          ) : (
+            <HyundaiLogoSvg className="h-6 w-auto" />
+          )}
+        </div>
+
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-black text-[#1A1A2E] leading-none">
