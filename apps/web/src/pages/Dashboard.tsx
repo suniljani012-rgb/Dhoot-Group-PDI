@@ -44,11 +44,27 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Pure Unified Dhoot Group Executive Identity
-  const brandInfo = {
-    title: 'Dhoot Group Operations Command Center',
-    subtitle: 'Executive dealership overview for vehicle fleet, stockyard logistics, and delivery operations'
+  // Dynamic Dhoot Group Franchise Intelligence
+  const getBrandHeader = () => {
+    if (currentBrand.code === 'DHOOT-TATA') {
+      return {
+        title: 'Dhoot Group • Tata Motors Command Center',
+        subtitle: 'Executive dealership overview for Tata Motors passenger and commercial vehicle fleet operations'
+      };
+    }
+    if (currentBrand.code === 'DHOOT-HYUNDAI') {
+      return {
+        title: 'Dhoot Group • Hyundai Command Center',
+        subtitle: 'Executive dealership overview for Hyundai Motor passenger vehicle fleet operations'
+      };
+    }
+    return {
+      title: 'Dhoot Group Operations Command Center',
+      subtitle: 'Consolidated multi-franchise dealership operations across Tata Motors and Hyundai franchises'
+    };
   };
+
+  const brandInfo = getBrandHeader();
 
   // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
   const kpis = [

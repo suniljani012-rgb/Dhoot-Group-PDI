@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Menu, X, Bell, Building } from 'lucide-react';
+import { LogOut, Menu, X, Bell, Globe } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
 
 interface HeaderProps {
@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobileMenu }) => {
-  const { user, logout } = useAuth();
+  const { user, currentBrand, setBrand, logout } = useAuth();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   return (
@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
           {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
-        {/* Pure Dhoot Group Brand Identity */}
+        {/* Dhoot Group Brand Identity */}
         <div className="flex items-center gap-3">
           <img 
             src="/logo.png" 
@@ -50,9 +50,59 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
         </div>
       </div>
 
+      {/* Center: Executive Brand / Franchise Switcher for Admin */}
+      <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-xs">
+        <button
+          onClick={() => setBrand('DHOOT-ALL')}
+          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            currentBrand.code === 'DHOOT-ALL'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          <span>All Franchises</span>
+        </button>
+
+        <button
+          onClick={() => setBrand('DHOOT-TATA')}
+          className={`px-3.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            currentBrand.code === 'DHOOT-TATA'
+              ? 'bg-blue-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>Tata Motors</span>
+        </button>
+
+        <button
+          onClick={() => setBrand('DHOOT-HYUNDAI')}
+          className={`px-3.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            currentBrand.code === 'DHOOT-HYUNDAI'
+              ? 'bg-indigo-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>Hyundai</span>
+        </button>
+      </div>
+
       {/* Right: Notifications, User Profile & Logout */}
       <div className="flex items-center gap-2.5 sm:gap-4">
         
+        {/* Mobile Brand Selector */}
+        <div className="md:hidden">
+          <select
+            value={currentBrand.code}
+            onChange={(e) => setBrand(e.target.value as any)}
+            className="text-xs font-bold p-1.5 bg-slate-100 border border-slate-200 rounded-xl"
+          >
+            <option value="DHOOT-ALL">All Brands</option>
+            <option value="DHOOT-TATA">Tata</option>
+            <option value="DHOOT-HYUNDAI">Hyundai</option>
+          </select>
+        </div>
+
         {/* Real-Time Operations Notification Bell */}
         <div className="relative">
           <button
