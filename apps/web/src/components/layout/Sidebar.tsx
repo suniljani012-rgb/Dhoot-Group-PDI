@@ -1,45 +1,97 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Car, CheckSquare, Wrench, ShieldCheck, Users, Building2 } from 'lucide-react';
+import { LayoutDashboard, Car, CheckSquare, Wrench, ShieldCheck, FileCheck, Building2, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onCloseMobile?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const location = useLocation();
+  const { currentBrand, user } = useAuth();
 
   const navItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Vehicles & Queue', path: '/vehicles', icon: Car },
+    { label: 'Vehicle Inventory', path: '/vehicles', icon: Car },
     { label: 'PDI Inspections', path: '/pdi', icon: CheckSquare },
-    { label: 'Repairs & Workshop', path: '/repairs', icon: Wrench },
+    { label: 'Workshop Repairs', path: '/repairs', icon: Wrench },
     { label: 'QA Approvals', path: '/qa', icon: ShieldCheck },
-    { label: 'User Directory', path: '/users', icon: Users },
-    { label: 'Branch Settings', path: '/branches', icon: Building2 },
+    { label: 'PDI Certificates', path: '/certificates/cert-101', icon: FileCheck },
   ];
 
   return (
-    <aside className="w-64 bg-[#1A1A2E] text-white flex flex-col shrink-0 min-h-[calc(100vh-4rem)]">
-      <div className="p-4 uppercase text-xs font-bold text-[#718096] tracking-wider">
+    <aside className="w-64 bg-[#0F172A] text-white flex flex-col shrink-0 h-full border-r border-slate-800">
+      
+      {/* Brand Profile Section */}
+      <div className="p-4 border-b border-slate-800/80 bg-slate-900/50">
+        <div className="flex items-center gap-3">
+          <img
+            src={currentBrand.logoUrl}
+            alt={currentBrand.name}
+            className="h-10 w-10 object-contain rounded-xl bg-white p-0.5 border border-slate-700"
+          />
+          <div className="overflow-hidden">
+            <div className="text-sm font-black text-white truncate">{currentBrand.name}</div>
+            <span
+              style={{ color: currentBrand.accentColor || '#38BDF8' }}
+              className="text-[10px] font-bold uppercase tracking-wider block"
+            >
+              {currentBrand.tagline}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-3 uppercase text-[10px] font-extrabold text-slate-500 tracking-wider">
         Operations Menu
       </div>
-      <nav className="flex-1 px-3 space-y-1">
+
+      {/* Navigation Links */}
+      <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+          
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={onCloseMobile}
+              style={{
+                backgroundColor: isActive ? currentBrand.primaryColor : undefined,
+              }}
+              className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all group ${
                 isActive 
-                  ? 'bg-[#1A3A6B] text-white' 
-                  : 'text-[#DEE2E8] hover:bg-[#2C2C44] hover:text-white'
+                  ? 'text-white shadow-md' 
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5 shrink-0" />
-              <span>{item.label}</span>
+              <div className="flex items-center gap-3">
+                <Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-105 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <span>{item.label}</span>
+              </div>
+              {isActive && <ChevronRight className="w-4 h-4 text-white/70" />}
             </Link>
           );
         })}
       </nav>
+
+      {/* Bottom User / Station Card */}
+      <div className="p-3 border-t border-slate-800 bg-slate-900/80">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold flex items-center justify-center text-xs shrink-0">
+              {user?.employeeId?.substring(0, 2) || 'US'}
+            </div>
+            <div className="overflow-hidden">
+              <div className="text-xs font-bold text-white truncate">{user?.employeeId || 'STAFF'}</div>
+              <div className="text-[10px] text-slate-400 font-medium truncate">{user?.role?.replace('_', ' ') || 'Engineer'}</div>
+            </div>
+          </div>
+          <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online" />
+        </div>
+      </div>
     </aside>
   );
 };
