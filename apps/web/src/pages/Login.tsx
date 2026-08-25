@@ -65,7 +65,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] bg-[#F0F4F8] relative flex flex-col justify-between items-center py-4 px-4 sm:px-6 lg:px-8 overflow-y-auto sm:overflow-hidden select-none">
+    <div className="h-[100dvh] min-h-[100dvh] bg-[#F0F4F8] relative flex flex-col justify-center items-center py-4 px-4 sm:px-6 lg:px-8 overflow-y-auto sm:overflow-hidden select-none">
       
       {/* 100% Authentic Dhoot Group Logo Watermark Background */}
       <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
@@ -81,7 +81,7 @@ export const LoginPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Floating Glassmorphic Login / Forgot Password Card (Fit-to-Screen) */}
+        {/* Floating Glassmorphic Login / Forgot Password Card */}
         <div className="w-full bg-white/95 backdrop-blur-xl py-6 px-5 sm:py-8 sm:px-8 rounded-3xl sm:rounded-[2.2rem] shadow-[0_15px_45px_rgba(15,23,42,0.09)] border border-white ring-1 ring-slate-900/5 relative overflow-hidden transition-all duration-300">
           
           {/* Top Brand Accent Line */}
@@ -302,11 +302,6 @@ export const LoginPage: React.FC = () => {
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Subtle Footer */}
-      <div className="z-10 text-[10px] text-[#94A3B8] font-medium text-center pb-1">
-        © {new Date().getFullYear()} Dhoot Group • Autoprime Tata & Raja Hyundai
       </div>
     </div>
   );
