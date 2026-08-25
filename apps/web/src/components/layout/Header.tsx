@@ -24,12 +24,12 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
           {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
-        {/* Clean Unified Brand Badge */}
+        {/* Clean Unified Brand Identity */}
         <div className="flex items-center gap-3">
           <img 
             src="/logo.png" 
             alt="Dhoot Group Logo" 
-            className="h-10 w-10 object-contain rounded-2xl shadow-xs shrink-0"
+            className="h-10 w-10 object-contain rounded-2xl shrink-0"
           />
 
           <div>

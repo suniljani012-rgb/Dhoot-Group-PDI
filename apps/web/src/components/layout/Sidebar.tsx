@@ -29,20 +29,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   return (
     <aside className="w-64 bg-[#0F172A] text-white flex flex-col shrink-0 h-full border-r border-slate-800 select-none">
       
-      {/* Brand Profile Section - Clean, High-Contrast & No Border Clutter */}
+      {/* Brand Profile Section - Clean Official Dhoot Group Logo & Clear Typography */}
       <div className="p-4 border-b border-slate-800 bg-[#0B1120]">
         <div className="flex items-center gap-3">
           <img
-            src={currentBrand.logoUrl}
-            alt={currentBrand.name}
-            className="h-10 w-10 object-contain rounded-2xl shadow-sm shrink-0"
+            src="/logo.png"
+            alt="Dhoot Group Logo"
+            className="h-10 w-10 object-contain rounded-2xl shrink-0"
           />
           <div className="overflow-hidden">
             <div className="text-sm font-black text-white truncate tracking-tight">
               {currentBrand.name}
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
-              {currentBrand.code === 'DHOOT-TATA' ? 'Authorized Tata Dealership' : 'Authorized Hyundai Dealership'}
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate mt-0.5">
+              Dhoot Group Dealership
             </span>
           </div>
         </div>
