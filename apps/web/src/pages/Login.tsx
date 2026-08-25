@@ -58,14 +58,9 @@ export const LoginPage: React.FC = () => {
         <DualBrandHeader brand={brand} className="mb-2" />
 
         {/* Clean Welcome Heading */}
-        <div className="space-y-1">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#0F172A]">
-            Welcome to <span style={{ color: currentConfig.primaryColor }} className="transition-colors duration-300">Dhoot Group</span>
-          </h1>
-          <p className="text-xs font-semibold text-[#64748B] uppercase tracking-widest">
-            Operations & Quality Portal
-          </p>
-        </div>
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#0F172A]">
+          Welcome to <span style={{ color: currentConfig.primaryColor }} className="transition-colors duration-300">Dhoot Group</span>
+        </h1>
       </div>
 
       {/* Login Card Container */}
@@ -180,10 +175,13 @@ export const LoginPage: React.FC = () => {
             </div>
           </form>
 
-          {/* Bottom Security Assurance */}
-          <div className="pt-4 border-t border-[#F1F5F9] flex items-center justify-center gap-1.5 text-[11px] font-medium text-[#94A3B8]">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
-            <span>Secure Enterprise Session • Dhoot Group</span>
+          {/* Bottom Security & Attribution Assurance */}
+          <div className="pt-4 border-t border-[#F1F5F9] flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-[#94A3B8]">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
+              <span>Secure Enterprise Session</span>
+            </div>
+            <span className="text-[10px] text-[#A0AEC0]">Designed & Developed for Dhoot Group</span>
           </div>
         </div>
       </div>
