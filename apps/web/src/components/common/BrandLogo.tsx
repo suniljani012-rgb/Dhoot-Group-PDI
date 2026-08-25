@@ -5,27 +5,23 @@ export const DualBrandHeader: React.FC<{ brand: BrandCode; className?: string }>
   const config = BRAND_CONFIGS[brand];
 
   return (
-    <div className={`flex items-center justify-center gap-3.5 sm:gap-5 ${className}`}>
-      {/* 1. Dhoot Group Master Emblem in Premium Curved Container */}
-      <div className="bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-[0_4px_15px_rgba(15,23,42,0.06)] border border-[#E2E8F0] flex items-center justify-center overflow-hidden hover:scale-105 transition-all duration-300">
-        <img
-          src="/logo.png"
-          alt="Dhoot Group Official Emblem"
-          className="h-14 w-14 sm:h-16 sm:w-16 object-contain"
-        />
-      </div>
+    <div className={`flex items-center justify-center gap-4 sm:gap-6 ${className}`}>
+      {/* 1. Dhoot Group Master Emblem - Direct Image (No extra outer background box) */}
+      <img
+        src="/logo.png"
+        alt="Dhoot Group Official Emblem"
+        className="h-16 w-16 sm:h-20 sm:w-20 object-contain hover:scale-105 transition-transform duration-300"
+      />
 
       {/* Sleek Vertical Divider */}
-      <div className="h-9 sm:h-11 w-[1.5px] bg-[#CBD5E1]" />
+      <div className="h-10 sm:h-12 w-[1.5px] bg-[#CBD5E1]" />
 
-      {/* 2. Dealership Brand Logo in Matching Curved Container */}
-      <div className="bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-[0_4px_15px_rgba(15,23,42,0.06)] border border-[#E2E8F0] flex items-center justify-center overflow-hidden hover:scale-105 transition-all duration-300">
-        <img
-          src={config.logoUrl}
-          alt={config.name}
-          className="h-14 w-14 sm:h-16 sm:w-16 object-contain rounded-xl sm:rounded-2xl"
-        />
-      </div>
+      {/* 2. Dealership Brand Logo - Direct Image (No extra outer background box) */}
+      <img
+        src={config.logoUrl}
+        alt={config.name}
+        className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-2xl sm:rounded-3xl shadow-sm hover:scale-105 transition-transform duration-300"
+      />
     </div>
   );
 };
