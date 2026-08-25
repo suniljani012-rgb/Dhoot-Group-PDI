@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
+import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
 
 export interface StockVehicle {
   id: string;
@@ -358,71 +359,12 @@ export const VehiclesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* BULK IMPORT STOCK MODAL */}
-      {isImportModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                <h3 className="font-bold text-slate-900">Bulk Import Stock Inventory • {currentBrand.name}</h3>
-              </div>
-              <button 
-                onClick={() => setIsImportModalOpen(false)}
-                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-xs text-emerald-800">
-                <strong>Supported 21 Stock Headers Format:</strong> Paste directly from Excel or Google Sheets (Tab-Separated or CSV):
-                <div className="mt-1 font-mono text-[10px] text-emerald-900 bg-white/70 p-2 rounded-lg overflow-x-auto">
-                  Purchase Date | Model | Variant | Colour | Fuel | FSC Code | Dealer Code | Plant Code | Year | Status | Vin No | Quantity | Location | Customer Name | Sales Consultant | Accessories Amount | Vehicle Status | Delivery Date | Allocation Date | Allocated Days | Received Amount
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                  Paste Excel Stock Data (Include Header Row)
-                </label>
-                <textarea
-                  rows={8}
-                  value={csvText}
-                  onChange={(e) => setCsvText(e.target.value)}
-                  placeholder="Paste tab-delimited or CSV rows directly from your stockyard Excel workbook..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:bg-white"
-                />
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-medium">
-                  {csvText.trim() ? `${csvText.trim().split('\n').length - 1} rows detected` : 'No data pasted'}
-                </span>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsImportModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={importing || !csvText.trim()}
-                    onClick={handleBulkStockImport}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shadow"
-                  >
-                    {importing ? 'Importing Rows...' : 'Process & Import Stock'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* UNIVERSAL 21-COLUMN EXCEL STOCK IMPORTER */}
+      <ExcelStockImporter
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={fetchStock}
+      />
 
       {/* STOCK DETAILS MODAL */}
       {selectedStock && (

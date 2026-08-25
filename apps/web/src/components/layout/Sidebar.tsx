@@ -3,9 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, 
   ShieldCheck, FileText, FileCheck, ChevronRight, Building2,
-  Truck, BarChart3, Database, Shield, Settings, User
+  Truck, Shield, Settings, UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useFleetCounts } from '../../hooks/useFleetCounts';
 
 interface SidebarProps {
   onCloseMobile?: () => void;
@@ -13,48 +14,113 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const location = useLocation();
-  const { currentBrand, user } = useAuth();
+  const { currentBrand, user, isSuperAdmin } = useAuth();
+  const counts = useFleetCounts();
 
-  const navItems = [
-    { label: 'Operations Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Yard Inward & Receiving', path: '/receiving', icon: Truck, count: 14 },
-    { label: 'Vehicle Stock Ledger', path: '/vehicles', icon: Car, count: 184 },
-    { label: 'PDI Inspection Queue', path: '/pdi', icon: CheckSquare, count: 28 },
-    { label: 'QA Review & Approvals', path: '/qa', icon: ShieldCheck, count: 8 },
-    { label: 'Customer Bookings', path: '/bookings', icon: Bookmark, count: 96 },
-    { label: 'Workshop Rectification', path: '/repairs', icon: Wrench, count: 6 },
-    { label: 'Challans & Invoicing', path: '/invoicing', icon: FileText },
-    { label: 'PDI Certificates', path: '/certificates/cert-101', icon: FileCheck },
-    { label: 'Dealership Admin HQ', path: '/admin', icon: Building2 },
+  // Dynamic modules with real live database counts
+  const allNavItems = [
+    { 
+      label: 'Operations Dashboard', 
+      path: '/dashboard', 
+      icon: LayoutDashboard,
+      roles: ['ALL'] 
+    },
+    { 
+      label: 'Yard Inward & Receiving', 
+      path: '/receiving', 
+      icon: Truck, 
+      count: counts.receivingPending,
+      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER'] 
+    },
+    { 
+      label: 'Vehicle Stock Ledger', 
+      path: '/vehicles', 
+      icon: Car, 
+      count: counts.totalStock,
+      badgeColor: 'bg-blue-50 text-blue-800 border-blue-200',
+      roles: ['ALL'] 
+    },
+    { 
+      label: 'PDI Inspection Queue', 
+      path: '/pdi', 
+      icon: CheckSquare, 
+      count: counts.pdiPending,
+      badgeColor: 'bg-orange-50 text-orange-800 border-orange-200',
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] 
+    },
+    { 
+      label: 'QA Review & Approvals', 
+      path: '/qa', 
+      icon: ShieldCheck, 
+      count: counts.qaPending,
+      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'QA_MANAGER'] 
+    },
+    { 
+      label: 'Customer Bookings', 
+      path: '/bookings', 
+      icon: Bookmark, 
+      count: counts.totalBookings,
+      badgeColor: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'SALES_CONSULTANT', 'ACCOUNTS_EXECUTIVE'] 
+    },
+    { 
+      label: 'Workshop Rectification', 
+      path: '/repairs', 
+      icon: Wrench, 
+      count: counts.inRepair,
+      badgeColor: 'bg-rose-50 text-rose-800 border-rose-200',
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'WORKSHOP_SUPERVISOR', 'PDI_ENGINEER'] 
+    },
+    { 
+      label: 'Challans & Invoicing', 
+      path: '/invoicing', 
+      icon: FileText,
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'ACCOUNTS_EXECUTIVE', 'SALES_CONSULTANT'] 
+    },
+    { 
+      label: 'PDI Certificates', 
+      path: '/certificates/cert-101', 
+      icon: FileCheck,
+      roles: ['ALL'] 
+    },
+    { 
+      label: 'Dealership Admin HQ', 
+      path: '/admin', 
+      icon: Building2,
+      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER'] 
+    },
   ];
+
+  // Filter items based on user role
+  const userRole = user?.role || 'SYSTEM_ADMIN';
+  const navItems = allNavItems.filter(item => {
+    if (isSuperAdmin || item.roles.includes('ALL')) return true;
+    return item.roles.includes(userRole);
+  });
 
   return (
     <aside className="w-64 bg-white text-slate-700 flex flex-col shrink-0 h-full border-r border-slate-200 shadow-xs select-none">
       
-      {/* Brand Header */}
-      <div className="p-4 border-b border-slate-200 bg-slate-50/70">
-        <div className="flex items-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Dhoot Group Logo"
-            className="h-9 w-9 object-contain rounded-xl shrink-0 border border-slate-200 bg-white p-0.5"
-          />
-          <div className="overflow-hidden">
-            <div className="text-xs font-black text-slate-900 truncate tracking-tight">
-              {currentBrand.name}
-            </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate mt-0.5">
-              Dhoot Group Automobile ERP
-            </span>
-          </div>
+      {/* Top Station Identification (Single Clean Header, No Duplicate Logo) */}
+      <div className="p-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+            {currentBrand.shortName} Station Desk
+          </span>
         </div>
+        <span className="text-[10px] font-mono font-bold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
+          v2.4
+        </span>
       </div>
 
       <div className="px-4 pt-4 pb-2 uppercase text-[10px] font-bold text-slate-400 tracking-wider">
         Enterprise Modules
       </div>
 
-      {/* Navigation Links (Clean Light Enterprise Styling) */}
+      {/* Navigation Links with Live Database Counters */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -81,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md font-bold ${
                     isActive 
                       ? 'bg-white/20 text-white' 
-                      : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                      : `${item.badgeColor || 'bg-slate-100 text-slate-600'} border`
                   }`}>
                     {item.count}
                   </span>
@@ -101,13 +167,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
               {user?.userCode ? user.userCode.substring(0, 2) : 'DG'}
             </div>
             <div className="overflow-hidden">
-              <div className="text-xs font-bold text-slate-900 truncate">{user?.userName || user?.employeeId || 'Staff Member'}</div>
+              <div className="text-xs font-bold text-slate-900 truncate">{user?.userName || user?.employeeId || 'System Administrator'}</div>
               <div className="text-[10px] text-slate-500 font-medium truncate">
-                {user?.designation || user?.role?.replace('_', ' ') || 'Engineer'} ({user?.userCode || 'DG001'})
+                {user?.designation || user?.role?.replace('_', ' ') || 'Admin'} ({user?.userCode || 'DG001'})
               </div>
             </div>
           </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Active Connection" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Live Database Connection" />
         </div>
       </div>
 

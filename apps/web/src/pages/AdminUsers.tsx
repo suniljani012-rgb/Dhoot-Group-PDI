@@ -586,11 +586,14 @@ export const AdminUsersPage: React.FC = () => {
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 font-bold"
                   >
-                    <option value="PDI_ENGINEER">PDI Engineer</option>
-                    <option value="QA_MANAGER">QA Manager</option>
+                    <option value="SYSTEM_ADMIN">System Administrator (Full Access)</option>
                     <option value="BRANCH_MANAGER">Branch Manager</option>
-                    <option value="WORKSHOP_MANAGER">Workshop Manager</option>
-                    <option value="SUPER_ADMIN">Super Administrator</option>
+                    <option value="YARD_MANAGER">Yard Manager (Gate Inward & Unloading)</option>
+                    <option value="PDI_ENGINEER">PDI Engineer (Inspection Checklist)</option>
+                    <option value="QA_MANAGER">QA Manager (Review & Sign-Off)</option>
+                    <option value="SALES_CONSULTANT">Sales Consultant (Bookings & Allocation)</option>
+                    <option value="WORKSHOP_MANAGER">Workshop Manager (Repairs)</option>
+                    <option value="ACCOUNTS_EXECUTIVE">Accounts Executive (Invoicing & Challans)</option>
                   </select>
                 </div>
               </div>
