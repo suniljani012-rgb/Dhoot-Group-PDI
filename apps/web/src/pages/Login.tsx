@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
 import { User, Lock, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { DualBrandHeader } from '../components/common/BrandLogo';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
 
 export const LoginPage: React.FC = () => {
@@ -17,8 +16,8 @@ export const LoginPage: React.FC = () => {
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  const { login, setBrand, currentBrand } = useAuth();
-  const currentConfig = BRAND_CONFIGS[currentBrand.code || 'DHOOT-TATA'];
+  const { login, setBrand } = useAuth();
+  const currentConfig = BRAND_CONFIGS['DHOOT-TATA'];
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +28,7 @@ export const LoginPage: React.FC = () => {
       const cleanId = employeeId.trim().toUpperCase();
       
       if (cleanId && password) {
-        // Automatic Brand Detection based on User ID / Credentials
+        // Automatic Brand Detection based on User ID
         let detectedBrand: BrandCode = 'DHOOT-TATA';
         
         if (cleanId.includes('HYN') || cleanId.includes('HYUNDAI') || cleanId.includes('RAJA') || cleanId.startsWith('H-')) {
@@ -76,17 +75,25 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen w-full bg-[#F4F6F9] relative flex flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 select-none">
       
       {/* Authentic Dhoot Group Logo Watermark Background (Desktop & Tablet only) */}
-      <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
+      <AutomotiveBackground primaryColor="#1A3A6B" />
 
       {/* Main Single Centered Card Stack */}
       <div className="w-full max-w-[420px] sm:max-w-[460px] mx-auto z-10 flex flex-col items-center">
         
-        {/* Header: Dual Brand Logos + Welcome Heading */}
-        <div className="text-center space-y-2.5 mb-5">
-          <DualBrandHeader brand={currentBrand.code || 'DHOOT-TATA'} className="mb-2" />
+        {/* Header: Sole Master Dhoot Group Emblem + Welcome Heading */}
+        <div className="text-center space-y-2.5 mb-5 flex flex-col items-center">
+          
+          {/* Authentic Master Dhoot Group Wheel Logo */}
+          <div className="mb-2 transition-transform duration-300 hover:scale-105">
+            <img
+              src="/logo.png"
+              alt="Dhoot Group Official Emblem"
+              className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-2xl sm:rounded-3xl shadow-sm"
+            />
+          </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0F172A]">
-            Welcome to <span style={{ color: currentConfig.primaryColor }} className="transition-colors duration-300">Dhoot Group</span>
+            Welcome to <span style={{ color: '#1A3A6B' }} className="transition-colors duration-300">Dhoot Group</span>
           </h1>
         </div>
 
@@ -95,8 +102,7 @@ export const LoginPage: React.FC = () => {
           
           {/* Top Brand Accent Line */}
           <div 
-            className="absolute top-0 left-0 right-0 h-1.5 transition-colors duration-500"
-            style={{ backgroundColor: currentConfig.primaryColor }}
+            className="absolute top-0 left-0 right-0 h-1.5 bg-[#1A3A6B]"
           />
 
           {error && (
@@ -125,7 +131,7 @@ export const LoginPage: React.FC = () => {
                     placeholder="Enter User ID"
                     value={employeeId}
                     onChange={(e) => setEmployeeId(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:border-transparent focus:bg-white transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -142,7 +148,7 @@ export const LoginPage: React.FC = () => {
                       setError(null);
                       setIsForgotPassword(true);
                     }}
-                    style={{ color: currentConfig.primaryColor }}
+                    style={{ color: '#1A3A6B' }}
                     className="text-[11px] font-bold hover:underline focus:outline-none cursor-pointer"
                   >
                     Forgot Password?
@@ -158,7 +164,7 @@ export const LoginPage: React.FC = () => {
                     placeholder="Enter Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                    className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:border-transparent focus:bg-white transition-all shadow-sm"
                   />
                   <button
                     type="button"
@@ -180,7 +186,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ backgroundColor: currentConfig.primaryColor }}
+                  style={{ backgroundColor: '#1A3A6B' }}
                   className="w-full flex justify-center items-center gap-2 py-4 px-4 rounded-2xl text-sm font-extrabold text-white shadow-md hover:shadow-lg hover:opacity-95 focus:outline-none active:scale-[0.98] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
                 >
                   {loading ? (
@@ -235,7 +241,7 @@ export const LoginPage: React.FC = () => {
                       setIsForgotPassword(false);
                       setForgotSuccess(false);
                     }}
-                    style={{ backgroundColor: currentConfig.primaryColor }}
+                    style={{ backgroundColor: '#1A3A6B' }}
                     className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white shadow hover:opacity-90 transition-all cursor-pointer"
                   >
                     Back to Sign In
@@ -257,7 +263,7 @@ export const LoginPage: React.FC = () => {
                         placeholder="Enter User ID or Email"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
-                        className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
+                        className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B] focus:border-transparent focus:bg-white transition-all shadow-sm"
                       />
                     </div>
                   </div>
@@ -265,7 +271,7 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    style={{ backgroundColor: currentConfig.primaryColor }}
+                    style={{ backgroundColor: '#1A3A6B' }}
                     className="w-full flex justify-center items-center py-3.5 px-4 rounded-2xl text-sm font-bold text-white shadow-md hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {forgotLoading ? (
