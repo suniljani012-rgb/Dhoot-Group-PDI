@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth, BrandCode } from '../../context/AuthContext';
 import { LogOut, Menu, X, Bell, Globe } from 'lucide-react';
+import { NotificationPanel } from './NotificationPanel';
 
 interface HeaderProps {
   isMobileMenuOpen: boolean;
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobileMenu }) => {
   const { user, currentBrand, setBrand, logout, isSuperAdmin } = useAuth();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs select-none">
@@ -99,11 +101,12 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
 
         {/* Notification Bell */}
         <button 
-          className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-2xl transition-colors relative cursor-pointer"
-          title="Notifications"
+          onClick={() => setIsNotificationOpen(true)}
+          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-colors relative cursor-pointer"
+          title="Notifications & Operations Feed"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
         </button>
 
         {/* User Info Badge */}
@@ -131,6 +134,12 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
           <span className="hidden sm:inline">Sign Out</span>
         </button>
       </div>
+
+      {/* Slide-Over Notification Center */}
+      <NotificationPanel
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+      />
     </header>
   );
 };
