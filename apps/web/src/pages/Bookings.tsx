@@ -169,14 +169,9 @@ export const BookingsPage: React.FC = () => {
       {/* Header Toolbar */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-              Customer Booking & Vehicle Stock Allocation Desk
-            </h1>
-            <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
-              Live Bookings Desk
-            </span>
-          </div>
+          <h1 className="text-base font-black text-slate-900 leading-tight">
+            Customer Booking & Vehicle Stock Allocation Desk
+          </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             Register retail customer advance bookings, track sales consultants, and allocate VIN from quality certified yard stock
           </p>
@@ -345,8 +340,8 @@ export const BookingsPage: React.FC = () => {
 
         {/* Footer */}
         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredBookings.length} database booking records</span>
-          <span className="font-mono text-slate-500">100% Real Database Synced</span>
+          <span>Showing {filteredBookings.length} booking records</span>
+          <span className="text-slate-500 font-medium">Enterprise Retail Desk</span>
         </div>
 
       </div>

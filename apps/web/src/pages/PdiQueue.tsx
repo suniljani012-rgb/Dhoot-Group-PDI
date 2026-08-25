@@ -101,14 +101,9 @@ export const PdiQueuePage: React.FC = () => {
       {/* Top Banner */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-              Vehicle Inspection Workstation Queue
-            </h1>
-            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-              Live Database Feed
-            </span>
-          </div>
+          <h1 className="text-base font-black text-slate-900 leading-tight">
+            Vehicle Inspection Workstation Queue
+          </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             Active inspections and pending vehicle pre-delivery quality checks
           </p>
@@ -267,8 +262,8 @@ export const PdiQueuePage: React.FC = () => {
 
         {/* Footer info */}
         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredSessions.length} active database sessions</span>
-          <span className="text-slate-500 font-medium">100% Real Database Synced</span>
+          <span>Showing {filteredSessions.length} active sessions</span>
+          <span className="text-slate-500 font-medium">Quality Inspection Authority</span>
         </div>
 
       </div>

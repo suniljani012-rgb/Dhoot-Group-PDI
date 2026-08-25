@@ -19,9 +19,9 @@ export interface BrandConfig {
 export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
   'DHOOT-ALL': {
     code: 'DHOOT-ALL',
-    name: 'Dhoot Group (All Brands)',
+    name: 'Dhoot Group Automotive Enterprise',
     shortName: 'ALL BRANDS',
-    tagline: 'Consolidated Automotive Dealership Operations',
+    tagline: 'Consolidated multi-brand executive intelligence across Tata Motors and Hyundai franchises',
     logoUrl: '/logo.png',
     primaryColor: '#0F172A',
     primaryHover: '#1E293B',
@@ -36,8 +36,8 @@ export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
   'DHOOT-TATA': {
     code: 'DHOOT-TATA',
     name: 'Autoprime Tata',
-    shortName: 'TATA',
-    tagline: 'Authorized Tata Motors Dealership',
+    shortName: 'TATA MOTORS',
+    tagline: 'Executive dealership overview for Tata passenger and commercial vehicle fleet operations',
     logoUrl: '/logo.png',
     primaryColor: '#1A3A6B',
     primaryHover: '#2C5298',
@@ -49,8 +49,8 @@ export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
   'DHOOT-HYUNDAI': {
     code: 'DHOOT-HYUNDAI',
     name: 'Raja Hyundai',
-    shortName: 'HYUNDAI',
-    tagline: 'Authorized Hyundai Motor Dealership',
+    shortName: 'HYUNDAI MOTOR',
+    tagline: 'Executive dealership overview for Hyundai passenger vehicle operations',
     logoUrl: '/logo.png',
     primaryColor: '#002C6C',
     primaryHover: '#0047AB',

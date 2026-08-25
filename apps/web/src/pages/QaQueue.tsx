@@ -76,14 +76,9 @@ export const QaQueuePage: React.FC = () => {
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-              Quality Assurance & Certification Review Queue
-            </h1>
-            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-              Live QA Telemetry
-            </span>
-          </div>
+          <h1 className="text-base font-black text-slate-900 leading-tight">
+            Quality Assurance & Certification Review Queue
+          </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             Verify completed inspections, approve delivery readiness, and issue digital vehicle certificates
           </p>
@@ -229,8 +224,8 @@ export const QaQueuePage: React.FC = () => {
 
         {/* Footer */}
         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredQueue.length} database QA records</span>
-          <span className="font-mono text-slate-500">100% Real Database Synced</span>
+          <span>Showing {filteredQueue.length} QA review records</span>
+          <span className="text-slate-500 font-medium">Quality Assurance Authority</span>
         </div>
 
       </div>

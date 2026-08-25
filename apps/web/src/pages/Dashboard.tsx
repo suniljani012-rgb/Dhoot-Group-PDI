@@ -14,7 +14,6 @@ import { useFleetCounts } from '../hooks/useFleetCounts';
 export const DashboardPage: React.FC = () => {
   const { currentBrand, user } = useAuth();
   const counts = useFleetCounts();
-  const [chartTimeframe, setChartTimeframe] = useState<'7D' | '30D' | 'MTD'>('7D');
   const [tableFilter, setTableFilter] = useState<'ALL' | 'IN_TRANSIT' | 'PDI_PENDING' | 'APPROVED' | 'ALLOCATED'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -38,12 +37,34 @@ export const DashboardPage: React.FC = () => {
         setFleetList([]);
       }
     } catch (e) {
-      console.warn('Error fetching live fleet:', e);
+      console.warn('Error fetching fleet:', e);
       setFleetList([]);
     } finally {
       setLoadingFleet(false);
     }
   };
+
+  // Dynamic Executive Heading Based on Active Brand Selection
+  const getBrandHeader = () => {
+    if (currentBrand.code === 'DHOOT-TATA') {
+      return {
+        title: 'Autoprime Tata Operations Command Center',
+        subtitle: 'Executive dealership overview for Tata passenger and commercial vehicle fleet operations'
+      };
+    }
+    if (currentBrand.code === 'DHOOT-HYUNDAI') {
+      return {
+        title: 'Raja Hyundai Operations Command Center',
+        subtitle: 'Executive dealership overview for Hyundai passenger vehicle operations'
+      };
+    }
+    return {
+      title: 'Dhoot Group Automotive Enterprise HQ',
+      subtitle: 'Consolidated multi-brand executive intelligence across Tata Motors and Hyundai franchises'
+    };
+  };
+
+  const brandInfo = getBrandHeader();
 
   // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
   const kpis = [
@@ -57,7 +78,7 @@ export const DashboardPage: React.FC = () => {
     { label: 'In Workshop', value: counts.inRepair, change: `${counts.inRepair} Repairs`, isUp: false, link: '/repairs', color: 'text-rose-700', bg: 'bg-rose-50/50' }
   ];
 
-  // Dynamic Model Distribution Calculated from Actual Database Rows
+  // Dynamic Model Distribution
   const dynamicModelBreakdown = () => {
     if (fleetList.length === 0) {
       return (currentBrand.models || []).slice(0, 6).map(m => ({
@@ -132,22 +153,19 @@ export const DashboardPage: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-              {currentBrand.name} Operations Command Center
+            <h1 className="text-base font-black text-slate-900 leading-tight">
+              {brandInfo.title}
             </h1>
-            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-              100% Real DB Sync
-            </span>
           </div>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Authoritative fleet data query directly from PostgreSQL database tables
+            {brandInfo.subtitle}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             to="/receiving"
-            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+            className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
           >
             <Truck className="w-3.5 h-3.5 text-amber-700" />
             <span>Gate Inward</span>
@@ -155,15 +173,15 @@ export const DashboardPage: React.FC = () => {
 
           <Link
             to="/vehicles"
-            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Import Stock CSV</span>
+            <span>Stock Ledger Importer</span>
           </Link>
         </div>
       </div>
 
-      {/* 2. Sleek Single-Row Metric Strip (100% Database Exact Counts) */}
+      {/* 2. Sleek Single-Row Metric Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
         {kpis.map((k, i) => (
           <Link
@@ -188,24 +206,24 @@ export const DashboardPage: React.FC = () => {
         ))}
       </div>
 
-      {/* 3. Real Database Analytics & Distribution Section */}
+      {/* 3. Dealership Operations & Inventory Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        {/* Left: Real Daily Activity Velocity */}
+        {/* Left: Dealership Daily Activity Velocity */}
         <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div>
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-blue-700" />
-                <h2 className="text-xs font-bold text-slate-900">Live Database Activity Velocity</h2>
+                <h2 className="text-xs font-bold text-slate-900">Operations Activity Velocity</h2>
               </div>
-              <p className="text-[11px] text-slate-400">Total database fleet count: {counts.totalStock} units</p>
+              <p className="text-[11px] text-slate-400">Total active dealership fleet: {counts.totalStock} units</p>
             </div>
 
             <button
               onClick={fetchLiveFleet}
-              className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Refresh DB Data"
+              className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Refresh Fleet Feed"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -214,15 +232,15 @@ export const DashboardPage: React.FC = () => {
           {counts.totalStock === 0 ? (
             <div className="h-44 flex flex-col items-center justify-center text-center space-y-2">
               <FolderOpen className="w-8 h-8 text-slate-300 stroke-[1.5]" />
-              <div className="text-xs font-bold text-slate-700">0 Vehicles in Database</div>
+              <div className="text-xs font-bold text-slate-700">0 Vehicles in Active Stock</div>
               <p className="text-[11px] text-slate-400 max-w-xs">
-                Upload your official 21-column stock Excel file or receive a carrier trailer at gate to see live charts.
+                Upload your official 21-column stock Excel file or receive an incoming carrier trailer at the yard gate.
               </p>
               <Link
                 to="/vehicles"
-                className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 mt-1"
+                className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1 mt-1 shadow-xs"
               >
-                <span>Import Stock Excel</span>
+                <span>Open Stock Importer</span>
                 <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -246,13 +264,13 @@ export const DashboardPage: React.FC = () => {
           )}
         </div>
 
-        {/* Right: Real Model Breakdown */}
+        {/* Right: Model Breakdown */}
         <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3 flex flex-col justify-between">
           <div>
             <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
               <div>
-                <h2 className="text-xs font-bold text-slate-900">Database Model Distribution</h2>
-                <p className="text-[11px] text-slate-400">Inventory count per vehicle model</p>
+                <h2 className="text-xs font-bold text-slate-900">Inventory Model Distribution</h2>
+                <p className="text-[11px] text-slate-400">Stockyard vehicle count per OEM model</p>
               </div>
               <span className="text-xs font-mono font-bold text-slate-700">{counts.totalStock} Total</span>
             </div>
@@ -277,8 +295,8 @@ export const DashboardPage: React.FC = () => {
 
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <div>
-              <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Database Status</span>
-              <div className="text-xs font-bold text-slate-800">PostgreSQL Connected & Synchronized</div>
+              <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Enterprise Dealership Network</span>
+              <div className="text-xs font-bold text-slate-800">{currentBrand.name}</div>
             </div>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
           </div>
@@ -286,14 +304,14 @@ export const DashboardPage: React.FC = () => {
 
       </div>
 
-      {/* 4. Full-Width Dense Real Excel-Style Telemetry Ledger */}
+      {/* 4. Full-Width Dense Operations Telemetry Ledger */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
         
         {/* Table Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-xs font-bold text-slate-900">Live Vehicle Fleet Telemetry (Database Rows)</h2>
-            <p className="text-[11px] text-slate-400">Direct query results from PostgreSQL `vehicles` table</p>
+            <h2 className="text-xs font-bold text-slate-900">Vehicle Inventory & Staging Ledger</h2>
+            <p className="text-[11px] text-slate-400">Live operational ledger across all stockyards, staging bays, and delivery lines</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -324,7 +342,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Real Database Table */}
+        {/* Dense Table */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
@@ -345,13 +363,13 @@ export const DashboardPage: React.FC = () => {
                   <td colSpan={8} className="py-10 text-center text-slate-400">
                     <div className="space-y-1">
                       <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
-                      <div className="font-bold text-slate-600">0 Vehicles Found in Database</div>
+                      <div className="font-bold text-slate-600">0 Vehicles in Active Fleet</div>
                       <p className="text-[11px]">Import an Excel spreadsheet or receive incoming carrier trailers to view stock rows.</p>
                       <Link
                         to="/vehicles"
                         className="inline-flex items-center gap-1 text-slate-900 font-bold underline mt-2 text-xs"
                       >
-                        <span>Go to Stock Ledger Importer</span>
+                        <span>Open 21-Column Stock Importer</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
@@ -414,7 +432,7 @@ export const DashboardPage: React.FC = () => {
 
         {/* Table Footer */}
         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredFleet.length} live database records</span>
+          <span>Showing {filteredFleet.length} active vehicle records</span>
           <Link to="/vehicles" className="text-slate-900 font-bold hover:underline inline-flex items-center gap-1">
             <span>Open 21-Column Stock Ledger</span>
             <ChevronRight className="w-3.5 h-3.5" />
