@@ -4,7 +4,7 @@ import {
   FileText, Search, Plus, Car, ChevronRight, 
   FileSpreadsheet, X, Loader2, DollarSign, CheckCircle2, 
   Receipt, Building, ShieldCheck, Printer, Calendar,
-  Key, UserCheck, Truck, ArrowRight, FolderOpen
+  Key, UserCheck, Truck, ArrowRight, FolderOpen, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -155,8 +155,14 @@ export const ChallanInvoicingPage: React.FC = () => {
     return matchesSearch;
   });
 
+  // Dynamic Billing KPI Metrics
+  const totalBillingCount = records.length;
+  const invoicedPendingHandover = records.filter(r => r.status === 'INVOICED').length;
+  const deliveredGatepassCount = records.filter(r => r.status === 'DELIVERED').length;
+  const totalNetInvoiceValue = records.reduce((sum, r) => sum + (Number(r.net_amount) || 1500000), 0);
+
   return (
-    <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
       
       {/* Top Header */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -178,6 +184,57 @@ export const ChallanInvoicingPage: React.FC = () => {
             <span>Generate Pre-Challan / Invoice</span>
           </button>
         </div>
+      </div>
+
+      {/* Billing & Invoicing KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commercial Invoices</span>
+            <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalBillingCount}</span>
+            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Vouchers Created</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold">
+            <FileSpreadsheet className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ready for Handover</span>
+            <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{invoicedPendingHandover}</span>
+            <span className="text-[10px] font-semibold text-amber-700 mt-1 block">Gatepass Pending</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold">
+            <Clock className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Delivered Customers</span>
+            <span className="text-xl font-black text-emerald-600 leading-none mt-0.5 block">{deliveredGatepassCount}</span>
+            <span className="text-[10px] font-semibold text-emerald-700 mt-1 block">Gatepass Signed</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Invoiced Billing</span>
+            <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block font-mono">
+              ₹{(totalNetInvoiceValue / 100000).toFixed(1)}L
+            </span>
+            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Net Dealership Value</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold">
+            <DollarSign className="w-4 h-4" />
+          </div>
+        </div>
+
       </div>
 
       {/* Dense Excel-Style Invoicing Table */}

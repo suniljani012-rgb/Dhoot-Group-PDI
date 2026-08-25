@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, Plus, Filter, Car, ChevronRight, FileSpreadsheet, 
-  X, Loader2, Calendar, Building, DollarSign, UserCheck 
+  X, Loader2, Calendar, Building, DollarSign, UserCheck,
+  CheckCircle2, CheckSquare, Truck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
@@ -164,39 +165,101 @@ export const VehiclesPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Dynamic Stock KPI Metrics
+  const totalStockCount = vehicles.length;
+  const unallocatedStockCount = vehicles.filter(v => v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length;
+  const allocatedStockCount = vehicles.filter(v => v.status === 'ALLOCATED').length;
+  const pdiCertifiedStockCount = vehicles.filter(v => v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY').length;
+  const inwardPendingCount = vehicles.filter(v => v.status === 'YARD_RECEIVING_PENDING' || v.status === 'IN_TRANSIT').length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
       
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">{currentBrand.name} Vehicle Stock Inventory</h2>
-            <span style={{ backgroundColor: `${currentBrand.primaryColor}15`, color: currentBrand.primaryColor }} className="text-xs font-bold px-2.5 py-0.5 rounded-full">
-              {currentBrand.shortName}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium">21-Field Authoritative Stockyard Inventory & Allocation Ledger</p>
+          <h1 className="text-base font-black text-slate-900 leading-tight">
+            Vehicle Stock Inventory & Allocation Ledger
+          </h1>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            21-Field authoritative stockyard inventory, customer mapping, and vehicle location tracker
+          </p>
         </div>
-        
-        <div className="flex items-center gap-2.5">
+
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-all cursor-pointer"
+            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Import Stock CSV</span>
-          </button>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            style={{ backgroundColor: currentBrand.primaryColor }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-white text-xs font-bold rounded-2xl shadow-sm hover:opacity-90 transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Register Vehicle</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import Excel Stock</span>
           </button>
         </div>
+      </div>
+
+      {/* Stock KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        
+        {/* Card 1: Total Stock */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Fleet Stock</span>
+            <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalStockCount}</span>
+            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Units in System</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold">
+            <Car className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 2: Free Unallocated Stock */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Available Free Stock</span>
+            <span className="text-xl font-black text-emerald-600 leading-none mt-0.5 block">{unallocatedStockCount}</span>
+            <span className="text-[10px] font-semibold text-emerald-700 mt-1 block">Unassigned & Free</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 3: Allocated to Bookings */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Customer Allocated</span>
+            <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block">{allocatedStockCount}</span>
+            <span className="text-[10px] font-semibold text-indigo-700 mt-1 block">Locked to Bookings</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold">
+            <UserCheck className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 4: Quality Certified */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">PDI Certified</span>
+            <span className="text-xl font-black text-blue-600 leading-none mt-0.5 block">{pdiCertifiedStockCount}</span>
+            <span className="text-[10px] font-semibold text-blue-700 mt-1 block">Delivery Ready</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold">
+            <CheckSquare className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 5: Inward Pending */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gate Inward Pending</span>
+            <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{inwardPendingCount}</span>
+            <span className="text-[10px] font-semibold text-amber-700 mt-1 block">Trailer In-Transit</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold">
+            <Truck className="w-4 h-4" />
+          </div>
+        </div>
+
       </div>
 
       {/* Filter & Search Bar */}

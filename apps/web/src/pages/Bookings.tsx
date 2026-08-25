@@ -4,7 +4,7 @@ import {
   Bookmark, Search, Plus, Car, ChevronRight, 
   FileSpreadsheet, X, Loader2, CheckCircle2, UserCheck,
   Calendar, Phone, DollarSign, Tag, Printer, ArrowRight,
-  FolderOpen
+  FolderOpen, Clock, AlertCircle, Check
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -163,8 +163,33 @@ export const BookingsPage: React.FC = () => {
     return matchesSearch;
   });
 
+  // Dynamic Stock & Booking Lookup Analytics
+  const totalBookingsCount = bookings.length;
+  const allocatedBookingsCount = bookings.filter(b => !!b.allocated_vin_no || b.status === 'ALLOCATED' || b.status === 'DELIVERED').length;
+  const pendingAllocBookingsCount = bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED').length;
+  const totalAdvanceReceived = bookings.reduce((acc, b) => acc + (Number(b.receipt_amt) || 25000), 0);
+
+  // Model-wise Lookup: Check unallocated stock available vs pending demand
+  const unallocatedStockByModel: Record<string, number> = {};
+  stockVehicles.forEach(v => {
+    if (v.status !== 'ALLOCATED' && v.status !== 'DELIVERED') {
+      const m = (v.model || '').trim();
+      unallocatedStockByModel[m] = (unallocatedStockByModel[m] || 0) + 1;
+    }
+  });
+
+  let plantIndentRequiredCount = 0;
+  bookings.filter(b => !b.allocated_vin_no).forEach(b => {
+    const m = (b.model || '').trim();
+    if ((unallocatedStockByModel[m] || 0) <= 0) {
+      plantIndentRequiredCount++;
+    } else {
+      unallocatedStockByModel[m]--;
+    }
+  });
+
   return (
-    <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
       
       {/* Header Toolbar */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -186,6 +211,73 @@ export const BookingsPage: React.FC = () => {
             <span>New Customer Booking</span>
           </button>
         </div>
+      </div>
+
+      {/* Smart Stock vs Bookings Lookup Analytics KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        
+        {/* Card 1: Total Bookings */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
+            <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalBookingsCount}</span>
+            <span className="text-[10px] font-bold text-emerald-700 font-mono mt-1 block">₹{(totalAdvanceReceived / 100000).toFixed(2)}L Advance</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold">
+            <Bookmark className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 2: Allocated Vehicles */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">VIN Allocated</span>
+            <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block">{allocatedBookingsCount}</span>
+            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Chassis Locked</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold">
+            <Check className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 3: Pending Allocation */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pending Allocation</span>
+            <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{pendingAllocBookingsCount}</span>
+            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Stock Assign Pending</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold">
+            <Clock className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 4: Available Free Stock */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Available Free Stock</span>
+            <span className="text-xl font-black text-emerald-600 leading-none mt-0.5 block">
+              {stockVehicles.filter(v => v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length}
+            </span>
+            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Unassigned in Yard</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
+            <Car className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 5: Plant Indent / Reorder Required */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plant Indent Needed</span>
+            <span className="text-xl font-black text-rose-600 leading-none mt-0.5 block">{plantIndentRequiredCount}</span>
+            <span className="text-[10px] font-semibold text-rose-700 mt-1 block">OEM Order Required</span>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 font-bold">
+            <AlertCircle className="w-4 h-4" />
+          </div>
+        </div>
+
       </div>
 
       {/* Dense Excel-Style Bookings Table */}
