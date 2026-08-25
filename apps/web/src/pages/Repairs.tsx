@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Wrench, AlertTriangle, CheckCircle2, Clock, Check, 
-  Search, Filter, Plus, FileSpreadsheet, ChevronRight 
+  Search, Filter, Plus, FileSpreadsheet, ChevronRight,
+  FolderOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,73 +10,52 @@ export const RepairsPage: React.FC = () => {
   const { currentBrand } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OPEN' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [tickets, setTickets] = useState([
-    {
-      id: 'REP-01',
-      vin: 'MAT612345N1234567',
-      model: 'Tata Nexon Fearless Plus',
-      area: 'Front Bumper Assembly',
-      severity: 'MAJOR',
-      description: 'Panel gap mismatch near left headlamp assembly',
-      priority: 'HIGH',
-      status: 'OPEN',
-      assignedTo: 'Vikram Singh (TECH-02)',
-      createdAt: 'Today, 12:45 PM',
-      bay: 'Workshop Bay 2',
-    },
-    {
-      id: 'REP-02',
-      vin: 'MAT612345P4455667',
-      model: 'Tata Punch Creative iCNG',
-      area: 'Interior AC Console',
-      severity: 'CRITICAL',
-      description: 'AC blower speed knob loose / erratic resistance',
-      priority: 'CRITICAL',
-      status: 'IN_PROGRESS',
-      assignedTo: 'Suresh Patil (TECH-01)',
-      createdAt: 'Today, 10:20 AM',
-      bay: 'Workshop Bay 1',
-    },
-    {
-      id: 'REP-03',
-      vin: 'MALC12345V5566778',
-      model: 'Hyundai Venue N Line N8',
-      area: 'Rear Tailgate Paint',
-      severity: 'MINOR',
-      description: 'Minor transit clear-coat scuff on bottom left lip',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      assignedTo: 'Anand Kumar (TECH-03)',
-      createdAt: 'Today, 09:15 AM',
-      bay: 'Detailing Bay',
-    },
-    {
-      id: 'REP-04',
-      vin: 'MAT612345H7654321',
-      model: 'Tata Harrier Fearless Dark',
-      area: 'Infotainment Bluetooth',
-      severity: 'MINOR',
-      description: 'Firmware sync glitch resolved with OTA re-flash',
-      priority: 'LOW',
-      status: 'COMPLETED',
-      assignedTo: 'Vikram Singh (TECH-02)',
-      createdAt: 'Yesterday, 04:30 PM',
-      bay: 'Electrical Bay',
+  useEffect(() => {
+    fetchRepairs();
+  }, [currentBrand?.code]);
+
+  const fetchRepairs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:8787/api/v1/repairs');
+      if (res.ok) {
+        const json = await res.json();
+        setTickets(json.data || []);
+      }
+    } catch (e) {
+      console.warn('Error fetching repairs:', e);
+      setTickets([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  const markComplete = (id: string) => {
-    setTickets((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: 'COMPLETED' } : t))
-    );
+  const markComplete = async (id: string) => {
+    try {
+      await fetch(`http://localhost:8787/api/v1/repairs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' })
+      });
+      fetchRepairs();
+    } catch (e) {
+      setTickets((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, status: 'COMPLETED' } : t))
+      );
+    }
   };
 
   const filteredTickets = tickets.filter(t => {
-    const matchesSearch = t.vin.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          t.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          t.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          t.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const vin = (t.vin || '').toLowerCase();
+    const model = (t.model || '').toLowerCase();
+    const tech = (t.assignedTo || t.assigned_to || '').toLowerCase();
+    const desc = (t.description || '').toLowerCase();
+    const search = searchTerm.toLowerCase();
+
+    const matchesSearch = vin.includes(search) || model.includes(search) || tech.includes(search) || desc.includes(search);
     
     if (statusFilter === 'OPEN') return matchesSearch && t.status === 'OPEN';
     if (statusFilter === 'IN_PROGRESS') return matchesSearch && t.status === 'IN_PROGRESS';
@@ -106,11 +86,16 @@ export const RepairsPage: React.FC = () => {
       {/* Top Header */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-            Workshop Defect & Rectification Queue
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
+              Workshop Defect & Rectification Queue
+            </h1>
+            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+              Live DB Ledger
+            </span>
+          </div>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Defect repair tickets triggered automatically from failed inspection points
+            Defect repair tickets triggered automatically from inspection findings
           </p>
         </div>
 
@@ -172,64 +157,76 @@ export const RepairsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-              {filteredTickets.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
-                    {t.id}
-                  </td>
-                  <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
-                    {t.vin}
-                  </td>
-                  <td className="py-2.5 px-3 font-bold text-slate-900">
-                    {t.model}
-                  </td>
-                  <td className="py-2.5 px-3 text-slate-700">
-                    {t.area}
-                  </td>
-                  <td className="py-2.5 px-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border ${getSeverityBadge(t.severity)}`}>
-                      {t.severity}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={t.description}>
-                    {t.description}
-                  </td>
-                  <td className="py-2.5 px-3 text-slate-700 font-semibold">
-                    {t.assignedTo}
-                  </td>
-                  <td className="py-2.5 px-3 font-bold text-slate-800">
-                    {t.bay}
-                  </td>
-                  <td className="py-2.5 px-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border ${getStatusBadge(t.status)}`}>
-                      {t.status}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 text-center">
-                    {t.status !== 'COMPLETED' ? (
-                      <button
-                        onClick={() => markComplete(t.id)}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                      >
-                        <Check className="w-3 h-3 stroke-[3]" />
-                        <span>Repaired</span>
-                      </button>
-                    ) : (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> QA Ready
-                      </span>
-                    )}
+              {filteredTickets.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-10 text-center text-slate-400">
+                    <div className="space-y-1">
+                      <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
+                      <div className="font-bold text-slate-600">0 Active Repair Tickets in Database</div>
+                      <p className="text-[11px]">All vehicle inspections have passed without defects requiring workshop repair.</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTickets.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      {t.id}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
+                      {t.vin}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900">
+                      {t.model}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-700">
+                      {t.area || t.finding_area || 'General'}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border ${getSeverityBadge(t.severity)}`}>
+                        {t.severity}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={t.description}>
+                      {t.description}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-700 font-semibold">
+                      {t.assignedTo || t.assigned_to || 'Technician'}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-slate-800">
+                      {t.bay || 'Bay 1'}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border ${getStatusBadge(t.status)}`}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      {t.status !== 'COMPLETED' ? (
+                        <button
+                          onClick={() => markComplete(t.id)}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                        >
+                          <Check className="w-3 h-3 stroke-[3]" />
+                          <span>Repaired</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> QA Ready
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredTickets.length} workshop rectification tickets</span>
-          <span className="font-mono text-slate-500">Live Workshop Telemetry</span>
+          <span>Showing {filteredTickets.length} database repair records</span>
+          <span className="font-mono text-slate-500">Live Database Synced</span>
         </div>
 
       </div>

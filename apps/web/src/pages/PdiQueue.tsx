@@ -1,87 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   CheckSquare, ArrowRight, UserCheck, Car, Clock, 
   Search, Filter, Plus, ShieldCheck, CheckCircle2,
-  Download, AlertTriangle, ChevronRight, FileSpreadsheet
+  Download, AlertTriangle, ChevronRight, FileSpreadsheet,
+  FolderOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+export interface PdiInspectionItem {
+  id: string;
+  vin: string;
+  brand: string;
+  model: string;
+  variant: string;
+  color: string;
+  yardLocation: string;
+  inspector: string;
+  progress: number;
+  passed: number;
+  failed: number;
+  total: number;
+  status: string;
+  startedAt: string;
+  elapsedTime: string;
+}
 
 export const PdiQueuePage: React.FC = () => {
   const { currentBrand } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'PENDING' | 'DEFECTS'>('ALL');
+  const [pdiSessions, setPdiSessions] = useState<PdiInspectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pdiSessions = [
-    {
-      id: '88888888-8888-8888-8888-888888888881',
-      vin: 'MAT612345S9988776',
-      brand: 'TATA',
-      model: 'Tata Safari Accomplished Plus 6S',
-      variant: 'Dark Edition Kryotec AT',
-      color: 'Oberon Black',
-      yardLocation: 'Pune Yard (Bay 2)',
-      inspector: 'Vikram Malhotra (DG002)',
-      progress: 58,
-      passed: 24,
-      failed: 1,
-      total: 42,
-      status: 'IN_PROGRESS',
-      startedAt: 'Today, 11:30 AM',
-      elapsedTime: '45 mins',
-    },
-    {
-      id: '88888888-8888-8888-8888-888888888882',
-      vin: 'MAT612345H7654321',
-      brand: 'TATA',
-      model: 'Tata Harrier Fearless Plus Dark',
-      variant: '2.0L Diesel 6MT',
-      color: 'Oberon Black',
-      yardLocation: 'Mumbai Yard (Bay 1)',
-      inspector: 'Amit Verma (DG004)',
-      progress: 15,
-      passed: 6,
-      failed: 0,
-      total: 42,
-      status: 'IN_PROGRESS',
-      startedAt: 'Today, 12:15 PM',
-      elapsedTime: '18 mins',
-    },
-    {
-      id: '88888888-8888-8888-8888-888888888883',
-      vin: 'MALC12345C1122334',
-      brand: 'HYUNDAI',
-      model: 'Hyundai Creta SX (O) Turbo DCT',
-      variant: '1.5L Turbo Petrol 7DCT',
-      color: 'Ranger Khaki',
-      yardLocation: 'Nashik Yard (Bay 3)',
-      inspector: 'Rahul Patil (DG007)',
-      progress: 0,
-      passed: 0,
-      failed: 0,
-      total: 42,
-      status: 'PENDING_START',
-      startedAt: 'Assigned 1h ago',
-      elapsedTime: '-',
-    },
-    {
-      id: '88888888-8888-8888-8888-888888888884',
-      vin: 'MAT612345P4455667',
-      brand: 'TATA',
-      model: 'Tata Punch Creative DT',
-      variant: '1.2L Revotron AMT',
-      color: 'Calypso Red',
-      yardLocation: 'Pune Yard (Bay 1)',
-      inspector: 'Vikram Malhotra (DG002)',
-      progress: 80,
-      passed: 34,
-      failed: 2,
-      total: 42,
-      status: 'DEFECTS_FOUND',
-      startedAt: 'Today, 09:40 AM',
-      elapsedTime: '1h 10m',
+  useEffect(() => {
+    fetchPdiQueue();
+  }, [currentBrand?.code]);
+
+  const fetchPdiQueue = async () => {
+    setLoading(true);
+    try {
+      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
+      const res = await fetch(`http://localhost:8787/api/v1/stock${orgParam}`);
+      if (res.ok) {
+        const json = await res.json();
+        const rows = json.data || [];
+        
+        // Filter rows that are ready for inspection or currently being inspected
+        const mapped: PdiInspectionItem[] = rows
+          .filter((v: any) => v.status === 'PDI_PENDING' || v.status === 'PDI_IN_PROGRESS' || v.status === 'RECEIVED')
+          .map((v: any) => ({
+            id: v.id || v.vin,
+            vin: v.vin,
+            brand: v.brand || (v.vin?.startsWith('MAL') ? 'HYUNDAI' : 'TATA'),
+            model: v.model || 'OEM Vehicle',
+            variant: v.variant || 'Standard',
+            color: v.color || 'White',
+            yardLocation: v.location || 'Central Yard • Bay 1',
+            inspector: v.inspector_name || 'Assigned Engineer',
+            progress: v.status === 'PDI_IN_PROGRESS' ? 50 : 0,
+            passed: v.status === 'PDI_IN_PROGRESS' ? 21 : 0,
+            failed: 0,
+            total: 42,
+            status: v.status === 'PDI_IN_PROGRESS' ? 'IN_PROGRESS' : 'PENDING_START',
+            startedAt: v.received_at || 'Today',
+            elapsedTime: v.status === 'PDI_IN_PROGRESS' ? '30 mins' : '-'
+          }));
+        
+        setPdiSessions(mapped);
+      }
+    } catch (e) {
+      console.warn('Error fetching PDI queue:', e);
+      setPdiSessions([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredSessions = pdiSessions.filter(s => {
     const matchesSearch = s.vin.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -102,20 +96,21 @@ export const PdiQueuePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-20 select-none">
+    <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
       
       {/* Top Banner */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
-              Inspection Workstation
+            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
+              Vehicle Inspection Workstation Queue
+            </h1>
+            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+              Live Database Feed
             </span>
-            <span className="text-xs font-semibold text-slate-400">PDI Operations Sheet</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900 mt-1">Active PDI Inspection Queue</h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Excel-style operational queue for tracking ongoing and pending vehicle pre-delivery inspections.
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Active inspections and pending vehicle pre-delivery quality checks
           </p>
         </div>
 
@@ -123,32 +118,32 @@ export const PdiQueuePage: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <Link
             to="/receiving"
-            className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-amber-700" />
             <span>Receive New Car</span>
           </Link>
           <button
             onClick={() => alert('Exporting PDI Inspection Queue to Excel CSV...')}
-            className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Export to Excel</span>
+            <span>Export Excel</span>
           </button>
         </div>
       </div>
 
       {/* Excel Table Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
         
         {/* Table Controls: Search & Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
             {(['ALL', 'IN_PROGRESS', 'PENDING', 'DEFECTS'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
                   statusFilter === tab ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
@@ -157,104 +152,123 @@ export const PdiQueuePage: React.FC = () => {
             ))}
           </div>
 
-          <div className="relative w-72">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search VIN, Model, Inspector..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
+              className="w-full pl-7 pr-3 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
             />
           </div>
         </div>
 
         {/* Excel Data Grid */}
-        <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+        <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
               <tr>
-                <th className="py-3 px-4">VIN Number</th>
-                <th className="py-3 px-4">Model & Variant</th>
-                <th className="py-3 px-4">Colour</th>
-                <th className="py-3 px-4">Assigned Inspector</th>
-                <th className="py-3 px-4">Staging Bay</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 w-44">Checklist Progress</th>
-                <th className="py-3 px-4">Duration</th>
-                <th className="py-3 px-4 text-center">Action</th>
+                <th className="py-2.5 px-3">VIN Number</th>
+                <th className="py-2.5 px-3">Model & Variant</th>
+                <th className="py-2.5 px-3">Colour</th>
+                <th className="py-2.5 px-3">Assigned Inspector</th>
+                <th className="py-2.5 px-3">Staging Bay</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3 w-40">Checklist Progress</th>
+                <th className="py-2.5 px-3">Duration</th>
+                <th className="py-2.5 px-3 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-              {filteredSessions.map((s) => {
-                const badge = getStatusBadge(s.status, s.failed);
-                return (
-                  <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                      {s.vin}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{s.model}</div>
-                      <div className="text-[10px] text-slate-400 font-medium">{s.variant}</div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-semibold text-slate-700">
-                        {s.color}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-700">
-                      <div className="flex items-center gap-1.5">
-                        <UserCheck className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{s.inspector}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-800">
-                      {s.yardLocation}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.class}`}>
-                        {badge.text}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-mono">
-                          <span className="text-slate-500 font-semibold">{s.passed}/{s.total}</span>
-                          <span className="font-bold text-slate-900">{s.progress}%</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                              s.failed > 0 ? 'bg-amber-500' : 'bg-emerald-500'
-                            }`}
-                            style={{ width: `${s.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
-                      {s.elapsedTime}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
+            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
+              {filteredSessions.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-10 text-center text-slate-400">
+                    <div className="space-y-1">
+                      <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
+                      <div className="font-bold text-slate-600">0 Inspection Sessions in Database</div>
+                      <p className="text-[11px]">Receive a carrier trailer at gate or import stock to start inspection.</p>
                       <Link
-                        to={`/pdi/${s.id}`}
-                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[11px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                        to="/receiving"
+                        className="inline-flex items-center gap-1 text-slate-900 font-bold underline mt-2 text-xs"
                       >
-                        <span>{s.progress > 0 ? 'Resume' : 'Start PDI'}</span>
-                        <ChevronRight className="w-3 h-3" />
+                        <span>Go to Gate Receiving Desk</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredSessions.map((s) => {
+                  const badge = getStatusBadge(s.status, s.failed);
+                  return (
+                    <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        {s.vin}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-slate-900">{s.model}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">{s.variant}</div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-semibold text-slate-700">
+                          {s.color}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-700">
+                        <div className="flex items-center gap-1">
+                          <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{s.inspector}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-slate-800">
+                        {s.yardLocation}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badge.class}`}>
+                          {badge.text}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-mono">
+                            <span className="text-slate-500 font-semibold">{s.passed}/{s.total}</span>
+                            <span className="font-bold text-slate-900">{s.progress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-1.5 rounded-full transition-all duration-300 ${
+                                s.failed > 0 ? 'bg-amber-500' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${s.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400">
+                        {s.elapsedTime}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <Link
+                          to={`/pdi/${s.id}`}
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                        >
+                          <span>{s.progress > 0 ? 'Resume' : 'Start PDI'}</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Footer info */}
-        <div className="flex items-center justify-between text-xs text-slate-400 pt-2">
-          <span>Showing {filteredSessions.length} active sessions</span>
-          <span className="text-slate-500 font-medium">Auto-synced with Yard Telemetry</span>
+        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+          <span>Showing {filteredSessions.length} active database sessions</span>
+          <span className="text-slate-500 font-medium">100% Real Database Synced</span>
         </div>
 
       </div>

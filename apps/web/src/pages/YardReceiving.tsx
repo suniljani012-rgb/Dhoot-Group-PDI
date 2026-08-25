@@ -69,71 +69,44 @@ export const YardReceivingPage: React.FC = () => {
   const { currentBrand } = useAuth();
   const [searchVin, setSearchVin] = useState('');
   const [activeTab, setActiveTab] = useState<'PENDING' | 'RECEIVED'>('PENDING');
+  const [vehicles, setVehicles] = useState<IncomingVehicle[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Seeded In-Transit & Inward Fleet
-  const [vehicles, setVehicles] = useState<IncomingVehicle[]>([
-    {
-      id: 'inc-1',
-      vin: 'MAT612345S9988776',
-      brand: 'TATA',
-      model: 'Tata Safari Accomplished Plus 6S',
-      variant: 'Dark Edition Kryotec 2.0L AT',
-      color: 'Oberon Black',
-      engineNo: 'ENG-KY-90881',
-      plantCode: 'Tata Motors Pune Plant',
-      dispatchDate: '24 Aug 2026',
-      trailerNo: 'MH-12-TR-4421',
-      transporter: 'VRL Logistics Logistics Fleet',
-      status: 'YARD_RECEIVING_PENDING',
-    },
-    {
-      id: 'inc-2',
-      vin: 'MAT612345H7654321',
-      brand: 'TATA',
-      model: 'Tata Harrier Fearless Plus Dark',
-      variant: '2.0L Kryotec Turbo Diesel 6MT',
-      color: 'Oberon Black',
-      engineNo: 'ENG-KY-90882',
-      plantCode: 'Tata Motors Pune Plant',
-      dispatchDate: '24 Aug 2026',
-      trailerNo: 'MH-14-BT-9901',
-      transporter: 'Tata Transporter Fleet #4',
-      status: 'YARD_RECEIVING_PENDING',
-    },
-    {
-      id: 'inc-3',
-      vin: 'MALC12345C1122334',
-      brand: 'HYUNDAI',
-      model: 'Hyundai Creta SX (O) Turbo DCT',
-      variant: '1.5L Turbo GDi 7-Speed DCT',
-      color: 'Ranger Khaki',
-      engineNo: 'ENG-HY-77612',
-      plantCode: 'Hyundai Sriperumbudur Plant',
-      dispatchDate: '23 Aug 2026',
-      trailerNo: 'TN-04-TR-1109',
-      transporter: 'South Auto Carriers',
-      status: 'YARD_RECEIVING_PENDING',
-    },
-    {
-      id: 'inc-4',
-      vin: 'MAT612345N1234567',
-      brand: 'TATA',
-      model: 'Tata Nexon Fearless Plus S DT',
-      variant: '1.2L Revotron Turbo Petrol 7DCA',
-      color: 'Daytona Grey',
-      engineNo: 'ENG-NX-33412',
-      plantCode: 'Tata Motors Sanand Plant',
-      dispatchDate: '22 Aug 2026',
-      trailerNo: 'GJ-01-TR-8812',
-      transporter: 'Express Auto Carriers',
-      status: 'RECEIVED_IN_YARD',
-      paperPdiPhoto: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=500',
-      unloadingVideo: 'sample-video',
-      odometerReading: 8,
-      receivedAt: '25 Aug 2026, 10:15 AM',
-      yardBay: 'Pune Central Yard • Bay 2'
+  useEffect(() => {
+    fetchIncomingStock();
+  }, [currentBrand?.code]);
+
+  const fetchIncomingStock = async () => {
+    setLoading(true);
+    try {
+      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
+      const res = await fetch(`http://localhost:8787/api/v1/stock${orgParam}`);
+      if (res.ok) {
+        const json = await res.json();
+        const rows = json.data || [];
+        const mapped: IncomingVehicle[] = rows.map((v: any) => ({
+          id: v.id || v.vin,
+          vin: v.vin,
+          brand: (v.brand || (v.vin?.startsWith('MAL') ? 'HYUNDAI' : 'TATA')) as 'TATA' | 'HYUNDAI',
+          model: v.model || 'OEM Vehicle',
+          variant: v.variant || 'Standard',
+          color: v.color || 'White',
+          engineNo: v.engine_no || v.engine_number || 'ENG-001',
+          plantCode: v.plant_code || 'OEM Plant',
+          dispatchDate: v.purchase_date || '2026-08-25',
+          trailerNo: v.trailer_no || 'TR-LOG-01',
+          transporter: v.transporter || 'Auto Carrier Logistics',
+          status: (v.status === 'YARD_RECEIVING_PENDING' || v.status === 'IN_TRANSIT') ? 'YARD_RECEIVING_PENDING' : 'RECEIVED_IN_YARD'
+        }));
+        setVehicles(mapped);
+      }
+    } catch (e) {
+      console.warn('Error fetching incoming stock:', e);
+      setVehicles([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   // Receiving Modal State
   const [selectedVehicle, setSelectedVehicle] = useState<IncomingVehicle | null>(null);
