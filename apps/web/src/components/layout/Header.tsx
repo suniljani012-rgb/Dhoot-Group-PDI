@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth, BrandCode } from '../../context/AuthContext';
-import { LogOut, Menu, X, Bell, Repeat } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { LogOut, Menu, X, Bell } from 'lucide-react';
 
 interface HeaderProps {
   isMobileMenuOpen: boolean;
@@ -11,47 +11,41 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
   const { user, currentBrand, setBrand, logout, isSuperAdmin } = useAuth();
 
   return (
-    <header className="h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+    <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs select-none">
       
-      {/* Left: Mobile Menu Button + Brand Logo & Title */}
+      {/* Left: Mobile Toggle & Clean Dealership Branding */}
       <div className="flex items-center gap-3">
-        {/* Mobile Hamburger Toggle Button (Hidden on Desktop) */}
+        {/* Mobile Hamburger Menu Toggle */}
         <button
           onClick={onToggleMobileMenu}
-          className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
+          className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
           aria-label={isMobileMenuOpen ? 'Close Menu' : 'Open Menu'}
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
-        {/* Brand Logos */}
-        <div className="flex items-center gap-2.5">
+        {/* Clean Unified Brand Badge */}
+        <div className="flex items-center gap-3">
           <img 
             src="/logo.png" 
             alt="Dhoot Group Logo" 
-            className="h-9 w-9 object-contain rounded-lg"
+            className="h-10 w-10 object-contain rounded-2xl shadow-xs shrink-0"
           />
 
-          <img 
-            src={currentBrand.logoUrl} 
-            alt={currentBrand.name} 
-            className="h-9 w-9 object-contain rounded-lg border border-slate-200 p-0.5"
-          />
-
-          <div className="hidden sm:block">
+          <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-black text-[#0F172A] leading-tight">
-                {currentBrand.name.toUpperCase()}
-              </h1>
+              <span className="text-sm sm:text-base font-black text-slate-900 leading-none">
+                {currentBrand.name}
+              </span>
               <span
-                style={{ backgroundColor: currentBrand.accentBg, color: currentBrand.primaryColor }}
-                className="text-[9px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md"
+                style={{ backgroundColor: `${currentBrand.primaryColor}15`, color: currentBrand.primaryColor }}
+                className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md"
               >
                 {currentBrand.shortName}
               </span>
             </div>
-            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Dhoot Group PDI Platform
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mt-0.5">
+              Dhoot Group • Automotive PDI Platform
             </span>
           </div>
         </div>
@@ -62,10 +56,10 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
         
         {/* Dual Brand Switcher for Super Admin */}
         {(isSuperAdmin || user?.hasDualBrandAccess) && (
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
             <button
               onClick={() => setBrand('DHOOT-TATA')}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                 currentBrand.code === 'DHOOT-TATA'
                   ? 'bg-[#1A3A6B] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -75,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
             </button>
             <button
               onClick={() => setBrand('DHOOT-HYUNDAI')}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                 currentBrand.code === 'DHOOT-HYUNDAI'
                   ? 'bg-[#002C6C] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -88,16 +82,16 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
 
         {/* Notification Bell */}
         <button 
-          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors relative"
+          className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-2xl transition-colors relative cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
         </button>
 
-        {/* User Badge */}
+        {/* User Info Badge */}
         <div className="hidden md:block text-right">
-          <div className="text-xs font-bold text-slate-800 flex items-center gap-1 justify-end">
+          <div className="text-xs font-bold text-slate-900 flex items-center gap-1 justify-end">
             <span>{user?.userName || user?.employeeId || 'STAFF'}</span>
             {isSuperAdmin && (
               <span className="px-1.5 py-0.2 bg-purple-100 text-purple-700 text-[9px] font-extrabold rounded">
@@ -105,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
               </span>
             )}
           </div>
-          <div className="text-[10px] text-slate-500 uppercase font-semibold">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">
             {user?.designation || user?.role?.replace('_', ' ') || 'Officer'} • {user?.userCode || 'DG001'}
           </div>
         </div>
@@ -113,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
         {/* Sign Out Button */}
         <button
           onClick={logout}
-          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-xs font-bold"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-colors text-xs font-bold cursor-pointer"
           title="Sign Out"
         >
           <LogOut className="w-4 h-4" />
