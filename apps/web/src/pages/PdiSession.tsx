@@ -83,98 +83,140 @@ export const PdiSessionPage: React.FC = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Real Official Tata Motors PDI Inspection Steps (Clean & Plain Language)
-  const checklistCategories: ChecklistCategory[] = [
-    {
-      id: 'cat-1',
-      stepNumber: 1,
-      name: 'Exterior, Body Panels & Paint',
-      shortName: 'Exterior',
-      items: [
-        { id: 'ext-1', code: 'EXT-01', title: 'VIN & Chassis Number Verification', instruction: 'Match VIN stamped on windshield, B-pillar sticker and engine bay with invoice.' },
-        { id: 'ext-2', code: 'EXT-02', title: 'Paint Quality & Scratch / Dent Inspection', instruction: 'Check body panels under natural daylight for scratches, transit dents or paint bubbles.' },
-        { id: 'ext-3', code: 'EXT-03', title: 'Panel Gaps & Fitment Alignment', instruction: 'Ensure uniform panel gaps between bonnet, front fenders, doors and boot lid.' },
-        { id: 'ext-4', code: 'EXT-04', title: 'Front & Rear Bumpers, Grille and Monograms', instruction: 'Check bumper clips, front chrome grille, and rear vehicle badge fitment.' },
-        { id: 'ext-5', code: 'EXT-05', title: 'Windshield, Windows & Rear Glass', instruction: 'Inspect all glass for chips, cracks and verify matching manufacturing date code.' },
-        { id: 'ext-6', code: 'EXT-06', title: 'Side Mirrors (ORVM) & Door Handles', instruction: 'Check mirror glass, power folding motor, and keyless entry sensors on door handles.' },
-        { id: 'ext-7', code: 'EXT-07', title: 'Alloy Wheels & Tyres (DOT Date & Tread)', instruction: 'Inspect all 4 alloy wheels for curb scratches, tyre pressure and spare wheel in boot.' },
-        { id: 'ext-8', code: 'EXT-08', title: 'Fuel / EV Charging Flap & Roof Rails', instruction: 'Check push-to-open latch, inner rubber seal, roof rails and shark fin antenna.' }
-      ]
-    },
-    {
-      id: 'cat-2',
-      stepNumber: 2,
-      name: 'Lighting & Electricals',
-      shortName: 'Electricals',
-      items: [
-        { id: 'lgt-1', code: 'LGT-01', title: 'Headlamps, LED DRLs & Fog Lamps', instruction: 'Test high beam, low beam, DRL brightness and cornering fog lamps.' },
-        { id: 'lgt-2', code: 'LGT-02', title: 'Turn Indicators & Hazard Flashers', instruction: 'Check front, rear and side mirror indicators for sequential blink animation.', allowsVideo: true, videoHint: 'Record 5-10s indicator blink test' },
-        { id: 'lgt-3', code: 'LGT-03', title: 'Rear Connected Tail Lamps & Brake Lights', instruction: 'Verify rear lightbar glow, high-mount stop lamp, and reverse white lamps.' },
-        { id: 'lgt-4', code: 'LGT-04', title: 'Dual Horn Sound & Pitch', instruction: 'Press steering horn pad to test dual trumpet tone output.', allowsVideo: true, videoHint: 'Record horn sound' },
-        { id: 'lgt-5', code: 'LGT-05', title: 'Wipers & Windshield Washer Spray', instruction: 'Test wiper speeds (intermittent, low, high) and washer jet spray pattern.', allowsVideo: true, videoHint: 'Record wiper spray sweep' },
-        { id: 'lgt-6', code: 'LGT-06', title: 'Power Windows & Central Locking', instruction: 'Test all 4 window switches for one-touch up/down and remote key lock/unlock.' },
-        { id: 'lgt-7', code: 'LGT-07', title: 'Reverse Camera & Parking Sensors', instruction: 'Check reverse camera screen clarity and dynamic parking guideline assist.', allowsVideo: true, videoHint: 'Record reverse camera display' }
-      ]
-    },
-    {
-      id: 'cat-3',
-      stepNumber: 3,
-      name: 'Interior Cabin & Dashboard',
-      shortName: 'Interior',
-      items: [
-        { id: 'int-1', code: 'INT-01', title: 'Dashboard & Center Console Fitment', instruction: 'Inspect dashboard leatherette, center armrest, and AC vent louvers.' },
-        { id: 'int-2', code: 'INT-02', title: 'Digital Instrument Cluster & Odometer', instruction: 'Verify zero warning errors on speedometer cluster and confirm odometer reading (<50 km).' },
-        { id: 'int-3', code: 'INT-03', title: 'Touchscreen Infotainment & Audio System', instruction: 'Test touchscreen touch response, Bluetooth, Apple CarPlay and Harman speakers.', allowsVideo: true, videoHint: 'Record touchscreen response' },
-        { id: 'int-4', code: 'INT-04', title: 'AC Climate Control & Blower Cooling', instruction: 'Test cooling at lowest temperature (16°C), fan speeds and air circulation.', allowsVideo: true, videoHint: 'Record AC cooling blower' },
-        { id: 'int-5', code: 'INT-05', title: 'Panoramic Sunroof & Sunblind Operation', instruction: 'Test sunroof open, tilt, slide and anti-pinch safety obstacle return.', allowsVideo: true, videoHint: 'Record sunroof opening' },
-        { id: 'int-6', code: 'INT-06', title: 'Seats Upholstery & Seatbelt Locks', instruction: 'Check seat fabric/leatherette stitching, seat adjustments and all 3-point seatbelts.' },
-        { id: 'int-7', code: 'INT-07', title: 'Steering Controls & Ambient Lighting', instruction: 'Verify illuminated Tata logo on steering, steering switches and mood lighting.' },
-        { id: 'int-8', code: 'INT-08', title: 'Toolkit, Spare Wheel & Emergency Jack', instruction: 'Ensure jack, wheel wrench, tow hook, and warning triangle are present in boot.' }
-      ]
-    },
-    {
-      id: 'cat-4',
-      stepNumber: 4,
-      name: 'Under-Hood & Fluid Levels',
-      shortName: 'Engine Bay',
-      items: [
-        { id: 'eng-1', code: 'ENG-01', title: 'Engine Oil Level & Dipstick', instruction: 'Check oil level on dipstick between MIN and MAX. Oil should be clean and amber.' },
-        { id: 'eng-2', code: 'ENG-02', title: 'Coolant Reservoir & Radiator Hoses', instruction: 'Verify coolant level in expansion bottle and ensure zero fluid leaks around hoses.' },
-        { id: 'eng-3', code: 'ENG-03', title: 'Brake & Clutch Fluid Level', instruction: 'Check master cylinder transparent reservoir level is at full MAX line.' },
-        { id: 'eng-4', code: 'ENG-04', title: '12V Battery Terminals & Voltage', instruction: 'Inspect battery terminal clamps and verify healthy voltage reading (>12.6V).' },
-        { id: 'eng-5', code: 'ENG-05', title: 'Engine Wire Harness & Fuse Box', instruction: 'Verify complete harness wiring taping with zero rodent damage or loose connectors.' },
-        { id: 'eng-6', code: 'ENG-06', title: 'Engine Cold Start & Smooth Idling', instruction: 'Crank engine cold. Listen for smooth 850 RPM idle with zero abnormal rattle or knock.', allowsVideo: true, videoHint: 'Record engine idle sound' },
-        { id: 'eng-7', code: 'ENG-07', title: 'Exhaust Tailpipe Emissions', instruction: 'Rev engine up to 2500 RPM. Verify tailpipe produces zero black, white or blue smoke.', allowsVideo: true, videoHint: 'Record exhaust rev smoke test' }
-      ]
-    },
-    {
-      id: 'cat-5',
-      stepNumber: 5,
-      name: 'Under-Chassis, Suspension & Brakes',
-      shortName: 'Underbody',
-      items: [
-        { id: 'und-1', code: 'UND-01', title: 'Underbody Anti-Rust Coating & Floor Pan', instruction: 'Inspect floor pan on lift for transit scrape marks or dented crossmembers.' },
-        { id: 'und-2', code: 'UND-02', title: 'Front & Rear Suspension (Struts & Springs)', instruction: 'Check front MacPherson struts, rear coil springs and rubber bump stops.' },
-        { id: 'und-3', code: 'UND-03', title: 'Brake Discs, Calipers & Fluid Lines', instruction: 'Inspect disc surfaces for smooth finish and verify zero oil seepage on brake lines.' },
-        { id: 'und-4', code: 'UND-04', title: 'Steering Rack & CV Axle Rubber Boots', instruction: 'Verify rubber bellows on steering rack and drive axle CV joints have zero tears.' },
-        { id: 'und-5', code: 'UND-05', title: 'Underbody Fluid Leakage Inspection', instruction: 'Check engine oil sump, gearbox casing and radiator bottom for oil drops.', allowsVideo: true, videoHint: 'Record under-chassis inspection sweep' }
-      ]
-    },
-    {
-      id: 'cat-6',
-      stepNumber: 6,
-      name: 'Road Test & Final Sign-Off',
-      shortName: 'Road Test',
-      items: [
-        { id: 'dyn-1', code: 'DYN-01', title: 'Gear Shift & Clutch Operation', instruction: 'Check smooth gear engagement (Manual/DCA/Automatic) without vibration.', allowsVideo: true, videoHint: 'Record gear shift engagement' },
-        { id: 'dyn-2', code: 'DYN-02', title: 'Braking Performance & Handbrake Hold', instruction: 'Test progressive pedal bite, emergency stopping, and electronic parking brake hold.' },
-        { id: 'dyn-3', code: 'DYN-03', title: 'Steering Alignment & Straight Tracking', instruction: 'Drive on flat road to verify steering is dead center with zero pulling to sides.' },
-        { id: 'dyn-4', code: 'DYN-04', title: 'Cabin NVH Squeak & Rattle Test', instruction: 'Drive over yard rumble strips to confirm zero dashboard or door trim rattles.' },
-        { id: 'dyn-5', code: 'DYN-05', title: 'Documentation (Owner Manual, Warranty, Fastag)', instruction: 'Confirm vehicle manual, warranty card, Fastag and service booklet are in glovebox.' },
-        { id: 'dyn-6', code: 'DYN-06', title: 'Vehicle Final Grooming & Delivery Shine', instruction: 'Verify car wash, vacuumed cabin, polished tyres and delivery-ready clean state.' }
-      ]
+  // Load Checkpoints dynamically from Admin Rules (with official fallback)
+  const getDynamicChecklistCategories = (): ChecklistCategory[] => {
+    const saved = localStorage.getItem('autoprime_pdi_rules');
+    if (saved) {
+      try {
+        const rules = JSON.parse(saved);
+        if (Array.isArray(rules) && rules.length > 0) {
+          const stages = [
+            { stage: 'Exterior', stepNumber: 1, name: 'Exterior, Body Panels & Paint', shortName: 'Exterior' },
+            { stage: 'Electricals', stepNumber: 2, name: 'Lighting & Electricals', shortName: 'Electricals' },
+            { stage: 'Interior', stepNumber: 3, name: 'Interior Cabin & Dashboard', shortName: 'Interior' },
+            { stage: 'Engine Bay', stepNumber: 4, name: 'Under-Hood & Fluid Levels', shortName: 'Engine Bay' },
+            { stage: 'Underbody', stepNumber: 5, name: 'Under-Chassis, Suspension & Brakes', shortName: 'Underbody' },
+            { stage: 'Road Test', stepNumber: 6, name: 'Road Test & Final Sign-Off', shortName: 'Road Test' },
+          ];
+
+          return stages.map((s, idx) => {
+            const itemsInStage = rules.filter((r: any) => r.stage === s.stage);
+            return {
+              id: `cat-${idx + 1}`,
+              stepNumber: s.stepNumber,
+              name: s.name,
+              shortName: s.shortName,
+              items: itemsInStage.map((r: any) => ({
+                id: r.id,
+                code: r.id,
+                title: r.title,
+                instruction: r.description || 'Follow standard inspection procedure.',
+                allowsVideo: r.videoRequired,
+                photosRequired: r.photosRequired || 0,
+                videoHint: r.videoRequired ? 'Mandatory video recording required' : undefined
+              }))
+            };
+          });
+        }
+      } catch (e) {
+        console.warn('Error loading dynamic rules, using defaults:', e);
+      }
     }
-  ];
+
+    return [
+      {
+        id: 'cat-1',
+        stepNumber: 1,
+        name: 'Exterior, Body Panels & Paint',
+        shortName: 'Exterior',
+        items: [
+          { id: 'ext-1', code: 'EXT-01', title: 'VIN & Chassis Number Verification', instruction: 'Match VIN stamped on windshield, B-pillar sticker and engine bay with invoice.' },
+          { id: 'ext-2', code: 'EXT-02', title: 'Paint Quality & Scratch / Dent Inspection', instruction: 'Check body panels under natural daylight for scratches, transit dents or paint bubbles.' },
+          { id: 'ext-3', code: 'EXT-03', title: 'Panel Gaps & Fitment Alignment', instruction: 'Ensure uniform panel gaps between bonnet, front fenders, doors and boot lid.' },
+          { id: 'ext-4', code: 'EXT-04', title: 'Front & Rear Bumpers, Grille and Monograms', instruction: 'Check bumper clips, front chrome grille, and rear vehicle badge fitment.' },
+          { id: 'ext-5', code: 'EXT-05', title: 'Windshield, Windows & Rear Glass', instruction: 'Inspect all glass for chips, cracks and verify matching manufacturing date code.' },
+          { id: 'ext-6', code: 'EXT-06', title: 'Side Mirrors (ORVM) & Door Handles', instruction: 'Check mirror glass, power folding motor, and keyless entry sensors on door handles.' },
+          { id: 'ext-7', code: 'EXT-07', title: 'Alloy Wheels & Tyres (DOT Date & Tread)', instruction: 'Inspect all 4 alloy wheels for curb scratches, tyre pressure and spare wheel in boot.' },
+          { id: 'ext-8', code: 'EXT-08', title: 'Fuel / EV Charging Flap & Roof Rails', instruction: 'Check push-to-open latch, inner rubber seal, roof rails and shark fin antenna.' }
+        ]
+      },
+      {
+        id: 'cat-2',
+        stepNumber: 2,
+        name: 'Lighting & Electricals',
+        shortName: 'Electricals',
+        items: [
+          { id: 'lgt-1', code: 'LGT-01', title: 'Headlamps, LED DRLs & Fog Lamps', instruction: 'Test high beam, low beam, DRL brightness and cornering fog lamps.' },
+          { id: 'lgt-2', code: 'LGT-02', title: 'Turn Indicators & Hazard Flashers', instruction: 'Check front, rear and side mirror indicators for sequential blink animation.', allowsVideo: true, videoHint: 'Record 5-10s indicator blink test' },
+          { id: 'lgt-3', code: 'LGT-03', title: 'Rear Connected Tail Lamps & Brake Lights', instruction: 'Verify rear lightbar glow, high-mount stop lamp, and reverse white lamps.' },
+          { id: 'lgt-4', code: 'LGT-04', title: 'Dual Horn Sound & Pitch', instruction: 'Press steering horn pad to test dual trumpet tone output.', allowsVideo: true, videoHint: 'Record horn sound' },
+          { id: 'lgt-5', code: 'LGT-05', title: 'Wipers & Windshield Washer Spray', instruction: 'Test wiper speeds (intermittent, low, high) and washer jet spray pattern.', allowsVideo: true, videoHint: 'Record wiper spray sweep' },
+          { id: 'lgt-6', code: 'LGT-06', title: 'Power Windows & Central Locking', instruction: 'Test all 4 window switches for one-touch up/down and remote key lock/unlock.' },
+          { id: 'lgt-7', code: 'LGT-07', title: 'Reverse Camera & Parking Sensors', instruction: 'Check reverse camera screen clarity and dynamic parking guideline assist.', allowsVideo: true, videoHint: 'Record reverse camera display' }
+        ]
+      },
+      {
+        id: 'cat-3',
+        stepNumber: 3,
+        name: 'Interior Cabin & Dashboard',
+        shortName: 'Interior',
+        items: [
+          { id: 'int-1', code: 'INT-01', title: 'Dashboard & Center Console Fitment', instruction: 'Inspect dashboard leatherette, center armrest, and AC vent louvers.' },
+          { id: 'int-2', code: 'INT-02', title: 'Digital Instrument Cluster & Odometer', instruction: 'Verify zero warning errors on speedometer cluster and confirm odometer reading (<50 km).' },
+          { id: 'int-3', code: 'INT-03', title: 'Touchscreen Infotainment & Audio System', instruction: 'Test touchscreen touch response, Bluetooth, Apple CarPlay and Harman speakers.', allowsVideo: true, videoHint: 'Record touchscreen response' },
+          { id: 'int-4', code: 'INT-04', title: 'AC Climate Control & Blower Cooling', instruction: 'Test cooling at lowest temperature (16°C), fan speeds and air circulation.', allowsVideo: true, videoHint: 'Record AC cooling blower' },
+          { id: 'int-5', code: 'INT-05', title: 'Panoramic Sunroof & Sunblind Operation', instruction: 'Test sunroof open, tilt, slide and anti-pinch safety obstacle return.', allowsVideo: true, videoHint: 'Record sunroof opening' },
+          { id: 'int-6', code: 'INT-06', title: 'Seats Upholstery & Seatbelt Locks', instruction: 'Check seat fabric/leatherette stitching, seat adjustments and all 3-point seatbelts.' },
+          { id: 'int-7', code: 'INT-07', title: 'Steering Controls & Ambient Lighting', instruction: 'Verify illuminated Tata logo on steering, steering switches and mood lighting.' },
+          { id: 'int-8', code: 'INT-08', title: 'Toolkit, Spare Wheel & Emergency Jack', instruction: 'Ensure jack, wheel wrench, tow hook, and warning triangle are present in boot.' }
+        ]
+      },
+      {
+        id: 'cat-4',
+        stepNumber: 4,
+        name: 'Under-Hood & Fluid Levels',
+        shortName: 'Engine Bay',
+        items: [
+          { id: 'eng-1', code: 'ENG-01', title: 'Engine Oil Level & Dipstick', instruction: 'Check oil level on dipstick between MIN and MAX. Oil should be clean and amber.' },
+          { id: 'eng-2', code: 'ENG-02', title: 'Coolant Reservoir & Radiator Hoses', instruction: 'Verify coolant level in expansion bottle and ensure zero fluid leaks around hoses.' },
+          { id: 'eng-3', code: 'ENG-03', title: 'Brake & Clutch Fluid Level', instruction: 'Check master cylinder transparent reservoir level is at full MAX line.' },
+          { id: 'eng-4', code: 'ENG-04', title: '12V Battery Terminals & Voltage', instruction: 'Inspect battery terminal clamps and verify healthy voltage reading (>12.6V).' },
+          { id: 'eng-5', code: 'ENG-05', title: 'Engine Wire Harness & Fuse Box', instruction: 'Verify complete harness wiring taping with zero rodent damage or loose connectors.' },
+          { id: 'eng-6', code: 'ENG-06', title: 'Engine Cold Start & Smooth Idling', instruction: 'Crank engine cold. Listen for smooth 850 RPM idle with zero abnormal rattle or knock.', allowsVideo: true, videoHint: 'Record engine idle sound' },
+          { id: 'eng-7', code: 'ENG-07', title: 'Exhaust Tailpipe Emissions', instruction: 'Rev engine up to 2500 RPM. Verify tailpipe produces zero black, white or blue smoke.', allowsVideo: true, videoHint: 'Record exhaust rev smoke test' }
+        ]
+      },
+      {
+        id: 'cat-5',
+        stepNumber: 5,
+        name: 'Under-Chassis, Suspension & Brakes',
+        shortName: 'Underbody',
+        items: [
+          { id: 'und-1', code: 'UND-01', title: 'Underbody Anti-Rust Coating & Floor Pan', instruction: 'Inspect floor pan on lift for transit scrape marks or dented crossmembers.' },
+          { id: 'und-2', code: 'UND-02', title: 'Front & Rear Suspension (Struts & Springs)', instruction: 'Check front MacPherson struts, rear coil springs and rubber bump stops.' },
+          { id: 'und-3', code: 'UND-03', title: 'Brake Discs, Calipers & Fluid Lines', instruction: 'Inspect disc surfaces for smooth finish and verify zero oil seepage on brake lines.' },
+          { id: 'und-4', code: 'UND-04', title: 'Steering Rack & CV Axle Rubber Boots', instruction: 'Verify rubber bellows on steering rack and drive axle CV joints have zero tears.' },
+          { id: 'und-5', code: 'UND-05', title: 'Underbody Fluid Leakage Inspection', instruction: 'Check engine oil sump, gearbox casing and radiator bottom for oil drops.', allowsVideo: true, videoHint: 'Record under-chassis inspection sweep' }
+        ]
+      },
+      {
+        id: 'cat-6',
+        stepNumber: 6,
+        name: 'Road Test & Final Sign-Off',
+        shortName: 'Road Test',
+        items: [
+          { id: 'dyn-1', code: 'DYN-01', title: 'Gear Shift & Clutch Operation', instruction: 'Check smooth gear engagement (Manual/DCA/Automatic) without vibration.', allowsVideo: true, videoHint: 'Record gear shift engagement' },
+          { id: 'dyn-2', code: 'DYN-02', title: 'Braking Performance & Handbrake Hold', instruction: 'Test progressive pedal bite, emergency stopping, and electronic parking brake hold.' },
+          { id: 'dyn-3', code: 'DYN-03', title: 'Steering Alignment & Straight Tracking', instruction: 'Drive on flat road to verify steering is dead center with zero pulling to sides.' },
+          { id: 'dyn-4', code: 'DYN-04', title: 'Cabin NVH Squeak & Rattle Test', instruction: 'Drive over yard rumble strips to confirm zero dashboard or door trim rattles.' },
+          { id: 'dyn-5', code: 'DYN-05', title: 'Documentation (Owner Manual, Warranty, Fastag)', instruction: 'Confirm vehicle manual, warranty card, Fastag and service booklet are in glovebox.' },
+          { id: 'dyn-6', code: 'DYN-06', title: 'Vehicle Final Grooming & Delivery Shine', instruction: 'Verify car wash, vacuumed cabin, polished tyres and delivery-ready clean state.' }
+        ]
+      }
+    ];
+  };
+
+  const checklistCategories = getDynamicChecklistCategories();
 
   // Responses State (status, photos, video, defect note, severity)
   const [responses, setResponses] = useState<Record<string, {
