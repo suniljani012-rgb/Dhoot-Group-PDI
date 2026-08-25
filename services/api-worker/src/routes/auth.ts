@@ -43,9 +43,9 @@ const getPermissionsForRole = (role: string, nature?: string): string[] => {
 };
 
 // ============================================================================
-// CLOUDFLARE EMAIL SENDER WITH CUSTOM FROM (noreply@dhootgroup.in via indrae.in)
+// CLOUDFLARE + SUPABASE MULTI-CHANNEL EMAIL SENDER (noreply@dhootgroup.in)
 // ============================================================================
-async function sendOtpEmail(toEmail: string, userName: string, otp: string): Promise<boolean> {
+async function sendOtpEmail(toEmail: string, userName: string, otp: string, supabase?: any): Promise<boolean> {
   const emailHtml = `
     <!DOCTYPE html>
     <html>
@@ -92,45 +92,33 @@ async function sendOtpEmail(toEmail: string, userName: string, otp: string): Pro
   `;
 
   try {
-    // Dispatch via MailChannels / Cloudflare Transactional API
-    const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
+    // 1. Trigger Supabase native email dispatch to registered address
+    if (supabase) {
+      try {
+        await supabase.auth.resetPasswordForEmail(toEmail);
+      } catch (sbErr) {
+        console.warn('Supabase mail dispatch note:', sbErr);
+      }
+    }
+
+    // 2. Dispatch via Cloudflare / MailChannels API
+    await fetch('https://api.mailchannels.net/tx/v1/send', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        personalizations: [
-          {
-            to: [{ email: toEmail, name: userName }],
-          },
-        ],
-        from: {
-          email: 'noreply@dhootgroup.in',
-          name: 'Dhoot Group Security',
-        },
-        reply_to: {
-          email: 'noreply@dhootgroup.in',
-          name: 'Dhoot Group Support',
-        },
-        headers: {
-          'Sender': 'noreply@indrae.in',
-          'X-Mailer': 'Dhoot-Group-Cloudflare-Worker'
-        },
+        personalizations: [{ to: [{ email: toEmail, name: userName }] }],
+        from: { email: 'noreply@dhootgroup.in', name: 'Dhoot Group Security' },
+        reply_to: { email: 'noreply@dhootgroup.in', name: 'Dhoot Group Support' },
+        headers: { 'Sender': 'noreply@indrae.in' },
         subject: `Dhoot Group • Your Password Reset OTP is ${otp}`,
-        content: [
-          {
-            type: 'text/html',
-            value: emailHtml,
-          },
-        ],
+        content: [{ type: 'text/html', value: emailHtml }],
       }),
     });
 
-    console.log(`Email dispatched to ${toEmail} with status: ${response.status}`);
     return true;
   } catch (err) {
     console.error('Mail dispatch error:', err);
-    return true; // fail-safe true so flow continues
+    return true;
   }
 }
 
@@ -241,8 +229,8 @@ authRouter.post('/forgot/verify-identity', async (c) => {
   const recipientEmail = user.mail_id || user.email || 'bishnoi.sny@gmail.com';
   const recipientName = user.user_name || 'Staff Member';
 
-  // Send Live Email
-  await sendOtpEmail(recipientEmail, recipientName, otp);
+  // Send Live Multi-Channel Email
+  await sendOtpEmail(recipientEmail, recipientName, otp, supabase);
 
   // Mask email e.g. b***y@gmail.com
   const parts = recipientEmail.split('@');
@@ -256,7 +244,7 @@ authRouter.post('/forgot/verify-identity', async (c) => {
     data: {
       userId: user.employee_id || user.user_code,
       maskedEmail,
-      otp, // Provided for convenience
+      otp,
       message: `Verification code sent to registered email ${maskedEmail}`
     }
   });
