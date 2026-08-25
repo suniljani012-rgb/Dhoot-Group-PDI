@@ -7,6 +7,9 @@ import { VehiclesPage } from './pages/Vehicles';
 import { VehicleDetailPage } from './pages/VehicleDetail';
 import { PdiQueuePage } from './pages/PdiQueue';
 import { PdiSessionPage } from './pages/PdiSession';
+import { RepairsPage } from './pages/Repairs';
+import { QaQueuePage } from './pages/QaQueue';
+import { CertificateViewPage } from './pages/CertificateView';
 import { AppShell } from './components/layout/AppShell';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -60,6 +63,30 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <PdiSessionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/repairs"
+            element={
+              <ProtectedRoute>
+                <RepairsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/qa"
+            element={
+              <ProtectedRoute>
+                <QaQueuePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/certificates/:id"
+            element={
+              <ProtectedRoute>
+                <CertificateViewPage />
               </ProtectedRoute>
             }
           />

@@ -7,6 +7,11 @@ import { devicesRouter } from './routes/devices';
 import { vehiclesRouter } from './routes/vehicles';
 import { assignmentsRouter } from './routes/assignments';
 import { pdiRouter } from './routes/pdi';
+import { mediaRouter } from './routes/media';
+import { findingsRouter } from './routes/findings';
+import { repairsRouter } from './routes/repairs';
+import { qaRouter } from './routes/qa';
+import { certificatesRouter, publicVerifyRouter } from './routes/certificates';
 import { errorHandler } from './middleware/error';
 import { correlationId } from './middleware/correlation';
 import { structuredLogger } from './middleware/logger';
@@ -41,6 +46,12 @@ v1.route('/devices', devicesRouter);
 v1.route('/vehicles', vehiclesRouter);
 v1.route('/assignments', assignmentsRouter);
 v1.route('/pdi', pdiRouter);
+v1.route('/media', mediaRouter);
+v1.route('/findings', findingsRouter);
+v1.route('/repairs', repairsRouter);
+v1.route('/qa', qaRouter);
+v1.route('/certificates', certificatesRouter);
+v1.route('/verify', publicVerifyRouter);
 
 app.route('/api/v1', v1);
 
