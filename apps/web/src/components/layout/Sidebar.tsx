@@ -2,7 +2,8 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, 
-  ShieldCheck, FileText, FileCheck, ChevronRight, Building2
+  ShieldCheck, FileText, FileCheck, ChevronRight, Building2,
+  Truck, Layers
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,12 +16,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const { currentBrand, user } = useAuth();
 
   const navItems = [
-    { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Bookings Tracking', path: '/bookings', icon: Bookmark },
-    { label: 'Vehicle Stock', path: '/vehicles', icon: Car },
+    { label: 'Operations Overview', path: '/dashboard', icon: LayoutDashboard },
+    { label: 'Yard Gate Inward', path: '/receiving', icon: Truck, badge: 'In-Transit' },
+    { label: 'Vehicle Stockyard', path: '/vehicles', icon: Car },
     { label: 'PDI Inspections', path: '/pdi', icon: CheckSquare },
-    { label: 'Workshop Repairs', path: '/repairs', icon: Wrench },
     { label: 'QA Approvals', path: '/qa', icon: ShieldCheck },
+    { label: 'Bookings & Allocation', path: '/bookings', icon: Bookmark },
+    { label: 'Workshop Repairs', path: '/repairs', icon: Wrench },
     { label: 'Challans & Invoicing', path: '/invoicing', icon: FileText },
     { label: 'PDI Certificates', path: '/certificates/cert-101', icon: FileCheck },
     { label: 'Dealership Admin HQ', path: '/admin', icon: Building2 },
@@ -49,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       </div>
 
       <div className="px-4 pt-4 pb-2 uppercase text-[10px] font-extrabold text-slate-500 tracking-wider">
-        Operations Menu
+        Dealership Operations
       </div>
 
       {/* Navigation Links */}
@@ -74,9 +76,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
             >
               <div className="flex items-center gap-3">
                 <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                <span>{item.label}</span>
+                <span className="truncate">{item.label}</span>
               </div>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 text-white/80" />}
+              
+              <div className="flex items-center gap-1.5 shrink-0">
+                {item.badge && !isActive && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    {item.badge}
+                  </span>
+                )}
+                {isActive && <ChevronRight className="w-3.5 h-3.5 text-white/80" />}
+              </div>
             </Link>
           );
         })}
@@ -99,6 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
         </div>
       </div>
+
     </aside>
   );
 };

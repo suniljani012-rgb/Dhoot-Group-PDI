@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
+import { YardReceivingPage } from './pages/YardReceiving';
 import { BookingsPage } from './pages/Bookings';
 import { VehiclesPage } from './pages/Vehicles';
 import { VehicleDetailPage } from './pages/VehicleDetail';
@@ -34,6 +35,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receiving"
+            element={
+              <ProtectedRoute>
+                <YardReceivingPage />
               </ProtectedRoute>
             }
           />
@@ -102,26 +111,18 @@ export const App: React.FC = () => {
             }
           />
           <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminMasterPanelPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute>
-                <AdminMasterPanelPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/certificates/:id"
             element={
               <ProtectedRoute>
                 <CertificateViewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminMasterPanelPage />
               </ProtectedRoute>
             }
           />
