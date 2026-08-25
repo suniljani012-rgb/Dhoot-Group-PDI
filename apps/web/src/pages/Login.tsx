@@ -36,7 +36,7 @@ export const LoginPage: React.FC = () => {
           brand: brand,
         });
       } else {
-        setError('Please enter your Username and Password.');
+        setError('Please enter your User ID and Password.');
         setLoading(false);
       }
     }, 500);
@@ -100,7 +100,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. USERNAME (CLEAN SINGLE LABEL) */}
+            {/* 2. USERNAME / USER ID (CLEAN 'Enter user id' PLACEHOLDER) */}
             <div>
               <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
                 Username
@@ -112,7 +112,7 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder={brand === 'DHOOT-TATA' ? 'e.g. TATA-1024 or ENG-101' : 'e.g. HYN-2048 or ENG-201'}
+                  placeholder="Enter user id"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
                   className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
