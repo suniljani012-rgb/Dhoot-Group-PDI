@@ -781,14 +781,14 @@ export const LoginPage: React.FC = () => {
               {/* STEP 4: SUCCESS CONFIRMATION                                          */}
               {/* --------------------------------------------------------------------- */}
               {forgotStep === 'STEP_4_SUCCESS' && (
-                <div className="space-y-4 text-center py-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-inner">
-                    <CheckCircle2 className="w-6 h-6" />
+                <div className="space-y-5 text-center py-2">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200/80 shadow-xs">
+                    <CheckCircle2 className="w-7 h-7 stroke-[2.2]" />
                   </div>
-                  <div>
-                    <h3 className="text-base font-black text-[#0F172A]">Password Changed Successfully!</h3>
-                    <p className="text-xs text-[#64748B] mt-1 leading-relaxed">
-                      Your new password has been securely updated in the Dhoot Group Enterprise records.
+                  <div className="space-y-1">
+                    <h3 className="text-base font-extrabold text-[#0F172A]">Password Reset Successful</h3>
+                    <p className="text-xs text-slate-500 max-w-[290px] mx-auto leading-relaxed">
+                      Your password has been updated. You can now sign in with your new password.
                     </p>
                   </div>
                   <button
@@ -797,7 +797,7 @@ export const LoginPage: React.FC = () => {
                       setIsForgotPassword(false);
                       setForgotStep('STEP_1_IDENTITY');
                     }}
-                    className="w-full py-3.5 px-4 rounded-2xl text-sm font-extrabold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow transition-all cursor-pointer"
+                    className="w-full py-3.5 px-4 rounded-2xl text-sm font-extrabold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-md hover:shadow-lg active:scale-[0.98] transition-all cursor-pointer"
                   >
                     Proceed to Sign In
                   </button>
