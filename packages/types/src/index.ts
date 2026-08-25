@@ -28,6 +28,9 @@ export type VehicleStatus =
   | 'DELIVERED';
 
 export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'REASSIGNED' | 'CANCELLED';
+export type ResponseType = 'PASS_FAIL' | 'NUMERIC' | 'TEXT' | 'PHOTO_REQUIRED' | 'BOOLEAN' | 'MULTI_SELECT';
+export type SeverityLevel = 'CRITICAL' | 'MAJOR' | 'MINOR' | 'OBSERVATION';
+export type PdiSessionStatus = 'DRAFT' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface User {
   id: string;
@@ -68,15 +71,6 @@ export interface Branch {
   isActive: boolean;
 }
 
-export interface Stockyard {
-  id: string;
-  branchId: string;
-  name: string;
-  code: string;
-  capacity: number;
-  isActive: boolean;
-}
-
 export interface Vehicle {
   id: string;
   organizationId: string;
@@ -97,52 +91,73 @@ export interface Vehicle {
   updatedAt: string;
 }
 
-export interface VehicleStatusHistory {
+export interface ChecklistTemplate {
   id: string;
-  vehicleId: string;
-  fromStatus: VehicleStatus | null;
-  toStatus: VehicleStatus;
-  changedBy: string;
-  reason?: string | null;
-  notes?: string | null;
-  createdAt: string;
+  organizationId: string;
+  name: string;
+  modelPattern: string;
+  fuelType: string;
+  transmission: string;
+  version: number;
+  isActive: boolean;
+  categories?: ChecklistCategory[];
 }
 
-export interface PdiAssignment {
+export interface ChecklistCategory {
+  id: string;
+  templateId: string;
+  code: string;
+  name: string;
+  description?: string;
+  displayOrder: number;
+  items?: ChecklistItem[];
+}
+
+export interface ChecklistItem {
+  id: string;
+  categoryId: string;
+  itemCode: string;
+  title: string;
+  instructions?: string;
+  responseType: ResponseType;
+  isMandatory: boolean;
+  evidenceRequired: boolean;
+  failureSeverity: SeverityLevel;
+  displayOrder: number;
+  isActive: boolean;
+}
+
+export interface PdiSession {
   id: string;
   vehicleId: string;
-  assignedTo: string;
-  assignedBy: string;
-  status: AssignmentStatus;
-  assignedAt: string;
-  completedAt?: string | null;
-  dueAt?: string | null;
+  templateId: string;
+  inspectorId: string;
+  branchId: string;
+  status: PdiSessionStatus;
+  progressPercentage: number;
+  totalItems: number;
+  passedItems: number;
+  failedItems: number;
+  naItems: number;
+  startedAt: string;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
   notes?: string | null;
   vehicle?: Vehicle;
-  assignee?: User;
+  responses?: ChecklistResponse[];
 }
 
-export interface Device {
+export interface ChecklistResponse {
   id: string;
-  userId: string;
-  deviceFingerprint: string;
-  platform: DevicePlatform;
-  osVersion: string;
-  appVersion: string;
-  pushToken?: string;
-  status: DeviceStatus;
-  lastActiveAt: string;
-  registeredAt: string;
-}
-
-export interface SessionContext {
-  userId: string;
-  email: string;
-  employeeId: string;
-  role: UserRole;
-  organizationId: string;
-  branchId: string | null;
   sessionId: string;
+  itemId: string;
+  status: 'PASS' | 'FAIL' | 'NA';
+  numericValue?: number | null;
+  textValue?: string | null;
+  remarks?: string | null;
+  mediaCount: number;
+  respondedAt: string;
+  item?: ChecklistItem;
 }
 
 export interface ApiResponse<T> {

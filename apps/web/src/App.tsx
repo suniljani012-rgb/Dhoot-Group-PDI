@@ -5,6 +5,8 @@ import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { VehiclesPage } from './pages/Vehicles';
 import { VehicleDetailPage } from './pages/VehicleDetail';
+import { PdiQueuePage } from './pages/PdiQueue';
+import { PdiSessionPage } from './pages/PdiSession';
 import { AppShell } from './components/layout/AppShell';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -42,6 +44,22 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <VehicleDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pdi"
+            element={
+              <ProtectedRoute>
+                <PdiQueuePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pdi/:id"
+            element={
+              <ProtectedRoute>
+                <PdiSessionPage />
               </ProtectedRoute>
             }
           />

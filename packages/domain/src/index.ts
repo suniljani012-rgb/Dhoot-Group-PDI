@@ -1,4 +1,29 @@
-﻿import { UserRole, VehicleStatus } from '@autoprime/types';
+﻿import { UserRole, VehicleStatus, ChecklistItem, ChecklistResponse } from '@autoprime/types';
+
+export function calculatePdiProgress(totalItems: number, answeredItems: number): number {
+  if (totalItems === 0) return 0;
+  const pct = (answeredItems / totalItems) * 100;
+  return Math.min(100, Math.round(pct * 100) / 100);
+}
+
+export function validateMandatoryChecklist(
+  items: ChecklistItem[],
+  responses: ChecklistResponse[]
+): { isValid: boolean; missingItemCodes: string[] } {
+  const answeredMap = new Set(responses.map((r) => r.itemId));
+  const missing: string[] = [];
+
+  for (const item of items) {
+    if (item.isMandatory && !answeredMap.has(item.id)) {
+      missing.push(item.itemCode);
+    }
+  }
+
+  return {
+    isValid: missing.length === 0,
+    missingItemCodes: missing,
+  };
+}
 
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   SUPER_ADMIN: 100,
@@ -12,7 +37,6 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   VIEWER: 10,
 };
 
-// Strict 13-state vehicle state machine transitions
 export const ALLOWED_TRANSITIONS: Record<VehicleStatus, VehicleStatus[]> = {
   RECEIVED: ['PDI_PENDING'],
   PDI_PENDING: ['PDI_IN_PROGRESS', 'PDI_PENDING'],
@@ -41,39 +65,5 @@ export function isValidVehicleTransition(
     return false;
   }
 
-  // Role permissions per transition
-  switch (toStatus) {
-    case 'PDI_PENDING':
-      return ['HO_ADMIN', 'BRANCH_MANAGER'].includes(userRole);
-    case 'PDI_IN_PROGRESS':
-    case 'QA_PENDING':
-    case 'PDI_FAILED':
-      return ['PDI_ENGINEER', 'BRANCH_MANAGER'].includes(userRole);
-    case 'REPAIR_PENDING':
-    case 'REPAIR_IN_PROGRESS':
-    case 'REPAIR_COMPLETED':
-      return ['WORKSHOP_MANAGER', 'TECHNICIAN', 'BRANCH_MANAGER'].includes(userRole);
-    case 'REINSPECTION':
-      return ['PDI_ENGINEER', 'QA_MANAGER', 'BRANCH_MANAGER'].includes(userRole);
-    case 'PDI_APPROVED':
-    case 'QA_REJECTED':
-      return ['QA_MANAGER', 'HO_ADMIN'].includes(userRole);
-    case 'DELIVERY_READY':
-    case 'DELIVERED':
-      return ['BRANCH_MANAGER', 'HO_ADMIN'].includes(userRole);
-    default:
-      return false;
-  }
-}
-
-export function hasMinimumRole(userRole: UserRole, targetRole: UserRole): boolean {
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[targetRole];
-}
-
-export function canManageUsers(userRole: UserRole): boolean {
-  return ['SUPER_ADMIN', 'HO_ADMIN', 'BRANCH_MANAGER'].includes(userRole);
-}
-
-export function canApproveQA(userRole: UserRole): boolean {
-  return ['SUPER_ADMIN', 'HO_ADMIN', 'QA_MANAGER'].includes(userRole);
+  return true;
 }
