@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, 
-  ShieldCheck, FileText, FileCheck, ChevronRight, Users, Settings
+  ShieldCheck, FileText, FileCheck, ChevronRight, Building2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,7 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     { label: 'QA Approvals', path: '/qa', icon: ShieldCheck },
     { label: 'Challans & Invoicing', path: '/invoicing', icon: FileText },
     { label: 'PDI Certificates', path: '/certificates/cert-101', icon: FileCheck },
-    { label: 'Admin User Desk', path: '/admin/users', icon: Users },
+    { label: 'Dealership Admin HQ', path: '/admin', icon: Building2 },
   ];
 
   return (
@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+          const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
           
           return (
             <Link

@@ -15,6 +15,7 @@ import { certificatesRouter, publicVerifyRouter } from './routes/certificates';
 import { bookingsRouter } from './routes/bookings';
 import { stockRouter } from './routes/stock';
 import { challansRouter } from './routes/challans';
+import { mastersRouter } from './routes/masters';
 import { errorHandler } from './middleware/error';
 import { correlationId } from './middleware/correlation';
 import { structuredLogger } from './middleware/logger';
@@ -44,6 +45,7 @@ app.get('/health', (c) => c.json({ status: 'healthy', env: c.env.ENVIRONMENT || 
 const v1 = new Hono<{ Bindings: Env }>();
 v1.route('/auth', authRouter);
 v1.route('/users', usersRouter);
+v1.route('/masters', mastersRouter);
 v1.route('/branches', branchesRouter);
 v1.route('/devices', devicesRouter);
 v1.route('/vehicles', vehiclesRouter);
