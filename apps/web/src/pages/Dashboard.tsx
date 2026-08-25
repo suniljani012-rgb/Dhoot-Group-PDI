@@ -44,27 +44,11 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Dynamic Executive Heading Based on Active Brand Selection
-  const getBrandHeader = () => {
-    if (currentBrand.code === 'DHOOT-TATA') {
-      return {
-        title: 'Autoprime Tata Operations Command Center',
-        subtitle: 'Executive dealership overview for Tata passenger and commercial vehicle fleet operations'
-      };
-    }
-    if (currentBrand.code === 'DHOOT-HYUNDAI') {
-      return {
-        title: 'Raja Hyundai Operations Command Center',
-        subtitle: 'Executive dealership overview for Hyundai passenger vehicle operations'
-      };
-    }
-    return {
-      title: 'Dhoot Group Automotive Enterprise HQ',
-      subtitle: 'Consolidated multi-brand executive intelligence across Tata Motors and Hyundai franchises'
-    };
+  // Pure Unified Dhoot Group Executive Identity
+  const brandInfo = {
+    title: 'Dhoot Group Operations Command Center',
+    subtitle: 'Executive dealership overview for vehicle fleet, stockyard logistics, and delivery operations'
   };
-
-  const brandInfo = getBrandHeader();
 
   // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
   const kpis = [
@@ -296,7 +280,7 @@ export const DashboardPage: React.FC = () => {
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <div>
               <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Enterprise Dealership Network</span>
-              <div className="text-xs font-bold text-slate-800">{currentBrand.name}</div>
+              <div className="text-xs font-bold text-slate-800">Dhoot Group Automotive Enterprise</div>
             </div>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
           </div>
