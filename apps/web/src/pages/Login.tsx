@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { 
   User, Lock, AlertCircle, Loader2, Eye, EyeOff, 
   ShieldCheck, ArrowLeft, CheckCircle2, 
-  Calendar, KeyRound, Check, RefreshCw
+  Calendar, KeyRound, Check, RefreshCw, Mail
 } from 'lucide-react';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
 
@@ -586,10 +586,13 @@ export const LoginPage: React.FC = () => {
               {/* --------------------------------------------------------------------- */}
               {forgotStep === 'STEP_2_OTP' && (
                 <form onSubmit={handleStep2OtpSubmit} className="space-y-4">
-                  <div className="p-3.5 bg-blue-50/80 rounded-2xl border border-blue-200 text-xs text-blue-900 space-y-1">
-                    <div className="font-bold">Security OTP Code Dispatched</div>
-                    <div className="text-[11px] text-blue-700">
-                      A 6-digit verification code has been sent to your registered mail: <strong>{maskedEmail}</strong>
+                  <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-[#0F172A] text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div className="text-xs text-slate-600 leading-tight">
+                      <span className="font-semibold text-slate-400 block text-[10px] uppercase tracking-wider">Verification Code Sent</span>
+                      <span className="text-slate-700">Sent to: <strong className="text-[#0F172A] font-mono">{maskedEmail}</strong></span>
                     </div>
                   </div>
 
