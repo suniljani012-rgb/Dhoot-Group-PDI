@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
-import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ShieldCheck, ChevronDown } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { DualBrandHeader } from '../components/common/BrandLogo';
 
 export const LoginPage: React.FC = () => {
@@ -175,13 +175,11 @@ export const LoginPage: React.FC = () => {
             </div>
           </form>
 
-          {/* Bottom Security & Attribution Assurance */}
-          <div className="pt-4 border-t border-[#F1F5F9] flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-[#94A3B8]">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
-              <span>Secure Enterprise Session</span>
-            </div>
-            <span className="text-[10px] text-[#A0AEC0]">Designed & Developed for Dhoot Group</span>
+          {/* Bottom Attribution */}
+          <div className="pt-4 border-t border-[#F1F5F9] text-center">
+            <span className="text-[11px] font-semibold text-[#64748B] tracking-wide">
+              Designed & Developed for Dhoot Group
+            </span>
           </div>
         </div>
       </div>
