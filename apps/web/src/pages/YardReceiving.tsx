@@ -376,70 +376,96 @@ export const YardReceivingPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Vehicle Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {displayedVehicles.map((v) => (
-          <div
-            key={v.id}
-            className="bg-white border border-slate-200 hover:border-slate-300 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-          >
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                  v.brand === 'TATA' ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-indigo-50 text-indigo-800 border-indigo-200'
-                }`}>
-                  {v.brand} OEM
-                </span>
+      {/* Excel-Style Gate Inward Table */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+        <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+              <tr>
+                <th className="py-3 px-4">VIN Number</th>
+                <th className="py-3 px-4">Model & Variant</th>
+                <th className="py-3 px-4">Colour</th>
+                <th className="py-3 px-4">Plant & Dispatch</th>
+                <th className="py-3 px-4">Trailer / Carrier</th>
+                <th className="py-3 px-4">Transporter Fleet</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Arrival Proofs</th>
+                <th className="py-3 px-4 text-center">Gate Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+              {displayedVehicles.map((v) => (
+                <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                    {v.vin}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <div className="font-bold text-slate-900">{v.model}</div>
+                    <div className="text-[10px] text-slate-400 font-medium">{v.variant}</div>
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-semibold text-slate-700">
+                      {v.color}
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-slate-600">
+                    <div className="font-semibold text-slate-800">{v.plantCode}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">{v.dispatchDate}</div>
+                  </td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                    {v.trailerNo}
+                  </td>
+                  <td className="py-3.5 px-4 text-slate-600">
+                    {v.transporter}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      v.status === 'YARD_RECEIVING_PENDING'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    }`}>
+                      {v.status === 'YARD_RECEIVING_PENDING' ? 'Receiving Pending' : 'Received in Yard'}
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4">
+                    {v.paperPdiPhoto ? (
+                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1 w-fit">
+                        <Check className="w-3 h-3 stroke-[3]" /> Photo + Video
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">Pending Inward</span>
+                    )}
+                  </td>
+                  <td className="py-3.5 px-4 text-center">
+                    {v.status === 'YARD_RECEIVING_PENDING' ? (
+                      <button
+                        type="button"
+                        onClick={() => openReceivingModal(v)}
+                        className="px-3.5 py-1.5 bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-bold rounded-xl transition-all inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Truck className="w-3 h-3 text-amber-400" />
+                        <span>Receive at Gate</span>
+                      </button>
+                    ) : (
+                      <Link
+                        to="/pdi/88888888-8888-8888-8888-888888888881"
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-xl transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                      >
+                        <span>Start PDI</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                  v.status === 'YARD_RECEIVING_PENDING'
-                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                }`}>
-                  {v.status === 'YARD_RECEIVING_PENDING' ? 'In-Transit to Yard' : 'Received in Yard'}
-                </span>
-              </div>
-
-              {/* Title & Specs */}
-              <div>
-                <h3 className="text-sm font-bold text-[#0F172A]">{v.model}</h3>
-                <p className="text-xs text-slate-500 font-medium">{v.variant} • {v.color}</p>
-                <div className="mt-2 space-y-0.5 text-[11px] font-mono text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                  <div>VIN: <span className="font-bold text-[#0F172A]">{v.vin}</span></div>
-                  <div>Engine: {v.engineNo}</div>
-                  <div>Trailer: <span className="font-semibold text-slate-800">{v.trailerNo}</span> ({v.transporter})</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[10px] font-medium text-slate-400">
-                Dispatched: {v.dispatchDate}
-              </span>
-
-              {v.status === 'YARD_RECEIVING_PENDING' ? (
-                <button
-                  type="button"
-                  onClick={() => openReceivingModal(v)}
-                  className="px-4 py-2 bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Truck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Receive Vehicle</span>
-                </button>
-              ) : (
-                <Link
-                  to="/pdi/88888888-8888-8888-8888-888888888881"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <span>Start PDI</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              )}
-            </div>
-          </div>
-        ))}
+        <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+          <span>Showing {displayedVehicles.length} incoming trailer units</span>
+          <span className="text-slate-500 font-medium">Gate Telemetry Active</span>
+        </div>
       </div>
 
       {/* ========================================================================= */}
