@@ -248,6 +248,7 @@ authRouter.post('/forgot/verify-identity', async (c) => {
     success: true,
     data: {
       userId: user.employee_id || user.user_code,
+      email: recipientEmail,
       maskedEmail,
       otp,
       message: `Verification code sent to registered email ${maskedEmail}`
