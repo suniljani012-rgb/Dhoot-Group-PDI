@@ -412,6 +412,18 @@ export const AdminMasterPanel: React.FC = () => {
     }
   };
 
+  const filteredModels = vehicleModels.filter(m => {
+    if (modelBrandFilter === 'Tata Motors') return m.brand?.includes('Tata');
+    if (modelBrandFilter === 'Hyundai') return m.brand?.includes('Hyundai');
+    return true;
+  });
+
+  const filteredBranches = branches.filter(b => {
+    if (branchBrandFilter === 'Tata Motors') return b.brand?.includes('Tata') || b.brand?.includes('Shared');
+    if (branchBrandFilter === 'Hyundai') return b.brand?.includes('Hyundai') || b.brand?.includes('Shared');
+    return true;
+  });
+
   return (
     <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
       
@@ -466,7 +478,7 @@ export const AdminMasterPanel: React.FC = () => {
           }`}
         >
           <Car className="w-3.5 h-3.5" />
-          <span>Vehicle Catalog ({vehicleModels.length})</span>
+          <span>Vehicle Catalog ({filteredModels.length})</span>
         </button>
 
         <button
@@ -476,7 +488,7 @@ export const AdminMasterPanel: React.FC = () => {
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
-          <span>Showrooms & Yards ({branches.length})</span>
+          <span>Showrooms & Yards ({filteredBranches.length})</span>
         </button>
 
         <button
