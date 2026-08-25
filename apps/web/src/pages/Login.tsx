@@ -65,16 +65,16 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F4F6F9] relative flex flex-col justify-center items-center px-4 sm:px-6 overflow-hidden select-none">
+    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F4F6F9] sm:bg-[#F0F4F8] relative flex flex-col justify-between items-center p-0 sm:py-10 sm:px-6 overflow-hidden select-none">
       
       {/* Background Watermarks (Active on Desktop/Tablet, Hidden on Mobile) */}
       <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
 
-      {/* Main Single Card Container */}
-      <div className="w-full max-w-[390px] sm:max-w-md mx-auto z-10 flex flex-col items-center">
+      {/* Main Container: Full-height native app on mobile, centered card on desktop */}
+      <div className="w-full sm:max-w-md h-full sm:h-auto flex flex-col justify-between sm:justify-center z-10 p-5 sm:p-0">
         
-        {/* Header: Dual Brand Logos + Clean Title */}
-        <div className="text-center space-y-2 mb-4 sm:mb-5">
+        {/* Top Section: Dual Brand Logos + Heading */}
+        <div className="text-center space-y-2 pt-4 sm:pt-0 mb-3 sm:mb-5">
           <DualBrandHeader brand={brand} className="mb-2" />
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
@@ -82,10 +82,10 @@ export const LoginPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Native-App Feel Floating Card Container */}
-        <div className="w-full bg-white py-6 px-5 sm:py-8 sm:px-8 rounded-[1.75rem] sm:rounded-[2.2rem] shadow-[0_10px_35px_rgba(15,23,42,0.06)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
+        {/* Core Form Card: Seamlessly fills mobile screen without excessive blank spaces */}
+        <div className="w-full bg-white my-auto sm:my-0 py-6 px-5 sm:py-8 sm:px-8 rounded-3xl sm:rounded-[2.2rem] shadow-[0_4px_25px_rgba(15,23,42,0.06)] sm:shadow-[0_20px_50px_rgba(15,23,42,0.1)] border border-[#E2E8F0] relative overflow-hidden transition-all duration-300">
           
-          {/* Top Brand Accent Line Indicator */}
+          {/* Top Brand Accent Line */}
           <div 
             className="absolute top-0 left-0 right-0 h-1.5 transition-colors duration-500"
             style={{ backgroundColor: currentConfig.primaryColor }}
@@ -100,7 +100,7 @@ export const LoginPage: React.FC = () => {
 
           {!isForgotPassword ? (
             /* --- 1. SIGN IN FORM --- */
-            <form className="space-y-4" onSubmit={handleLoginSubmit}>
+            <form className="space-y-4 sm:space-y-4.5" onSubmit={handleLoginSubmit}>
               {/* DEALERSHIP BRAND DROPDOWN */}
               <div>
                 <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
@@ -144,7 +144,7 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* PASSWORD FIELD WITH HIGH CONTRAST SHOW/HIDE TOGGLE */}
+              {/* PASSWORD FIELD */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider">
@@ -303,6 +303,12 @@ export const LoginPage: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Bottom Mobile Safe Spacing */}
+        <div className="pb-3 text-center sm:hidden">
+          <span className="text-[10px] font-medium text-slate-400">PDI Management Platform</span>
+        </div>
+
       </div>
     </div>
   );
