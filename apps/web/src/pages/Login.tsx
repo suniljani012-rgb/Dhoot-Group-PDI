@@ -216,7 +216,7 @@ export const LoginPage: React.FC = () => {
               {/* USERNAME FIELD */}
               <div>
                 <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-1.5">
-                  User ID / Official Email
+                  User ID
                 </label>
                 <div className="relative rounded-2xl group">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
@@ -226,7 +226,7 @@ export const LoginPage: React.FC = () => {
                     type="text"
                     required
                     autoComplete="username"
-                    placeholder="e.g. Admin or DG002"
+                    placeholder="Enter your User ID"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:bg-white transition-all shadow-xs"
@@ -360,7 +360,7 @@ export const LoginPage: React.FC = () => {
                 <form className="space-y-4" onSubmit={handleForgotSubmit}>
                   <div>
                     <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
-                      Registered User ID / Email
+                      User ID
                     </label>
                     <div className="relative rounded-2xl group">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8] group-focus-within:text-[#0F172A] transition-colors">
@@ -369,7 +369,7 @@ export const LoginPage: React.FC = () => {
                       <input
                         type="text"
                         required
-                        placeholder="Enter User ID or Email"
+                        placeholder="Enter your User ID"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:border-transparent focus:bg-white transition-all shadow-xs"
