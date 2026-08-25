@@ -55,7 +55,7 @@ export const LoginPage: React.FC = () => {
           {currentConfig.name.toUpperCase()}
         </h1>
         <p className="text-xs text-[#718096] uppercase font-bold tracking-wider">
-          Dhoot Group — PDI Management Platform
+          Dhoot Group — PDI Platform
         </p>
         <p className="text-[11px] text-[#A0AEC0] mt-0.5">{currentConfig.tagline}</p>
       </div>
@@ -88,9 +88,6 @@ export const LoginPage: React.FC = () => {
                   <option value="DHOOT-HYUNDAI">Raja Hyundai (Dhoot Group)</option>
                 </select>
               </div>
-              <span className="text-[10px] text-[#718096] mt-1 block">
-                Brand-specific authentication & inventory isolation
-              </span>
             </div>
 
             {/* 2. USERNAME / EMPLOYEE ID */}
@@ -150,10 +147,6 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          <div className="pt-4 border-t border-[#DEE2E8] text-center text-xs text-[#718096]">
-            Dhoot Group Multi-Brand Inspection & Quality Control
-          </div>
         </div>
       </div>
     </div>
