@@ -3,13 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
+import { BookingsPage } from './pages/Bookings';
 import { VehiclesPage } from './pages/Vehicles';
 import { VehicleDetailPage } from './pages/VehicleDetail';
-import { BookingsPage } from './pages/Bookings';
 import { PdiQueuePage } from './pages/PdiQueue';
 import { PdiSessionPage } from './pages/PdiSession';
 import { RepairsPage } from './pages/Repairs';
 import { QaQueuePage } from './pages/QaQueue';
+import { ChallanInvoicingPage } from './pages/ChallanInvoicing';
 import { CertificateViewPage } from './pages/CertificateView';
 import { AppShell } from './components/layout/AppShell';
 
@@ -88,6 +89,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <QaQueuePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoicing"
+            element={
+              <ProtectedRoute>
+                <ChallanInvoicingPage />
               </ProtectedRoute>
             }
           />

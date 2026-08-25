@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, ShieldCheck, FileCheck, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, ShieldCheck, FileText, FileCheck, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
@@ -18,6 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     { label: 'PDI Inspections', path: '/pdi', icon: CheckSquare },
     { label: 'Workshop Repairs', path: '/repairs', icon: Wrench },
     { label: 'QA Approvals', path: '/qa', icon: ShieldCheck },
+    { label: 'Challans & Invoicing', path: '/invoicing', icon: FileText },
     { label: 'PDI Certificates', path: '/certificates/cert-101', icon: FileCheck },
   ];
 

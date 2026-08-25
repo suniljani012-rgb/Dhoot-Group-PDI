@@ -35,6 +35,13 @@ export type BookingStatus =
   | 'DELIVERED'
   | 'CANCELLED';
 
+export type ChallanStatus = 
+  | 'CHALLAN_ISSUED'
+  | 'VAAHAN_PROCESSED'
+  | 'INVOICED'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
 export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'REASSIGNED' | 'CANCELLED';
 export type ResponseType = 'PASS_FAIL' | 'NUMERIC' | 'TEXT' | 'PHOTO_REQUIRED' | 'BOOLEAN' | 'MULTI_SELECT';
 export type SeverityLevel = 'CRITICAL' | 'MAJOR' | 'MINOR' | 'OBSERVATION';
@@ -80,7 +87,7 @@ export interface Branch {
 }
 
 /**
- * 34-Field Authoritative Enterprise Booking Format (Hyundai & Tata)
+ * 34-Field Authoritative Enterprise Booking Format
  */
 export interface Booking {
   id: string;
@@ -123,11 +130,67 @@ export interface Booking {
   status: BookingStatus;
   createdAt: string;
   updatedAt: string;
-  vehicle?: Vehicle | null;
 }
 
 /**
- * 21-Field Authoritative Stock / Vehicle Format (Hyundai & Tata)
+ * 45-Field Authoritative Post-Challan / Invoicing Format
+ */
+export interface ChallanInvoice {
+  id: string;
+  organizationId: string;
+  branchId?: string | null;
+  bookingDate?: string | null;
+  challanNo: string;
+  challanDate?: string | null;
+  vaahanDate?: string | null;
+  deliveryDate?: string | null;
+  challanType: string;
+  vinNo: string;
+  customerName: string;
+  address?: string | null;
+  city?: string | null;
+  area?: string | null;
+  panNo?: string | null;
+  mobileNo?: string | null;
+  mailId?: string | null;
+  model: string;
+  variant: string;
+  colour: string;
+  saleConsultant?: string | null;
+  teamLeader?: string | null;
+  financierName?: string | null;
+  corporate?: number;
+  exchange?: number;
+  exShowRoom?: number;
+  discount?: number;
+  net?: number;
+  insurancePer?: number;
+  insuranceAmount?: number;
+  ep?: number;
+  rti?: number;
+  cm?: number;
+  rtoCity?: string | null;
+  rtoAmount?: number;
+  hmlAcc?: number;
+  ownAcc?: number;
+  accDiscountAmount?: number;
+  accAmount?: number;
+  trc?: number;
+  warranty?: number;
+  handlingCharges?: number;
+  otherCharges?: number;
+  fastTag?: number;
+  tcs?: number;
+  netAmount?: number;
+  invoiceDate?: string | null;
+  invoiceNo?: string | null;
+  status: ChallanStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 21-Field Authoritative Stock / Vehicle Format
  */
 export interface Vehicle {
   id: string;
@@ -145,8 +208,6 @@ export interface Vehicle {
   manufacturingYear?: number;
   status: VehicleStatus;
   receivedAt?: string;
-  
-  // Extended Stock Fields
   purchaseDate?: string | null;
   fscCode?: string | null;
   dealerCode?: string | null;
@@ -161,7 +222,6 @@ export interface Vehicle {
   allocationDate?: string | null;
   allocatedDays?: number;
   receivedAmount?: number;
-
   createdAt: string;
   updatedAt: string;
 }
