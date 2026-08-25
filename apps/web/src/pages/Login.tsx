@@ -65,13 +65,13 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F0F4F8] relative flex flex-col justify-center items-center px-4 sm:px-6 overflow-x-hidden overflow-y-auto sm:overflow-hidden select-none">
+    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#F0F4F8] relative flex flex-col justify-center items-center px-4 sm:px-6 overflow-hidden select-none">
       
-      {/* 100% Authentic Dhoot Group Logo Watermark Background */}
+      {/* Background Watermarks (Hidden on Mobile) */}
       <AutomotiveBackground primaryColor={currentConfig.primaryColor} />
 
-      {/* Portrait Optimized Main Container */}
-      <div className="w-full max-w-[390px] sm:max-w-md mx-auto my-auto z-10 flex flex-col items-center">
+      {/* Main Single Card Container: 100% Focused on Mobile */}
+      <div className="w-full max-w-[390px] sm:max-w-md mx-auto z-10 flex flex-col items-center">
         
         {/* Header: Dual Brand Logos + Welcome Heading */}
         <div className="text-center space-y-2 mb-3.5 sm:mb-5">
@@ -82,7 +82,7 @@ export const LoginPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Floating Glassmorphic Login Card (Optimized for Mobile Portrait & Desktop) */}
+        {/* Floating Glassmorphic Login Card (Exact Card Focus) */}
         <div className="w-full bg-white/95 backdrop-blur-xl py-6 px-5 sm:py-8 sm:px-8 rounded-3xl sm:rounded-[2.2rem] shadow-[0_15px_45px_rgba(15,23,42,0.09)] border border-white ring-1 ring-slate-900/5 relative overflow-hidden transition-all duration-300">
           
           {/* Top Brand Accent Line */}
