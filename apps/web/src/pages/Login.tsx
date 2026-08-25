@@ -194,9 +194,6 @@ export const LoginPage: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
             Dhoot Group
           </h1>
-          <p className="text-xs text-slate-500 font-semibold tracking-wide uppercase">
-            Automotive Dealership & PDI Enterprise Platform
-          </p>
         </div>
 
         {/* Clean Production Card */}
@@ -399,23 +396,6 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Bottom Enterprise Badge */}
-          <div className="pt-5 mt-5 border-t border-[#F1F5F9] flex flex-col items-center gap-1.5 text-center">
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-[#64748B]">
-              <Building2 className="w-3.5 h-3.5 text-slate-400" />
-              <span>Autoprime Tata • Raja Hyundai • Dhoot Group</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-medium">
-              Enterprise Automotive SaaS & Quality Control Infrastructure
-            </span>
-          </div>
-        </div>
-
-        {/* Confidentiality Footer */}
-        <div className="mt-4 text-center">
-          <p className="text-[11px] text-slate-400 font-medium">
-            Authorized personnel only. All access attempts are logged and monitored.
-          </p>
         </div>
 
       </div>
