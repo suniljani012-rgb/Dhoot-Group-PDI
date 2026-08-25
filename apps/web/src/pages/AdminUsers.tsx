@@ -14,6 +14,7 @@ export interface EnterpriseUser {
   employee_id: string;
   user_name: string;
   password_hash: string;
+  password?: string;
   date_of_birth?: string;
   mail_id: string;
   mobile_number: string;
@@ -196,8 +197,10 @@ export const AdminUsersPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showDesModal, setShowDesModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<EnterpriseUser | null>(null);
   const [editingRole, setEditingRole] = useState<RolePermissionConfig | null>(null);
+  const [editingDesignation, setEditingDesignation] = useState<any | null>(null);
 
   // Password visibility map
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
@@ -309,6 +312,16 @@ export const AdminUsersPage: React.FC = () => {
       setDesignations(updated);
       localStorage.setItem('dhoot_master_designations', JSON.stringify(updated));
     }
+  };
+
+  const handleSaveEditedDesignation = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDesignation) return;
+    const updated = designations.map(d => d.id === editingDesignation.id ? editingDesignation : d);
+    setDesignations(updated);
+    localStorage.setItem('dhoot_master_designations', JSON.stringify(updated));
+    setShowDesModal(false);
+    setEditingDesignation(null);
   };
 
   const handleSaveRolePermissions = (roleToSave: RolePermissionConfig) => {
@@ -672,13 +685,25 @@ export const AdminUsersPage: React.FC = () => {
                       </td>
                       <td className="py-2.5 px-3 font-mono font-bold text-slate-700">{staffCount} Active Staff</td>
                       <td className="py-2.5 px-3 text-center">
-                        <button
-                          onClick={() => handleDeleteDesignation(d.id)}
-                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Designation"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              setEditingDesignation(d);
+                              setShowDesModal(true);
+                            }}
+                            className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                            title="Edit Designation"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDesignation(d.id)}
+                            className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete Designation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -932,9 +957,12 @@ export const AdminUsersPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* MODAL: EDIT USER DIALOG                                                   */}
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT USER DIALOG (100% COMPLETE DATABASE SCHEMA COLUMNS)            */}
+      {/* ========================================================================= */}
       {showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
               <div className="flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-emerald-400" />
@@ -945,55 +973,143 @@ export const AdminUsersPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateUser} className="p-6 space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-4 text-xs overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Full Name</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Full Name *</label>
                   <input
                     type="text"
                     required
                     value={selectedUser.user_name}
                     onChange={(e) => setSelectedUser({ ...selectedUser, user_name: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Role</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">User Code / Login ID *</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedUser.user_code}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, user_code: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Official Email Desk *</label>
+                  <input
+                    type="email"
+                    required
+                    value={selectedUser.mail_id}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, mail_id: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Mobile Contact No *</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedUser.mobile_number}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, mobile_number: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={selectedUser.date_of_birth || '1995-01-01'}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, date_of_birth: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Brand Franchise Access *</label>
                   <select
-                    value={selectedUser.role}
-                    onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    value={selectedUser.brand || 'Dhoot Group'}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, brand: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                   >
-                    {roleConfigs.map(r => (
-                      <option key={r.role} value={r.role}>{r.displayName} ({r.role})</option>
-                    ))}
+                    <option value="Dhoot Group">Dhoot Group (All Franchises)</option>
+                    <option value="Tata Motors">Tata Motors</option>
+                    <option value="Hyundai">Hyundai</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Designation</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Department Nature *</label>
+                  <select
+                    value={selectedUser.nature || 'Stockyard'}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, nature: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    <option value="Management">Executive Leadership</option>
+                    <option value="Stockyard">Stockyard & Inward Logistics</option>
+                    <option value="Quality Inspection">Quality Inspection</option>
+                    <option value="Quality Assurance">Quality Assurance</option>
+                    <option value="Sales">Sales & Retail Bookings</option>
+                    <option value="Workshop">Workshop & Repairs</option>
+                    <option value="Accounts">Accounts & Invoicing</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Assigned Designation *</label>
                   <select
                     value={selectedUser.designation}
                     onChange={(e) => setSelectedUser({ ...selectedUser, designation: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                   >
                     {designations.map(d => (
                       <option key={d.id} value={d.title}>{d.title} ({d.nature})</option>
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Status</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">RBAC Security Role *</label>
+                  <select
+                    value={selectedUser.role}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    {roleConfigs.map(r => (
+                      <option key={r.role} value={r.role}>{r.displayName} ({r.role})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Branch Code / Yard Location</label>
+                  <input
+                    type="text"
+                    value={selectedUser.branch_code || 'HO-DHOOT'}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, branch_code: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Account Operational Status *</label>
                   <select
                     value={selectedUser.status}
                     onChange={(e) => setSelectedUser({ ...selectedUser, status: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                   >
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="ACTIVE">ACTIVE (Full Login Access)</option>
+                    <option value="INACTIVE">INACTIVE (Access Suspended)</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Reset Password (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Enter new password if resetting"
+                    value={selectedUser.password || ''}
+                    onChange={(e) => setSelectedUser({ ...selectedUser, password: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                  />
                 </div>
               </div>
 
@@ -1001,8 +1117,58 @@ export const AdminUsersPage: React.FC = () => {
                 <button type="button" onClick={() => { setShowEditModal(false); setSelectedUser(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+                <button type="submit" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs">
                   Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT DESIGNATION MASTER                                             */}
+      {/* ========================================================================= */}
+      {showDesModal && editingDesignation && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <h3 className="font-bold text-sm">Edit Master Designation</h3>
+              <button onClick={() => { setShowDesModal(false); setEditingDesignation(null); }} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedDesignation} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Designation Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingDesignation.title}
+                  onChange={(e) => setEditingDesignation({ ...editingDesignation, title: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Department Nature *</label>
+                <select
+                  value={editingDesignation.nature}
+                  onChange={(e) => setEditingDesignation({ ...editingDesignation, nature: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                >
+                  {natures.map(n => (
+                    <option key={n.id} value={n.name}>{n.name} ({n.description})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                <button type="button" onClick={() => { setShowDesModal(false); setEditingDesignation(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+                  Save Designation
                 </button>
               </div>
             </form>
