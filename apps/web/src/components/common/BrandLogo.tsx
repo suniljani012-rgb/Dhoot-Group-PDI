@@ -6,20 +6,20 @@ export const DualBrandHeader: React.FC<{ brand: BrandCode; className?: string }>
 
   return (
     <div className={`flex items-center justify-center gap-4 ${className}`}>
-      {/* 1. Dhoot Group Master Emblem */}
-      <div className="bg-white p-2 rounded-2xl shadow-sm border border-[#DEE2E8] flex items-center justify-center">
+      {/* 1. 100% Exact Dhoot Group Master Emblem */}
+      <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-[#DEE2E8] flex items-center justify-center hover:shadow-md transition-shadow">
         <img
           src="/logo.png"
-          alt="Dhoot Group Logo"
+          alt="Dhoot Group Official Logo"
           className="h-16 w-16 object-contain"
         />
       </div>
 
-      {/* Divider */}
+      {/* Elegant Divider */}
       <div className="h-12 w-[2px] bg-[#DEE2E8]" />
 
-      {/* 2. Official Uploaded Brand Logo (Autoprime Tata / Raja Hyundai) */}
-      <div className="bg-white p-2 rounded-2xl shadow-sm border border-[#DEE2E8] flex items-center justify-center overflow-hidden">
+      {/* 2. 100% Exact Uploaded Dealership Brand Logo (Autoprime Tata / Raja Hyundai) */}
+      <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-[#DEE2E8] flex items-center justify-center overflow-hidden hover:shadow-md transition-shadow">
         <img
           src={config.logoUrl}
           alt={config.name}
