@@ -12,6 +12,7 @@
     "@autoprime/domain": "workspace:*",
     "@autoprime/types": "workspace:*",
     "@autoprime/validation": "workspace:*",
+    "@supabase/supabase-js": "^2.46.0",
     "@tanstack/react-query": "^5.62.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
