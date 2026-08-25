@@ -1,0 +1,42 @@
+﻿name: Deploy Worker
+
+on:
+  push:
+    branches:
+      - main      # deploys to production
+      - develop   # deploys to staging
+
+jobs:
+  deploy-worker:
+    name: Deploy API Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Worker
+        run: pnpm --filter api-worker build
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: services/api-worker
+          command: deploy --env ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}

@@ -1,0 +1,6 @@
+﻿@layer base {
+  :root {
+    --color-brand-primary: #1A3A6B;
+    --color-brand-secondary: #C8102E;
+  }
+}

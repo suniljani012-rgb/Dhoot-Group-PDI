@@ -1,0 +1,28 @@
+﻿{
+  "name": "autoprime-pdi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Autoprime Tata PDI Management Platform — Dhoot Group",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:unit": "turbo test:unit",
+    "test:integration": "turbo test:integration",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "clean": "turbo clean && find . -name node_modules -type d -prune -exec rm -rf '{}' +"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.14.0"
+}
