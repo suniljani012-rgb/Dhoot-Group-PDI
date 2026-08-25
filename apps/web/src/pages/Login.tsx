@@ -474,14 +474,7 @@ export const LoginPage: React.FC = () => {
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
-                  <h2 className="text-base font-bold text-[#0F172A]">Password Recovery</h2>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span className={forgotStep === 'STEP_1_IDENTITY' ? 'text-[#0F172A] font-black' : ''}>1. Identity</span>
-                    <span>•</span>
-                    <span className={forgotStep === 'STEP_2_OTP' ? 'text-[#0F172A] font-black' : ''}>2. Email OTP</span>
-                    <span>•</span>
-                    <span className={forgotStep === 'STEP_3_NEW_PASSWORD' ? 'text-[#0F172A] font-black' : ''}>3. New Password</span>
-                  </div>
+                  <h2 className="text-base font-bold text-[#0F172A]">Forgot Password</h2>
                 </div>
               </div>
 
@@ -501,7 +494,7 @@ export const LoginPage: React.FC = () => {
                       <input
                         type="text"
                         required
-                        placeholder="Enter your User ID (e.g. Admin, DG002)"
+                        placeholder="Enter your User ID"
                         value={forgotUserId}
                         onChange={(e) => setForgotUserId(e.target.value)}
                         className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:bg-white transition-all shadow-xs"
