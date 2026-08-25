@@ -19,9 +19,9 @@ export interface BrandConfig {
 export const BRAND_CONFIGS: Record<BrandCode, BrandConfig> = {
   'DHOOT-ALL': {
     code: 'DHOOT-ALL',
-    name: 'Dhoot Group Automotive Enterprise',
+    name: 'Dhoot Group',
     shortName: 'ALL BRANDS',
-    tagline: 'Consolidated multi-brand executive intelligence across Tata Motors and Hyundai franchises',
+    tagline: 'Consolidated multi-brand intelligence across Tata Motors and Hyundai franchises',
     logoUrl: '/logo.png',
     primaryColor: '#0F172A',
     primaryHover: '#1E293B',

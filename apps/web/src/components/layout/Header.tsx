@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
               </span>
             </div>
             <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mt-0.5">
-              Automotive Enterprise
+              Official Dealership Portal
             </span>
           </div>
         </div>

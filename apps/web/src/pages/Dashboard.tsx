@@ -295,8 +295,8 @@ export const DashboardPage: React.FC = () => {
 
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <div>
-              <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Enterprise Dealership Network</span>
-              <div className="text-xs font-bold text-slate-800">Dhoot Group Automotive Enterprise</div>
+              <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Dealership Network</span>
+              <div className="text-xs font-bold text-slate-800">Dhoot Group</div>
             </div>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
           </div>

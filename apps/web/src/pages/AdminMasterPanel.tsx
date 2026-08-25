@@ -330,7 +330,7 @@ export const AdminMasterPanelPage: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-base font-black text-slate-900 leading-tight">
-            Dealership Enterprise Master Administration
+            Dealership Master Administration
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             Centralized management for inspection rules, RBAC users, vehicle catalog, multi-state branches, banks, and insurance partners
