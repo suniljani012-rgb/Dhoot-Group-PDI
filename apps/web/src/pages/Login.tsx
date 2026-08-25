@@ -27,7 +27,7 @@ export const LoginPage: React.FC = () => {
   const currentConfig = BRAND_CONFIGS['DHOOT-TATA'];
 
   const testAccounts = [
-    { id: 'Admin', code: 'DG001', name: 'System Administration', role: 'Super Admin (MD Office)', brand: 'ALL', color: '#1A3A6B' },
+    { id: 'Admin', code: 'Admin', name: 'System Administration', role: 'Super Admin (MD Office)', brand: 'ALL', color: '#1A3A6B' },
     { id: 'DG002', code: 'DG002', name: 'Vikram Malhotra', role: 'PDI Lead Engineer', brand: 'Autoprime Tata', color: '#1A3A6B' },
     { id: 'DG003', code: 'DG003', name: 'Ramesh Choudhary', role: 'Branch Sales Manager', brand: 'Raja Hyundai', color: '#002C6C' },
     { id: 'DG004', code: 'DG004', name: 'Sanjay Patil', role: 'QA Manager & Certifier', brand: 'Autoprime Tata', color: '#1A3A6B' },
@@ -348,7 +348,7 @@ export const LoginPage: React.FC = () => {
             >
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>1-Click Test Role Accounts (DG001 - DG006)</span>
+                <span>1-Click Test Role Accounts (Admin, DG002 - DG006)</span>
               </div>
               {showDemoAccounts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
