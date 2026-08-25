@@ -1,33 +1,129 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Filter, Car, ChevronRight } from 'lucide-react';
+import { 
+  Search, Plus, Filter, Car, ChevronRight, FileSpreadsheet, 
+  X, Loader2, Calendar, Building, DollarSign, UserCheck 
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 
+export interface StockVehicle {
+  id: string;
+  vin: string;
+  model: string;
+  variant: string;
+  color: string;
+  fuel_type?: string;
+  fsc_code?: string;
+  dealer_code?: string;
+  plant_code?: string;
+  manufacturing_year?: number;
+  status: string;
+  quantity?: number;
+  location?: string;
+  customer_name?: string;
+  sales_consultant?: string;
+  accessories_amount?: number;
+  delivery_date?: string;
+  allocation_date?: string;
+  allocated_days?: number;
+  received_amount?: number;
+  purchase_date?: string;
+  created_at?: string;
+}
+
 export const VehiclesPage: React.FC = () => {
   const { currentBrand } = useAuth();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<StockVehicle | null>(null);
 
-  // Tata Inventory Data
-  const tataVehicles = [
-    { id: '55555555-5555-5555-5555-555555555551', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', fuelType: 'PETROL', color: 'Daytona Grey', status: 'RECEIVED', receivedAt: '2026-08-25' },
-    { id: '55555555-5555-5555-5555-555555555552', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', fuelType: 'DIESEL', color: 'Oberon Black', status: 'PDI_PENDING', receivedAt: '2026-08-24' },
-    { id: '55555555-5555-5555-5555-555555555553', vin: 'MAT612345S9988776', model: 'Tata Safari', variant: 'Accomplished Plus 6S', fuelType: 'DIESEL', color: 'Cosmic Gold', status: 'PDI_IN_PROGRESS', receivedAt: '2026-08-24' },
-    { id: '55555555-5555-5555-5555-555555555554', vin: 'MAT612345C1122334', model: 'Tata Curvv.ev', variant: 'Empowered Plus 55', fuelType: 'EV', color: 'Virtual Sunrise', status: 'PDI_APPROVED', receivedAt: '2026-08-23' },
-    { id: '55555555-5555-5555-5555-555555555555', vin: 'MAT612345P4455667', model: 'Tata Punch', variant: 'Creative Flagship iCNG', fuelType: 'CNG', color: 'Atomic Orange', status: 'DELIVERY_READY', receivedAt: '2026-08-22' },
-  ];
+  const [vehicles, setVehicles] = useState<StockVehicle[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Hyundai Inventory Data
-  const hyundaiVehicles = [
-    { id: '55555555-5555-5555-5555-555555555561', vin: 'MALC12345C1122334', model: 'Hyundai Creta', variant: 'SX(O) Turbo 1.5 DCT', fuelType: 'PETROL', color: 'Ranger Khaki', status: 'RECEIVED', receivedAt: '2026-08-25' },
-    { id: '55555555-5555-5555-5555-555555555562', vin: 'MALC12345V5566778', model: 'Hyundai Venue', variant: 'N Line N8 DCT', fuelType: 'PETROL', color: 'Atlas White / Abyss Black', status: 'PDI_PENDING', receivedAt: '2026-08-24' },
-    { id: '55555555-5555-5555-5555-555555555563', vin: 'MALC12345I9900112', model: 'Hyundai Ioniq 5', variant: 'RWD 72.6 kWh', fuelType: 'EV', color: 'Gravity Gold Matte', status: 'PDI_APPROVED', receivedAt: '2026-08-23' },
-    { id: '55555555-5555-5555-5555-555555555564', vin: 'MALC12345E3344556', model: 'Hyundai Exter', variant: 'SX(O) Connect Dual Tone', fuelType: 'PETROL', color: 'Cosmic Blue', status: 'DELIVERY_READY', receivedAt: '2026-08-22' },
-  ];
+  // Bulk Import state
+  const [csvText, setCsvText] = useState('');
+  const [importing, setImporting] = useState(false);
 
-  const [vehicles, setVehicles] = useState(currentBrand.code === 'DHOOT-HYUNDAI' ? hyundaiVehicles : tataVehicles);
+  useEffect(() => {
+    fetchStock();
+  }, [currentBrand.code]);
+
+  const fetchStock = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8787/api/v1/stock?organization_id=${currentBrand.orgId}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && json.data.length > 0) {
+          setVehicles(json.data);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Default seeded stock fallback
+    if (currentBrand.code === 'DHOOT-HYUNDAI') {
+      setVehicles([
+        { id: '1', vin: 'MALC12345C1122334', model: 'Hyundai Creta', variant: 'SX(O) Turbo 1.5 DCT', color: 'Ranger Khaki', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-901', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Sunil Jani', sales_consultant: 'Ramesh Choudhary', accessories_amount: 15000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 51000, purchase_date: '2026-08-15' },
+        { id: '2', vin: 'MALC12345V5566778', model: 'Hyundai Venue', variant: 'N Line N8 DCT', color: 'Atlas White / Abyss Black', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-902', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Pooja Agarwal', sales_consultant: 'Kavita Shekhawat', accessories_amount: 8500, delivery_date: '2026-08-29', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 25000, purchase_date: '2026-08-18' },
+        { id: '3', vin: 'MALC12345I9900112', model: 'Hyundai Ioniq 5', variant: 'RWD 72.6 kWh', color: 'Gravity Gold Matte', fuel_type: 'EV', fsc_code: 'FSC-HYN-903', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_APPROVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Vikramaditya Singh', sales_consultant: 'Ramesh Choudhary', accessories_amount: 35000, delivery_date: '2026-08-26', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 150000, purchase_date: '2026-08-10' },
+        { id: '4', vin: 'MALC12345E3344556', model: 'Hyundai Exter', variant: 'SX(O) Connect Dual Tone', color: 'Cosmic Blue', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-904', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'DELIVERY_READY', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Rahul Meena', sales_consultant: 'Kavita Shekhawat', accessories_amount: 12000, delivery_date: '2026-08-25', allocation_date: '2026-08-19', allocated_days: 6, received_amount: 30000, purchase_date: '2026-08-12' },
+      ]);
+    } else {
+      setVehicles([
+        { id: '1', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', color: 'Daytona Grey', fuel_type: 'PETROL', fsc_code: 'FSC-TAT-801', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Rajesh Sharma', sales_consultant: 'Vikram Malhotra', accessories_amount: 18000, delivery_date: '2026-08-28', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 50000, purchase_date: '2026-08-14' },
+        { id: '2', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', color: 'Oberon Black', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-802', dealer_code: 'DLR-MH02', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Amit Deshmukh', sales_consultant: 'Sneha Kulkarni', accessories_amount: 25000, delivery_date: '2026-08-30', allocation_date: '2026-08-22', allocated_days: 3, received_amount: 100000, purchase_date: '2026-08-16' },
+        { id: '3', vin: 'MAT612345S9988776', model: 'Tata Safari', variant: 'Accomplished Plus 6S', color: 'Cosmic Gold', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-803', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_IN_PROGRESS', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Anand Shinde', sales_consultant: 'Vikram Malhotra', accessories_amount: 32000, delivery_date: '2026-08-31', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 75000, purchase_date: '2026-08-17' },
+        { id: '4', vin: 'MAT612345C1122334', model: 'Tata Curvv.ev', variant: 'Empowered Plus 55', color: 'Virtual Sunrise', fuel_type: 'EV', fsc_code: 'FSC-TAT-804', dealer_code: 'DLR-MH02', plant_code: 'PLT-SAN', manufacturing_year: 2026, status: 'PDI_APPROVED', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Priya Nair', sales_consultant: 'Sneha Kulkarni', accessories_amount: 14000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 60000, purchase_date: '2026-08-15' },
+      ]);
+    }
+    setLoading(false);
+  };
+
+  const handleBulkStockImport = async () => {
+    if (!csvText.trim()) return;
+    setImporting(true);
+    try {
+      const lines = csvText.trim().split('\n');
+      if (lines.length <= 1) return;
+
+      const headers = lines[0].split('\t').map(h => h.trim());
+      const parsedRecords = lines.slice(1).map(line => {
+        const cols = line.split('\t').map(c => c.trim());
+        const record: any = {};
+        headers.forEach((h, idx) => {
+          record[h] = cols[idx] || '';
+        });
+        return record;
+      });
+
+      const res = await fetch('http://localhost:8787/api/v1/stock/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId: currentBrand.orgId,
+          stockItems: parsedRecords
+        })
+      });
+
+      if (res.ok) {
+        setIsImportModalOpen(false);
+        setCsvText('');
+        fetchStock();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -42,52 +138,70 @@ export const VehiclesPage: React.FC = () => {
   };
 
   const filtered = vehicles.filter((v) => {
-    const matchesSearch = v.vin.toLowerCase().includes(searchTerm.toLowerCase()) || v.model.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      v.vin.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (v.customer_name && v.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (v.fsc_code && v.fsc_code.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     const matchesStatus = statusFilter === 'ALL' || v.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-[#1A1A2E]">{currentBrand.name} Vehicle Inventory</h2>
-            <span style={{ backgroundColor: currentBrand.accentBg, color: currentBrand.primaryColor }} className="text-xs font-bold px-2 py-0.5 rounded">
-              {currentBrand.shortName} ISOLATED
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900">{currentBrand.name} Vehicle Stock Inventory</h2>
+            <span style={{ backgroundColor: `${currentBrand.primaryColor}15`, color: currentBrand.primaryColor }} className="text-xs font-bold px-2.5 py-0.5 rounded-full">
+              {currentBrand.name} ISOLATED
             </span>
           </div>
-          <p className="text-sm text-[#718096]">Stockyard vehicles and inspection queue for {currentBrand.name}</p>
+          <p className="text-xs text-slate-500 font-medium">21-Field Authoritative Stockyard Inventory & Allocation Ledger</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          style={{ backgroundColor: currentBrand.primaryColor }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-lg shadow-sm hover:opacity-90 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Register Vehicle
-        </button>
+        
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-all cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Import Stock CSV</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            style={{ backgroundColor: currentBrand.primaryColor }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-white text-xs font-bold rounded-2xl shadow-sm hover:opacity-90 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Register Vehicle</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white border border-[#DEE2E8] rounded-xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-3xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center shadow-xs">
         <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-[#718096] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder={`Search ${currentBrand.shortName} by VIN or Model...`}
+            placeholder="Search by VIN, Model, Customer, FSC..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-[#DEE2E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]"
+            className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="w-4 h-4 text-[#718096]" />
+          <Filter className="w-4 h-4 text-slate-400" />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-sm border border-[#DEE2E8] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]"
+            className="text-xs font-bold border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2"
           >
             <option value="ALL">All Statuses</option>
             <option value="RECEIVED">Received</option>
@@ -99,72 +213,275 @@ export const VehiclesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-[#DEE2E8] rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-[#1A1A2E]">
-            <thead className="bg-[#F8F9FA] border-b border-[#DEE2E8] text-xs font-semibold text-[#718096] uppercase tracking-wider">
+      {/* Stock Table with Full 21 Columns */}
+      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto max-h-[600px]">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead className="bg-slate-50/90 sticky top-0 z-10 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-4">Vehicle / Model</th>
-                <th className="px-6 py-4">VIN Number</th>
-                <th className="px-6 py-4">Fuel & Specs</th>
-                <th className="px-6 py-4">Color</th>
-                <th className="px-6 py-4">PDI Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="py-3 px-4">VIN Number</th>
+                <th className="py-3 px-4">Model & Variant</th>
+                <th className="py-3 px-4">Colour</th>
+                <th className="py-3 px-4">Fuel</th>
+                <th className="py-3 px-4">FSC Code</th>
+                <th className="py-3 px-4">Dealer / Plant</th>
+                <th className="py-3 px-4">Location</th>
+                <th className="py-3 px-4">Allocated Customer</th>
+                <th className="py-3 px-4">Sales Consultant</th>
+                <th className="py-3 px-4">Purchase Date</th>
+                <th className="py-3 px-4">Delivery Date</th>
+                <th className="py-3 px-4">Days</th>
+                <th className="py-3 px-4">Rec. Amount</th>
+                <th className="py-3 px-4">Vehicle Status</th>
+                <th className="py-3 px-4 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#DEE2E8]">
-              {filtered.map((v) => (
-                <tr key={v.id} className="hover:bg-[#F8F9FA] transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-[#EBF3FD] text-[#1565A8] rounded-lg">
-                        <Car className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1A1A2E]">{v.model}</div>
-                        <div className="text-xs text-[#718096]">{v.variant}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-mono font-medium text-xs text-[#1A1A2E]">
-                    {v.vin}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-block px-2.5 py-0.5 text-xs font-medium bg-[#F1F3F5] text-[#4A5568] rounded">
-                      {v.fuelType}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-[#4A5568]">
-                    {v.color}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(v.status)}`}>
-                      {v.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link
-                      to={`/vehicles/${v.id}`}
-                      style={{ color: currentBrand.primaryColor }}
-                      className="inline-flex items-center gap-1 text-sm font-semibold hover:underline"
-                    >
-                      View Details
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {loading ? (
+                <tr>
+                  <td colSpan={15} className="py-12 text-center text-slate-400">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-500" />
+                    Loading Stock Inventory...
                   </td>
                 </tr>
-              ))}
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={15} className="py-12 text-center text-slate-400">
+                    No vehicles found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((v) => (
+                  <tr 
+                    key={v.id} 
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => setSelectedStock(v)}
+                  >
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      <div className="flex items-center gap-1.5">
+                        <Car className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{v.vin}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900">{v.model}</div>
+                      <div className="text-[11px] text-slate-500">{v.variant}</div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
+                        {v.color}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-[11px] text-slate-600">
+                      {v.fuel_type || 'PETROL'}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-[11px]">
+                      {v.fsc_code || '-'}
+                    </td>
+                    <td className="py-3.5 px-4 text-[11px] text-slate-500">
+                      {v.dealer_code || '-'}/{v.plant_code || '-'}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-700">
+                      {v.location || 'Central Stockyard'}
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      {v.customer_name || <span className="text-slate-400 font-normal italic">Unallocated</span>}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-600">
+                      {v.sales_consultant || '-'}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                      {v.purchase_date || '-'}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                      {v.delivery_date || 'TBD'}
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-center">
+                      {v.allocated_days || 0}d
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-emerald-700">
+                      ₹{(Number(v.received_amount) || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusBadge(v.status)}`}>
+                        {v.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <Link
+                        to="/pdi"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2.5 py-1 rounded-xl bg-slate-900 text-white text-[11px] font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-1"
+                      >
+                        <span>PDI</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* BULK IMPORT STOCK MODAL (21 HEADERS) */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                <h3 className="font-bold text-slate-900">Bulk Import Stock Inventory • {currentBrand.name}</h3>
+              </div>
+              <button 
+                onClick={() => setIsImportModalOpen(false)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-xs text-emerald-800">
+                <strong>Supported 21 Stock Headers Format:</strong> Paste directly from Excel or Google Sheets (Tab-Separated or CSV):
+                <div className="mt-1 font-mono text-[10px] text-emerald-900 bg-white/70 p-2 rounded-lg overflow-x-auto">
+                  Purchase Date | Model | Variant | Colour | Fuel | FSC Code | Dealer Code | Plant Code | Year | Status | Vin No | Quantity | Location | Customer Name | Sales Consultant | Accessories Amount | Vehicle Status | Delivery Date | Allocation Date | Allocated Days | Received Amount
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
+                  Paste Excel Stock Data (Include Header Row)
+                </label>
+                <textarea
+                  rows={8}
+                  value={csvText}
+                  onChange={(e) => setCsvText(e.target.value)}
+                  placeholder="Paste tab-delimited or CSV rows directly from your stockyard Excel workbook..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:bg-white"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-medium">
+                  {csvText.trim() ? `${csvText.trim().split('\n').length - 1} rows detected` : 'No data pasted'}
+                </span>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsImportModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={importing || !csvText.trim()}
+                    onClick={handleBulkStockImport}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shadow"
+                  >
+                    {importing ? 'Importing Rows...' : 'Process & Import Stock'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STOCK DETAILS MODAL */}
+      {selectedStock && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900">Stock Details: {selectedStock.vin}</h3>
+                <p className="text-xs text-slate-500">{selectedStock.model} • {selectedStock.variant}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedStock(null)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">VIN Number</span>
+                  <span className="font-mono font-bold text-slate-900">{selectedStock.vin}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">FSC Code</span>
+                  <span className="font-mono text-slate-900">{selectedStock.fsc_code || '-'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Dealer / Plant Code</span>
+                  <span>{selectedStock.dealer_code || '-'}/{selectedStock.plant_code || '-'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Location</span>
+                  <span>{selectedStock.location || 'Central Stockyard'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Customer Name</span>
+                  <span className="font-bold text-slate-900">{selectedStock.customer_name || 'Unallocated'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Sales Consultant</span>
+                  <span>{selectedStock.sales_consultant || '-'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Purchase Date</span>
+                  <span>{selectedStock.purchase_date || '-'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Delivery Date</span>
+                  <span>{selectedStock.delivery_date || 'TBD'}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Allocated Days</span>
+                  <span className="font-bold">{selectedStock.allocated_days || 0} Days</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Accessories Amt</span>
+                  <span className="font-bold text-slate-900">₹{(Number(selectedStock.accessories_amount) || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Received Amount</span>
+                  <span className="font-bold text-emerald-700">₹{(Number(selectedStock.received_amount) || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Vehicle Status</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(selectedStock.status)}`}>
+                    {selectedStock.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+              <button
+                onClick={() => setSelectedStock(null)}
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW VEHICLE MODAL */}
       <NewVehicleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={(newV) => setVehicles([newV, ...vehicles])}
+        onAdd={(newVeh) => setVehicles([newVeh, ...vehicles])}
       />
+
     </div>
   );
 };

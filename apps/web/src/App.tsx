@@ -1,10 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { VehiclesPage } from './pages/Vehicles';
 import { VehicleDetailPage } from './pages/VehicleDetail';
+import { BookingsPage } from './pages/Bookings';
 import { PdiQueuePage } from './pages/PdiQueue';
 import { PdiSessionPage } from './pages/PdiSession';
 import { RepairsPage } from './pages/Repairs';
@@ -31,6 +32,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bookings"
+            element={
+              <ProtectedRoute>
+                <BookingsPage />
               </ProtectedRoute>
             }
           />

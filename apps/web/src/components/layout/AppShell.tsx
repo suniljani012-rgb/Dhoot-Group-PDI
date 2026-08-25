@@ -4,7 +4,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 
-export const AppShell: React.FC = () => {
+export const AppShell: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -23,27 +23,26 @@ export const AppShell: React.FC = () => {
 
         {/* Mobile Slide-Over Drawer with Backdrop Blur (< 1024px) */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-40 flex">
-            {/* Backdrop Overlay */}
-            <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-
-            {/* Slide-out Drawer Panel */}
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#0F172A] z-50 shadow-2xl animate-in slide-in-from-left duration-300">
+          <div 
+            className="lg:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <div 
+              className="w-72 bg-[#0F172A] h-full shadow-2xl animate-in slide-in-from-left duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Sidebar onCloseMobile={() => setIsMobileMenuOpen(false)} />
             </div>
           </div>
         )}
 
-        {/* Main Application Scrollable Content (Padded for Bottom Nav on Mobile) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl mx-auto w-full">
-          <Outlet />
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 lg:pb-6">
+          {children || <Outlet />}
         </main>
       </div>
 
-      {/* One-Handed Mobile Bottom Navigation Bar (< 1024px) */}
+      {/* Mobile One-Handed Bottom Nav Bar (< 1024px) */}
       <BottomNav />
     </div>
   );

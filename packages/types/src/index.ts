@@ -1,4 +1,4 @@
-﻿export type UserRole = 
+export type UserRole = 
   | 'SUPER_ADMIN'
   | 'HO_ADMIN'
   | 'REGIONAL_MANAGER'
@@ -26,6 +26,14 @@ export type VehicleStatus =
   | 'PDI_APPROVED'
   | 'DELIVERY_READY'
   | 'DELIVERED';
+
+export type BookingStatus = 
+  | 'BOOKED'
+  | 'ALLOCATED'
+  | 'PDI_READY'
+  | 'INVOICED'
+  | 'DELIVERED'
+  | 'CANCELLED';
 
 export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'REASSIGNED' | 'CANCELLED';
 export type ResponseType = 'PASS_FAIL' | 'NUMERIC' | 'TEXT' | 'PHOTO_REQUIRED' | 'BOOLEAN' | 'MULTI_SELECT';
@@ -71,22 +79,89 @@ export interface Branch {
   isActive: boolean;
 }
 
+/**
+ * 34-Field Authoritative Enterprise Booking Format (Hyundai & Tata)
+ */
+export interface Booking {
+  id: string;
+  organizationId: string;
+  branchId?: string | null;
+  receiptDate?: string | null;
+  receiptNo: string;
+  customerName: string;
+  mobileNumber: string;
+  salesConsultant?: string | null;
+  teamLeader?: string | null;
+  model: string;
+  variant: string;
+  colour: string;
+  bookingDate?: string | null;
+  bookingModel?: string | null;
+  bookingVariant?: string | null;
+  bookingColour?: string | null;
+  bookingApprovalDate?: string | null;
+  promiseDeliveryDate?: string | null;
+  allocationDate?: string | null;
+  allocatedModel?: string | null;
+  allocatedVariant?: string | null;
+  allocatedColour?: string | null;
+  allocatedVinNo?: string | null;
+  requisitionSlip?: string | null;
+  requisitionDate?: string | null;
+  issueNo?: string | null;
+  issueDate?: string | null;
+  prechallanDate?: string | null;
+  prechallanNo?: string | null;
+  challanApprovalDate?: string | null;
+  insuranceDate?: string | null;
+  afterInsuranceDate?: string | null;
+  cancelDate?: string | null;
+  reason?: string | null;
+  receiptAmt?: number | null;
+  docketNo?: string | null;
+  panNo?: string | null;
+  status: BookingStatus;
+  createdAt: string;
+  updatedAt: string;
+  vehicle?: Vehicle | null;
+}
+
+/**
+ * 21-Field Authoritative Stock / Vehicle Format (Hyundai & Tata)
+ */
 export interface Vehicle {
   id: string;
   organizationId: string;
   branchId: string;
   stockyardId?: string | null;
   vin: string;
-  chassisNumber: string;
+  chassisNumber?: string;
   engineNumber?: string | null;
   model: string;
   variant: string;
-  fuelType: string;
-  transmission: string;
   color: string;
-  manufacturingYear: number;
+  fuelType?: string;
+  transmission?: string;
+  manufacturingYear?: number;
   status: VehicleStatus;
-  receivedAt: string;
+  receivedAt?: string;
+  
+  // Extended Stock Fields
+  purchaseDate?: string | null;
+  fscCode?: string | null;
+  dealerCode?: string | null;
+  plantCode?: string | null;
+  year?: number | null;
+  quantity?: number;
+  location?: string | null;
+  customerName?: string | null;
+  salesConsultant?: string | null;
+  accessoriesAmount?: number;
+  deliveryDate?: string | null;
+  allocationDate?: string | null;
+  allocatedDays?: number;
+  receivedAmount?: number;
+
   createdAt: string;
   updatedAt: string;
 }

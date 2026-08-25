@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Car, CheckSquare, Wrench, ShieldCheck, FileCheck, Building2, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, ShieldCheck, FileCheck, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
@@ -13,7 +13,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
 
   const navItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Vehicle Inventory', path: '/vehicles', icon: Car },
+    { label: 'Bookings Tracking', path: '/bookings', icon: Bookmark },
+    { label: 'Vehicle Stock', path: '/vehicles', icon: Car },
     { label: 'PDI Inspections', path: '/pdi', icon: CheckSquare },
     { label: 'Workshop Repairs', path: '/repairs', icon: Wrench },
     { label: 'QA Approvals', path: '/qa', icon: ShieldCheck },
