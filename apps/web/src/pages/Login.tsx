@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, BrandCode, BRAND_CONFIGS } from '../context/AuthContext';
-import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, Building2, Eye, EyeOff, ChevronDown, ShieldCheck } from 'lucide-react';
 import { DualBrandHeader } from '../components/common/BrandLogo';
 
 export const LoginPage: React.FC = () => {
@@ -155,13 +155,13 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* SUBMIT BUTTON WITH HOVER LIFT */}
+            {/* SECURE SIGN IN BUTTON */}
             <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
                 style={{ backgroundColor: currentConfig.primaryColor }}
-                className="w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-extrabold text-white shadow-lg hover:shadow-xl hover:opacity-95 focus:outline-none transform active:scale-[0.99] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
+                className="w-full flex justify-center items-center gap-2 py-4 px-6 rounded-2xl text-sm font-extrabold text-white shadow-lg hover:shadow-xl hover:opacity-95 focus:outline-none transform active:scale-[0.99] transition-all disabled:opacity-50 tracking-wide cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -169,7 +169,10 @@ export const LoginPage: React.FC = () => {
                     Authenticating...
                   </>
                 ) : (
-                  `Sign In to ${currentConfig.name}`
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    Secure Sign In
+                  </>
                 )}
               </button>
             </div>
