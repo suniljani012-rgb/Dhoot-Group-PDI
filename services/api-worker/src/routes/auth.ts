@@ -92,12 +92,17 @@ async function sendOtpEmail(toEmail: string, userName: string, otp: string, supa
   `;
 
   try {
-    // 1. Trigger Supabase native email dispatch to registered address
+    // 1. Trigger Supabase native 6-digit OTP email dispatch
     if (supabase) {
       try {
-        await supabase.auth.resetPasswordForEmail(toEmail);
+        await supabase.auth.signInWithOtp({
+          email: toEmail,
+          options: {
+            shouldCreateUser: false
+          }
+        });
       } catch (sbErr) {
-        console.warn('Supabase mail dispatch note:', sbErr);
+        console.warn('Supabase OTP mail note:', sbErr);
       }
     }
 
