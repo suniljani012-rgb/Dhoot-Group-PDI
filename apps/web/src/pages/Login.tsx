@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, BrandCode } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { 
   User, Lock, AlertCircle, Loader2, Eye, EyeOff, 
   ShieldCheck, ArrowLeft, CheckCircle2, 
-  Calendar, KeyRound, Check
+  Calendar, KeyRound, Check, RefreshCw
 } from 'lucide-react';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
 
@@ -31,11 +31,23 @@ export const LoginPage: React.FC = () => {
   const [maskedEmail, setMaskedEmail] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [inputOtp, setInputOtp] = useState('');
+  const [resendTimer, setResendTimer] = useState(60);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Countdown timer for 1-minute OTP resend cooldown
+  useEffect(() => {
+    let interval: any;
+    if (isForgotPassword && forgotStep === 'STEP_2_OTP' && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isForgotPassword, forgotStep, resendTimer]);
 
   // 1. Sign In Submission
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -232,9 +244,41 @@ export const LoginPage: React.FC = () => {
 
       setMaskedEmail(verifiedData.maskedEmail);
       setGeneratedOtp(verifiedData.otp || '123456');
+      setResendTimer(60);
       setForgotStep('STEP_2_OTP');
     } catch (err: any) {
       setError(err.message || 'Identity verification error.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Resend OTP Handler
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return;
+    setForgotLoading(true);
+    setError(null);
+
+    try {
+      const cleanUser = forgotUserId.trim();
+      const cleanDob = forgotDob.trim();
+
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+      const res = await fetch(`${apiUrl}/api/v1/auth/forgot/verify-identity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: cleanUser, dateOfBirth: cleanDob })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setGeneratedOtp(json.data.otp);
+        setResendTimer(60);
+      } else {
+        throw new Error(json.error?.message || 'Failed to resend OTP.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend OTP.');
     } finally {
       setForgotLoading(false);
     }
@@ -567,6 +611,26 @@ export const LoginPage: React.FC = () => {
                         className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-base font-bold font-mono tracking-widest text-center text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:bg-white transition-all shadow-xs"
                       />
                     </div>
+                  </div>
+
+                  {/* 1-Minute Resend OTP Countdown & Button */}
+                  <div className="flex items-center justify-between text-xs px-1">
+                    <span className="text-slate-500 font-medium">Didn't receive OTP?</span>
+                    {resendTimer > 0 ? (
+                      <span className="font-mono font-bold text-slate-400">
+                        Resend in 00:{resendTimer < 10 ? `0${resendTimer}` : resendTimer}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={forgotLoading}
+                        className="font-bold text-[#0F172A] hover:underline flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${forgotLoading ? 'animate-spin' : ''}`} />
+                        <span>Resend OTP</span>
+                      </button>
+                    )}
                   </div>
 
                   <button
