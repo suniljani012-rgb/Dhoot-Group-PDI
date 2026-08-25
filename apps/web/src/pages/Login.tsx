@@ -100,7 +100,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. USERNAME / USER ID (CLEAN 'Enter user id' PLACEHOLDER) */}
+            {/* 2. USER ID FIELD */}
             <div>
               <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
                 Username
@@ -112,7 +112,7 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="Enter user id"
+                  placeholder="Enter User ID"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
                   className="block w-full pl-11 pr-4 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
@@ -120,7 +120,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 3. PASSWORD FIELD WITH HIGH-VISIBILITY SHOW/HIDE EYE ICON */}
+            {/* 3. PASSWORD FIELD WITH 'Enter Password' PLACEHOLDER & TOGGLE */}
             <div>
               <label className="block text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-2">
                 Password
@@ -132,7 +132,7 @@ export const LoginPage: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="••••••••"
+                  placeholder="Enter Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-11 pr-12 py-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] rounded-2xl text-sm font-semibold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all shadow-sm"
@@ -141,8 +141,8 @@ export const LoginPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center text-[#64748B] hover:text-[#0F172A] transition-colors focus:outline-none cursor-pointer"
-                  title={showPassword ? 'Hide password' : 'Show password'}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide Password' : 'Show Password'}
+                  aria-label={showPassword ? 'Hide Password' : 'Show Password'}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-[#475569] hover:text-[#0F172A]" />
