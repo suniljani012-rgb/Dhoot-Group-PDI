@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/apiConfig';
 import { 
   Users, Search, Plus, Shield, ShieldCheck, 
   Settings, Key, X, Loader2, Edit3, CheckCircle2, 
@@ -231,7 +232,7 @@ export const AdminUsersPage: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8787/api/v1/users');
+      const res = await fetch(getApiUrl('/api/v1/users'));
       if (res.ok) {
         const json = await res.json();
         setUsersList(json.data || []);
@@ -246,7 +247,7 @@ export const AdminUsersPage: React.FC = () => {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:8787/api/v1/users', {
+      const res = await fetch(getApiUrl('/api/v1/users'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser)
@@ -277,7 +278,7 @@ export const AdminUsersPage: React.FC = () => {
     e.preventDefault();
     if (!selectedUser) return;
     try {
-      const res = await fetch(`http://localhost:8787/api/v1/users/${selectedUser.id}`, {
+      const res = await fetch(getApiUrl(`/api/v1/users/${selectedUser.id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectedUser)

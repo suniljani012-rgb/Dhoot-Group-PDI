@@ -8,6 +8,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
+import { getApiUrl } from '../utils/apiConfig';
+import { getVehiclesForBrand } from '../data/seedData';
 
 export interface StockVehicle {
   id: string;
@@ -57,11 +59,8 @@ export const VehiclesPage: React.FC = () => {
   const fetchStock = async () => {
     setLoading(true);
     try {
-      const url = currentBrand.code === 'DHOOT-ALL'
-        ? 'http://localhost:8787/api/v1/stock'
-        : `http://localhost:8787/api/v1/stock?organization_id=${currentBrand.orgId}`;
-
-      const res = await fetch(url);
+      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
+      const res = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
       if (res.ok) {
         const json = await res.json();
         if (json.data && json.data.length > 0) {
@@ -70,31 +69,13 @@ export const VehiclesPage: React.FC = () => {
           return;
         }
       }
+      setVehicles(getVehiclesForBrand(currentBrand.code) as any);
     } catch (e) {
-      console.error(e);
+      console.warn('Live API unreachable, using brand dataset:', e);
+      setVehicles(getVehiclesForBrand(currentBrand.code) as any);
+    } finally {
+      setLoading(false);
     }
-
-    // Default seeded stock fallback
-    if (currentBrand.code === 'DHOOT-HYUNDAI') {
-      setVehicles([
-        { id: '1', vin: 'MALC12345C1122334', model: 'Hyundai Creta', variant: 'SX(O) Turbo 1.5 DCT', color: 'Ranger Khaki', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-901', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Sunil Jani', sales_consultant: 'Ramesh Choudhary', accessories_amount: 15000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 51000, purchase_date: '2026-08-15' },
-        { id: '2', vin: 'MALC12345V5566778', model: 'Hyundai Venue', variant: 'N Line N8 DCT', color: 'Atlas White / Abyss Black', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-902', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Pooja Agarwal', sales_consultant: 'Kavita Shekhawat', accessories_amount: 8500, delivery_date: '2026-08-29', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 25000, purchase_date: '2026-08-18' },
-      ]);
-    } else if (currentBrand.code === 'DHOOT-TATA') {
-      setVehicles([
-        { id: '3', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', color: 'Daytona Grey', fuel_type: 'PETROL', fsc_code: 'FSC-TAT-801', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Rajesh Sharma', sales_consultant: 'Vikram Malhotra', accessories_amount: 18000, delivery_date: '2026-08-28', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 50000, purchase_date: '2026-08-14' },
-        { id: '4', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', color: 'Oberon Black', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-802', dealer_code: 'DLR-MH02', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Amit Deshmukh', sales_consultant: 'Sneha Kulkarni', accessories_amount: 25000, delivery_date: '2026-08-30', allocation_date: '2026-08-22', allocated_days: 3, received_amount: 100000, purchase_date: '2026-08-16' },
-      ]);
-    } else {
-      // Consolidated ALL
-      setVehicles([
-        { id: '1', vin: 'MALC12345C1122334', model: 'Hyundai Creta', variant: 'SX(O) Turbo 1.5 DCT', color: 'Ranger Khaki', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-901', dealer_code: 'DLR-RJ01', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Jaipur Main Stockyard', customer_name: 'Sunil Jani', sales_consultant: 'Ramesh Choudhary', accessories_amount: 15000, delivery_date: '2026-08-27', allocation_date: '2026-08-21', allocated_days: 4, received_amount: 51000, purchase_date: '2026-08-15' },
-        { id: '2', vin: 'MALC12345V5566778', model: 'Hyundai Venue', variant: 'N Line N8 DCT', color: 'Atlas White / Abyss Black', fuel_type: 'PETROL', fsc_code: 'FSC-HYN-902', dealer_code: 'DLR-RJ02', plant_code: 'PLT-CHE', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Jodhpur Stockyard', customer_name: 'Pooja Agarwal', sales_consultant: 'Kavita Shekhawat', accessories_amount: 8500, delivery_date: '2026-08-29', allocation_date: '2026-08-23', allocated_days: 2, received_amount: 25000, purchase_date: '2026-08-18' },
-        { id: '3', vin: 'MAT612345N1234567', model: 'Tata Nexon', variant: 'Fearless Plus S DT', color: 'Daytona Grey', fuel_type: 'PETROL', fsc_code: 'FSC-TAT-801', dealer_code: 'DLR-MH01', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'RECEIVED', quantity: 1, location: 'Pune Central Stockyard', customer_name: 'Rajesh Sharma', sales_consultant: 'Vikram Malhotra', accessories_amount: 18000, delivery_date: '2026-08-28', allocation_date: '2026-08-20', allocated_days: 5, received_amount: 50000, purchase_date: '2026-08-14' },
-        { id: '4', vin: 'MAT612345H7654321', model: 'Tata Harrier', variant: 'Fearless Plus Dark', color: 'Oberon Black', fuel_type: 'DIESEL', fsc_code: 'FSC-TAT-802', dealer_code: 'DLR-MH02', plant_code: 'PLT-PUN', manufacturing_year: 2026, status: 'PDI_PENDING', quantity: 1, location: 'Mumbai Stockyard', customer_name: 'Amit Deshmukh', sales_consultant: 'Sneha Kulkarni', accessories_amount: 25000, delivery_date: '2026-08-30', allocation_date: '2026-08-22', allocated_days: 3, received_amount: 100000, purchase_date: '2026-08-16' },
-      ]);
-    }
-    setLoading(false);
   };
 
   const handleBulkStockImport = async () => {
@@ -118,7 +99,7 @@ export const VehiclesPage: React.FC = () => {
         ? '11111111-1111-1111-1111-111111111112'
         : '11111111-1111-1111-1111-111111111111';
 
-      const res = await fetch('http://localhost:8787/api/v1/stock/bulk-import', {
+      const res = await fetch(getApiUrl('/api/v1/stock/bulk-import'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -203,7 +184,7 @@ export const VehiclesPage: React.FC = () => {
         {/* Card 1: Total Stock */}
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Fleet Stock</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Vehicles</span>
             <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalStockCount}</span>
             <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Units in System</span>
           </div>

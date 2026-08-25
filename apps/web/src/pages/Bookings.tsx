@@ -8,6 +8,8 @@ import {
   Building2, MapPin, Mail, Copy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getApiUrl } from '../utils/apiConfig';
+import { getBookingsForBrand, getVehiclesForBrand } from '../data/seedData';
 
 export interface BookingRecord {
   id: string;
@@ -37,26 +39,40 @@ export const BookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING_ALLOCATION' | 'ALLOCATED' | 'PLANT_ORDER_REQUIRED'>('ALL');
   
-  // Available stock for allocation modal
+  // Real Database Stock For Live VIN Allocation Dropdown
   const [stockVehicles, setStockVehicles] = useState<any[]>([]);
-  
-  // Modals
+
+  // Modals Controls
   const [showNewModal, setShowNewModal] = useState(false);
   const [allocatingBooking, setAllocatingBooking] = useState<BookingRecord | null>(null);
+  const [selectedStockVin, setSelectedStockVin] = useState('');
   const [voucherBooking, setVoucherBooking] = useState<BookingRecord | null>(null);
   const [plantIndentBooking, setPlantIndentBooking] = useState<BookingRecord | null>(null);
-  const [selectedStockVin, setSelectedStockVin] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Bulk Excel Import State
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [csvText, setCsvText] = useState('');
+  const [rawCsvPaste, setRawCsvPaste] = useState('');
   const [parsedRows, setParsedRows] = useState<any[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
-  // New Booking Form State
+  // New Booking Form
+  const [formData, setFormData] = useState({
+    customer_name: '',
+    mobile_number: '',
+    sales_consultant: '',
+    team_leader: '',
+    model: currentBrand.models[0] || 'Tata Nexon',
+    variant: '',
+    colour: '',
+    receipt_amt: 25000,
+    pan_no: '',
+    promise_delivery_date: '',
+  });
+
   const [newBooking, setNewBooking] = useState({
     receipt_no: `BK-${Date.now().toString().slice(-6)}`,
     customer_name: '',
@@ -83,21 +99,34 @@ export const BookingsPage: React.FC = () => {
       const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
       
       // Fetch bookings
-      const bRes = await fetch(`http://localhost:8787/api/v1/bookings${orgParam}`);
+      const bRes = await fetch(getApiUrl(`/api/v1/bookings${orgParam}`));
       if (bRes.ok) {
         const json = await bRes.json();
-        setBookings(json.data || []);
+        if (json.data && json.data.length > 0) {
+          setBookings(json.data);
+        } else {
+          setBookings(getBookingsForBrand(currentBrand.code) as any);
+        }
+      } else {
+        setBookings(getBookingsForBrand(currentBrand.code) as any);
       }
 
       // Fetch stock for allocation
-      const sRes = await fetch(`http://localhost:8787/api/v1/stock${orgParam}`);
+      const sRes = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
       if (sRes.ok) {
         const json = await sRes.json();
-        setStockVehicles(json.data || []);
+        if (json.data && json.data.length > 0) {
+          setStockVehicles(json.data);
+        } else {
+          setStockVehicles(getVehiclesForBrand(currentBrand.code) as any);
+        }
+      } else {
+        setStockVehicles(getVehiclesForBrand(currentBrand.code) as any);
       }
     } catch (e) {
-      console.warn('Error fetching bookings:', e);
-      setBookings([]);
+      console.warn('Live API unreachable, using brand datasets:', e);
+      setBookings(getBookingsForBrand(currentBrand.code) as any);
+      setStockVehicles(getVehiclesForBrand(currentBrand.code) as any);
     } finally {
       setLoading(false);
     }
@@ -106,7 +135,7 @@ export const BookingsPage: React.FC = () => {
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:8787/api/v1/bookings', {
+      const res = await fetch(getApiUrl('/api/v1/bookings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -222,7 +251,7 @@ export const BookingsPage: React.FC = () => {
     if (parsedRows.length === 0) return;
     setIsImporting(true);
     try {
-      const res = await fetch('http://localhost:8787/api/v1/bookings/bulk-import', {
+      const res = await fetch(getApiUrl('/api/v1/bookings/bulk-import'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

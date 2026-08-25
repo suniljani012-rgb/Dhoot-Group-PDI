@@ -105,21 +105,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedBrandCode, setSelectedBrandCode] = useState<BrandCode>('DHOOT-ALL');
   
-  // Safe default initialization so dashboard never fails to load
+  // Real secure session state — strictly null until user logs in
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('autoprime_token') || 'dhoot-enterprise-session-token';
+    return localStorage.getItem('dhoot_pdi_token') || localStorage.getItem('autoprime_token') || null;
   });
 
   const [user, setUser] = useState<AuthUser | null>(() => {
-    const saved = localStorage.getItem('autoprime_user');
+    const saved = localStorage.getItem('dhoot_pdi_user') || localStorage.getItem('autoprime_user');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (e) {
-        return DEFAULT_ADMIN;
+        return null;
       }
     }
-    return DEFAULT_ADMIN;
+    return null;
   });
 
   useEffect(() => {
@@ -150,19 +150,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       setSelectedBrandCode('DHOOT-ALL');
     }
-    localStorage.setItem('autoprime_token', newToken);
-    localStorage.setItem('autoprime_user', JSON.stringify(newUser));
+    localStorage.setItem('dhoot_pdi_token', newToken);
+    localStorage.setItem('dhoot_pdi_user', JSON.stringify(newUser));
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    localStorage.removeItem('dhoot_pdi_token');
+    localStorage.removeItem('dhoot_pdi_user');
     localStorage.removeItem('autoprime_token');
     localStorage.removeItem('autoprime_user');
   };
 
   const currentBrand = BRAND_CONFIGS[selectedBrandCode] || BRAND_CONFIGS['DHOOT-ALL'];
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'SYSTEM_ADMIN' || user?.employeeId?.toUpperCase() === 'ADMIN' || user?.userCode === 'DG001';
+  const isSuperAdmin = !!user && (user?.role === 'SUPER_ADMIN' || user?.role === 'SYSTEM_ADMIN' || user?.employeeId?.toUpperCase() === 'ADMIN' || user?.userCode === 'DG001');
 
   return (
     <AuthContext.Provider value={{ user, token, currentBrand, setBrand, login, logout, isSuperAdmin }}>

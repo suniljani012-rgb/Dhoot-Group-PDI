@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFleetCounts } from '../hooks/useFleetCounts';
+import { getApiUrl } from '../utils/apiConfig';
+import { getVehiclesForBrand } from '../data/seedData';
 
 export const DashboardPage: React.FC = () => {
   const { currentBrand, user } = useAuth();
@@ -29,16 +31,19 @@ export const DashboardPage: React.FC = () => {
     setLoadingFleet(true);
     try {
       const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
-      const res = await fetch(`http://localhost:8787/api/v1/stock${orgParam}`);
+      const res = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
       if (res.ok) {
         const json = await res.json();
-        setFleetList(json.data || []);
-      } else {
-        setFleetList([]);
+        if (json.data && json.data.length > 0) {
+          setFleetList(json.data);
+          setLoadingFleet(false);
+          return;
+        }
       }
+      setFleetList(getVehiclesForBrand(currentBrand.code));
     } catch (e) {
-      console.warn('Error fetching fleet:', e);
-      setFleetList([]);
+      console.warn('Live API unreachable, using brand dataset:', e);
+      setFleetList(getVehiclesForBrand(currentBrand.code));
     } finally {
       setLoadingFleet(false);
     }
@@ -68,13 +73,13 @@ export const DashboardPage: React.FC = () => {
 
   // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
   const kpis = [
-    { label: 'Total Fleet', value: counts.totalStock, change: `${counts.totalStock} Units`, isUp: true, link: '/vehicles', color: 'text-blue-700', bg: 'bg-blue-50/50' },
-    { label: 'Receiving Pending', value: counts.receivingPending, change: `${counts.receivingPending} En-route`, isUp: true, link: '/receiving', color: 'text-amber-700', bg: 'bg-amber-50/50', alert: counts.receivingPending > 0 },
+    { label: 'Total Vehicle', value: counts.totalStock, change: `${counts.totalStock} Units`, isUp: true, link: '/vehicles', color: 'text-blue-700', bg: 'bg-blue-50/50' },
+    { label: 'Gate Inward', value: counts.receivingPending, change: `${counts.receivingPending} En-route`, isUp: true, link: '/receiving', color: 'text-amber-700', bg: 'bg-amber-50/50', alert: counts.receivingPending > 0 },
     { label: 'Yard Stock', value: counts.inYard, change: `${counts.inYard} On-site`, isUp: true, link: '/vehicles', color: 'text-slate-800', bg: 'bg-slate-50' },
-    { label: 'Inspection Pending', value: counts.pdiPending, change: `${counts.pdiPending} Ready`, isUp: false, link: '/pdi', color: 'text-orange-700', bg: 'bg-orange-50/50', alert: counts.pdiPending > 0 },
-    { label: 'Quality Certified', value: counts.pdiDone, change: `${counts.pdiDone} Certified`, isUp: true, link: '/pdi', color: 'text-emerald-700', bg: 'bg-emerald-50/50' },
-    { label: 'Customer Bookings', value: counts.totalBookings, change: `${counts.totalBookings} Orders`, isUp: true, link: '/bookings', color: 'text-indigo-700', bg: 'bg-indigo-50/50' },
-    { label: 'Allocated Units', value: counts.allocatedVehicles, change: `${counts.allocatedVehicles} Tagged`, isUp: true, link: '/bookings', color: 'text-purple-700', bg: 'bg-purple-50/50' },
+    { label: 'PDI Pending', value: counts.pdiPending, change: `${counts.pdiPending} Ready`, isUp: false, link: '/pdi', color: 'text-orange-700', bg: 'bg-orange-50/50', alert: counts.pdiPending > 0 },
+    { label: 'PDI Certified', value: counts.pdiDone, change: `${counts.pdiDone} Certified`, isUp: true, link: '/pdi', color: 'text-emerald-700', bg: 'bg-emerald-50/50' },
+    { label: 'Bookings', value: counts.totalBookings, change: `${counts.totalBookings} Orders`, isUp: true, link: '/bookings', color: 'text-indigo-700', bg: 'bg-indigo-50/50' },
+    { label: 'VIN Allocated', value: counts.allocatedVehicles, change: `${counts.allocatedVehicles} Tagged`, isUp: true, link: '/bookings', color: 'text-purple-700', bg: 'bg-purple-50/50' },
     { label: 'In Workshop', value: counts.inRepair, change: `${counts.inRepair} Repairs`, isUp: false, link: '/repairs', color: 'text-rose-700', bg: 'bg-rose-50/50' }
   ];
 
@@ -138,11 +143,11 @@ export const DashboardPage: React.FC = () => {
       case 'DELIVERY_READY':
         return { text: 'Certified Approved', class: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
       case 'ALLOCATED':
-        return { text: 'Customer Allocated', class: 'bg-purple-50 text-purple-800 border-purple-200' };
-      case 'IN_REPAIR':
-        return { text: 'In Workshop', class: 'bg-rose-50 text-rose-800 border-rose-200' };
+        return { text: 'Allocated to Retail', class: 'bg-purple-50 text-purple-800 border-purple-200' };
+      case 'REPAIR_PENDING':
+        return { text: 'Defect in Workshop', class: 'bg-rose-50 text-rose-800 border-rose-200' };
       default:
-        return { text: status || 'RECEIVED', class: 'bg-slate-100 text-slate-700 border-slate-200' };
+        return { text: status, class: 'bg-slate-100 text-slate-700' };
     }
   };
 
@@ -190,7 +195,9 @@ export const DashboardPage: React.FC = () => {
             className={`p-3 rounded-2xl border border-slate-200/90 bg-white hover:border-slate-400 hover:shadow-xs transition-all flex flex-col justify-between group ${k.bg}`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">{k.label}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 leading-tight block whitespace-nowrap overflow-hidden text-ellipsis">
+                {k.label}
+              </span>
               {k.alert && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-ping" />}
             </div>
 

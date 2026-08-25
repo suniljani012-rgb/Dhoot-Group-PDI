@@ -8,6 +8,7 @@ import {
   Calendar, KeyRound, Check, RefreshCw, Mail
 } from 'lucide-react';
 import { AutomotiveBackground } from '../components/common/AutomotiveBackground';
+import { getApiUrl } from '../utils/apiConfig';
 
 type ForgotStep = 'STEP_1_IDENTITY' | 'STEP_2_OTP' | 'STEP_3_NEW_PASSWORD' | 'STEP_4_SUCCESS';
 
@@ -69,8 +70,7 @@ export const LoginPage: React.FC = () => {
 
       // Try API Worker First
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
-        const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
+        const res = await fetch(getApiUrl('/api/v1/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: cleanUser, password })
@@ -189,8 +189,7 @@ export const LoginPage: React.FC = () => {
       // 1. Try API Worker
       let verifiedData: any = null;
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
-        const res = await fetch(`${apiUrl}/api/v1/auth/forgot/verify-identity`, {
+        const res = await fetch(getApiUrl('/api/v1/auth/forgot/verify-identity'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: forgotUserId.trim(), dateOfBirth: forgotDob })
@@ -266,8 +265,7 @@ export const LoginPage: React.FC = () => {
       const cleanUser = forgotUserId.trim();
       const cleanDob = forgotDob.trim();
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
-      const res = await fetch(`${apiUrl}/api/v1/auth/forgot/verify-identity`, {
+      const res = await fetch(getApiUrl('/api/v1/auth/forgot/verify-identity'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: cleanUser, dateOfBirth: cleanDob })
@@ -322,8 +320,7 @@ export const LoginPage: React.FC = () => {
       // 2. Verify via API Worker
       if (!isValid) {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
-          const res = await fetch(`${apiUrl}/api/v1/auth/forgot/verify-otp`, {
+          const res = await fetch(getApiUrl('/api/v1/auth/forgot/verify-otp'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: forgotUserId.trim(), otp: cleanOtp })

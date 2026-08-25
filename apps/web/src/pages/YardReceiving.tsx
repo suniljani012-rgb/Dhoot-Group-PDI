@@ -6,6 +6,8 @@ import {
   AlertCircle, X, StopCircle, FolderOpen, Calendar, MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/apiConfig';
+import { getVehiclesForBrand } from '../data/seedData';
 
 interface IncomingVehicle {
   id: string;
@@ -67,46 +69,11 @@ const compressImageFile = async (file: File): Promise<string> => {
 
 export const YardReceivingPage: React.FC = () => {
   const { currentBrand } = useAuth();
-  const [searchVin, setSearchVin] = useState('');
-  const [activeTab, setActiveTab] = useState<'PENDING' | 'RECEIVED'>('PENDING');
+  
   const [vehicles, setVehicles] = useState<IncomingVehicle[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchIncomingStock();
-  }, [currentBrand?.code]);
-
-  const fetchIncomingStock = async () => {
-    setLoading(true);
-    try {
-      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
-      const res = await fetch(`http://localhost:8787/api/v1/stock${orgParam}`);
-      if (res.ok) {
-        const json = await res.json();
-        const rows = json.data || [];
-        const mapped: IncomingVehicle[] = rows.map((v: any) => ({
-          id: v.id || v.vin,
-          vin: v.vin,
-          brand: (v.brand || (v.vin?.startsWith('MAL') ? 'HYUNDAI' : 'TATA')) as 'TATA' | 'HYUNDAI',
-          model: v.model || 'OEM Vehicle',
-          variant: v.variant || 'Standard',
-          color: v.color || 'White',
-          engineNo: v.engine_no || v.engine_number || 'ENG-001',
-          plantCode: v.plant_code || 'OEM Plant',
-          dispatchDate: v.purchase_date || '2026-08-25',
-          trailerNo: v.trailer_no || 'TR-LOG-01',
-          transporter: v.transporter || 'Auto Carrier Logistics',
-          status: (v.status === 'YARD_RECEIVING_PENDING' || v.status === 'IN_TRANSIT') ? 'YARD_RECEIVING_PENDING' : 'RECEIVED_IN_YARD'
-        }));
-        setVehicles(mapped);
-      }
-    } catch (e) {
-      console.warn('Error fetching incoming stock:', e);
-      setVehicles([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [activeTab, setActiveTab] = useState<'PENDING' | 'RECEIVED'>('PENDING');
+  const [searchVin, setSearchVin] = useState('');
 
   // Receiving Modal State
   const [selectedVehicle, setSelectedVehicle] = useState<IncomingVehicle | null>(null);
@@ -116,6 +83,49 @@ export const YardReceivingPage: React.FC = () => {
   const [yardBay, setYardBay] = useState<string>('Bay 1 (Inspection Staging)');
   const [receivingNotes, setReceivingNotes] = useState<string>('Unloaded safely from carrier. Zero physical transit damages.');
   const [isReceivingSuccess, setIsReceivingSuccess] = useState(false);
+
+  useEffect(() => {
+    fetchIncomingStock();
+  }, [currentBrand?.code]);
+
+  const mapVehicles = (rows: any[]): IncomingVehicle[] => {
+    return rows.map((v: any) => ({
+      id: v.id || v.vin,
+      vin: v.vin,
+      brand: (v.brand || (v.vin?.startsWith('MAL') ? 'HYUNDAI' : 'TATA')) as 'TATA' | 'HYUNDAI',
+      model: v.model || 'OEM Vehicle',
+      variant: v.variant || 'Standard',
+      color: v.color || 'White',
+      engineNo: v.engine_no || v.engine_number || 'ENG-001',
+      plantCode: v.plant_code || 'OEM Plant',
+      dispatchDate: v.purchase_date || '2026-08-25',
+      trailerNo: v.trailer_no || 'TR-LOG-01',
+      transporter: v.transporter || 'Auto Carrier Logistics',
+      status: (v.status === 'YARD_RECEIVING_PENDING' || v.status === 'IN_TRANSIT') ? ('YARD_RECEIVING_PENDING' as const) : ('RECEIVED_IN_YARD' as const)
+    }));
+  };
+
+  const fetchIncomingStock = async () => {
+    setLoading(true);
+    try {
+      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
+      const res = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
+      if (res.ok) {
+        const json = await res.json();
+        const rows = json.data || [];
+        if (rows.length > 0) {
+          setVehicles(mapVehicles(rows));
+          setLoading(false);
+          return;
+        }
+      }
+      setVehicles(mapVehicles(getVehiclesForBrand(currentBrand.code)));
+    } catch (e) {
+      setVehicles(mapVehicles(getVehiclesForBrand(currentBrand.code)));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // In-App Camera/Video Recorder State for Gate Receiving
   const [cameraModal, setCameraModal] = useState<{
@@ -315,7 +325,7 @@ export const YardReceivingPage: React.FC = () => {
         
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Inward Fleet</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Inward Vehicles</span>
             <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{vehicles.length}</span>
             <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Carrier Transits</span>
           </div>

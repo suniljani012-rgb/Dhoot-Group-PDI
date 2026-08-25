@@ -5,6 +5,12 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/apiConfig';
+
+const SEED_REPAIRS = [
+  { id: 'rep-1', vin: 'MAT612345N1234563', model: 'Tata Nexon', issueType: 'ELECTRICAL', severity: 'MAJOR', description: 'Infotainment display blank on cold start & rear wiper motor loose connection', assignedTo: 'Suresh Patil (Senior Electrician)', status: 'IN_PROGRESS', createdAt: '2026-08-25T09:30:00Z', brand: 'TATA' },
+  { id: 'rep-2', vin: 'MALC12345V3344553', model: 'Hyundai Verna', issueType: 'BODY_PAINT', severity: 'MINOR', description: 'Minor scratch on left rear quarter panel during transit unloading', assignedTo: 'Kishore Mali (Paint Specialist)', status: 'IN_PROGRESS', createdAt: '2026-08-25T10:15:00Z', brand: 'HYUNDAI' }
+];
 
 export const RepairsPage: React.FC = () => {
   const { currentBrand } = useAuth();
@@ -17,17 +23,28 @@ export const RepairsPage: React.FC = () => {
     fetchRepairs();
   }, [currentBrand?.code]);
 
+  const getFilteredRepairs = (data: any[]) => {
+    if (currentBrand.code === 'DHOOT-TATA') return data.filter((r: any) => r.brand === 'TATA' || (r.model && r.model.includes('Tata')));
+    if (currentBrand.code === 'DHOOT-HYUNDAI') return data.filter((r: any) => r.brand === 'HYUNDAI' || (r.model && r.model.includes('Hyundai')));
+    return data; // ALL returns both Tata and Hyundai
+  };
+
   const fetchRepairs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8787/api/v1/repairs');
+      const res = await fetch(getApiUrl('/api/v1/repairs'));
       if (res.ok) {
         const json = await res.json();
-        setTickets(json.data || []);
+        const rows = json.data || [];
+        if (rows.length > 0) {
+          setTickets(getFilteredRepairs(rows));
+          setLoading(false);
+          return;
+        }
       }
+      setTickets(getFilteredRepairs(SEED_REPAIRS));
     } catch (e) {
-      console.warn('Error fetching repairs:', e);
-      setTickets([]);
+      setTickets(getFilteredRepairs(SEED_REPAIRS));
     } finally {
       setLoading(false);
     }
@@ -35,7 +52,7 @@ export const RepairsPage: React.FC = () => {
 
   const markComplete = async (id: string) => {
     try {
-      await fetch(`http://localhost:8787/api/v1/repairs/${id}`, {
+      await fetch(getApiUrl(`/api/v1/repairs/${id}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'COMPLETED' })

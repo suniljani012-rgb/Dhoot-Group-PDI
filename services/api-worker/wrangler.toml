@@ -7,3 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 ENVIRONMENT = "production"
 SUPABASE_URL = "https://eyskoxjbzziahdatzvmq.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_YC_deZ2YNk0EwpdQBEliMQ_X2ES1f10"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "dhoot-group-pdi-media"

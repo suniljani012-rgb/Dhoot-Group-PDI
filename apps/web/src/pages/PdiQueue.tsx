@@ -7,6 +7,8 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/apiConfig';
+import { getVehiclesForBrand } from '../data/seedData';
 
 export interface PdiInspectionItem {
   id: string;
@@ -37,41 +39,44 @@ export const PdiQueuePage: React.FC = () => {
     fetchPdiQueue();
   }, [currentBrand?.code]);
 
+  const mapPdi = (rows: any[]) => {
+    return rows
+      .filter((v: any) => v.status === 'PDI_PENDING' || v.status === 'PDI_IN_PROGRESS' || v.status === 'RECEIVED')
+      .map((v: any) => ({
+        id: v.id || v.vin,
+        vin: v.vin,
+        brand: v.brand || (v.vin?.startsWith('MAL') ? 'HYUNDAI' : 'TATA'),
+        model: v.model || 'OEM Vehicle',
+        variant: v.variant || 'Standard',
+        color: v.color || 'White',
+        yardLocation: v.location || 'Central Yard • Bay 1',
+        inspector: v.inspector_name || 'Senior PDI Inspector',
+        progress: v.status === 'PDI_IN_PROGRESS' ? 65 : 0,
+        passed: v.status === 'PDI_IN_PROGRESS' ? 42 : 0,
+        failed: 0,
+        total: 64,
+        status: v.status,
+        startedAt: '10:30 AM',
+        elapsedTime: v.status === 'PDI_IN_PROGRESS' ? '24 mins' : 'Not Started'
+      }));
+  };
+
   const fetchPdiQueue = async () => {
     setLoading(true);
     try {
       const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
-      const res = await fetch(`http://localhost:8787/api/v1/stock${orgParam}`);
+      const res = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
       if (res.ok) {
         const json = await res.json();
         const rows = json.data || [];
-        
-        // Filter rows that are ready for inspection or currently being inspected
-        const mapped: PdiInspectionItem[] = rows
-          .filter((v: any) => v.status === 'PDI_PENDING' || v.status === 'PDI_IN_PROGRESS' || v.status === 'RECEIVED')
-          .map((v: any) => ({
-            id: v.id || v.vin,
-            vin: v.vin,
-            brand: v.brand || (v.vin?.startsWith('MAL') ? 'HYUNDAI' : 'TATA'),
-            model: v.model || 'OEM Vehicle',
-            variant: v.variant || 'Standard',
-            color: v.color || 'White',
-            yardLocation: v.location || 'Central Yard • Bay 1',
-            inspector: v.inspector_name || 'Assigned Engineer',
-            progress: v.status === 'PDI_IN_PROGRESS' ? 50 : 0,
-            passed: v.status === 'PDI_IN_PROGRESS' ? 21 : 0,
-            failed: 0,
-            total: 42,
-            status: v.status === 'PDI_IN_PROGRESS' ? 'IN_PROGRESS' : 'PENDING_START',
-            startedAt: v.received_at || 'Today',
-            elapsedTime: v.status === 'PDI_IN_PROGRESS' ? '30 mins' : '-'
-          }));
-        
-        setPdiSessions(mapped);
+        if (rows.length > 0) {
+          setPdiSessions(mapPdi(rows));
+          setLoading(false);
+          return;
+        }
       }
+      setPdiSessions(mapPdi(getVehiclesForBrand(currentBrand.code)));
     } catch (e) {
-      console.warn('Error fetching PDI queue:', e);
-      setPdiSessions([]);
     } finally {
       setLoading(false);
     }

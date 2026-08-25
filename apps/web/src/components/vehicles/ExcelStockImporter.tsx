@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { getApiUrl } from '../../utils/apiConfig';
 
 interface ExcelStockImporterProps {
   isOpen: boolean;
@@ -183,7 +184,7 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       if (error) {
         console.warn('Database upsert warning, fallback to API worker:', error);
         // Fallback to API worker bulk import
-        const res = await fetch('http://localhost:8787/api/v1/stock/bulk-import', {
+        const res = await fetch(getApiUrl('/api/v1/stock/bulk-import'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

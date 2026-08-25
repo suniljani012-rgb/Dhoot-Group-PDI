@@ -40,7 +40,38 @@ app.use('*', cors({
 
 app.onError(errorHandler);
 
-app.get('/health', (c) => c.json({ status: 'healthy', env: c.env.ENVIRONMENT || 'development', timestamp: new Date().toISOString() }));
+app.get('/', (c) => c.json({
+  service: 'Dhoot Group PDI — Enterprise Management Platform API',
+  brand: 'Dhoot Group',
+  status: 'ONLINE',
+  version: '1.0.0',
+  environment: c.env.ENVIRONMENT || 'production',
+  portal_url: 'https://dhoot-group-pdi.pages.dev',
+  timestamp: new Date().toISOString(),
+  endpoints: {
+    health: '/health',
+    users: '/api/v1/users',
+    stock: '/api/v1/stock',
+    bookings: '/api/v1/bookings',
+    vehicles: '/api/v1/vehicles',
+    challans: '/api/v1/challans',
+    pdi_inspections: '/api/v1/pdi',
+    repairs: '/api/v1/repairs',
+    qa: '/api/v1/qa',
+    certificates: '/api/v1/certificates',
+    masters: '/api/v1/masters'
+  }
+}));
+
+app.get('/health', (c) => c.json({ 
+  status: 'healthy', 
+  service: 'Dhoot Group PDI API Worker',
+  env: c.env.ENVIRONMENT || 'production', 
+  timestamp: new Date().toISOString() 
+}));
+
+app.get('/api', (c) => c.redirect('/'));
+app.get('/api/v1', (c) => c.redirect('/'));
 
 const v1 = new Hono<{ Bindings: Env }>();
 v1.route('/auth', authRouter);
