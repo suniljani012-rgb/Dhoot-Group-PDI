@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { Env } from '../index';
 
-export const challansRouter = new Hono<{ Bindings: Env }>();
+export const challansRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/challans — List challans/invoices with multi-brand scoping
 challansRouter.get('/', async (c) => {

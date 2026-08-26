@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { Env } from '../index';
 
-export const authRouter = new Hono<{ Bindings: Env }>();
+export const authRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // In-memory OTP cache for reset flows (map: userId -> { otp, expiresAt, verified })
 const otpStore = new Map<string, { otp: string; expiresAt: number; verified: boolean }>();

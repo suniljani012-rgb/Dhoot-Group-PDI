@@ -9,7 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
 import { getApiUrl } from '../utils/apiConfig';
-import { getVehiclesForBrand, clearStockInventory, getActiveStockyards, syncWithSupabase } from '../data/seedData';
+import { getVehiclesForBrand, clearStockInventory, getActiveStockyards, syncWithSupabase, isTataItem, isHyundaiItem } from '../data/seedData';
+import { supabase } from '../lib/supabase';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface StockVehicle {
@@ -99,6 +100,7 @@ export const VehiclesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setBrandFilter(currentBrand.code === 'DHOOT-ALL' ? 'ALL' : currentBrand.code);
     fetchStock();
     
     // Listen for stock-updated events from Importer or other tabs
@@ -125,7 +127,7 @@ export const VehiclesPage: React.FC = () => {
   };
 
   // Instant update of Vehicle Yard from Table Dropdown
-  const handleUpdateVehicleYard = (vin: string, newYard: string) => {
+  const handleUpdateVehicleYard = async (vin: string, newYard: string) => {
     const updated = vehicles.map(v => {
       if (v.vin === vin) {
         return { ...v, location: newYard };
@@ -135,6 +137,12 @@ export const VehiclesPage: React.FC = () => {
     setVehicles(updated);
     localStorage.setItem('dhoot_stock_inventory', JSON.stringify(updated));
     window.dispatchEvent(new Event('stock-updated'));
+
+    try {
+      await supabase.from('vehicles').update({ location: newYard }).eq('vin', vin);
+    } catch (e) {
+      console.warn('Supabase yard update note:', e);
+    }
   };
 
 
@@ -209,22 +217,10 @@ export const VehiclesPage: React.FC = () => {
     return 'neutral';
   };
 
-  const isTataVehicle = (v: StockVehicle) => {
-    const m = (v.model || '').toLowerCase();
-    const b = (v.brand || '').toLowerCase();
-    return b.includes('tata') || ['nexon', 'punch', 'harrier', 'safari', 'curvv', 'altroz', 'tiago', 'tigor'].some(x => m.includes(x));
-  };
-
-  const isHyundaiVehicle = (v: StockVehicle) => {
-    const m = (v.model || '').toLowerCase();
-    const b = (v.brand || '').toLowerCase();
-    return b.includes('hyundai') || ['creta', 'venue', 'exter', 'i20', 'verna', 'tucson', 'alcazar', 'aura', 'nios'].some(x => m.includes(x));
-  };
-
   // Filter vehicles by Brand first
   const brandScopedVehicles = useMemo(() => {
-    if (brandFilter === 'DHOOT-TATA') return vehicles.filter(isTataVehicle);
-    if (brandFilter === 'DHOOT-HYUNDAI') return vehicles.filter(isHyundaiVehicle);
+    if (brandFilter === 'DHOOT-TATA') return vehicles.filter(isTataItem);
+    if (brandFilter === 'DHOOT-HYUNDAI') return vehicles.filter(isHyundaiItem);
     return vehicles;
   }, [vehicles, brandFilter]);
 
@@ -253,11 +249,11 @@ export const VehiclesPage: React.FC = () => {
     return matchesSearch && matchesStatus && matchesModel && matchesLocation;
   });
 
-  const totalStockCount = vehicles.length;
-  const unallocatedStockCount = vehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length;
-  const allocatedStockCount = vehicles.filter(v => !!v.customer_name || v.status === 'ALLOCATED').length;
-  const pdiCertifiedStockCount = vehicles.filter(v => v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY').length;
-  const inwardPendingCount = vehicles.filter(v => v.status === 'YARD_RECEIVING_PENDING' || v.status === 'GATE_INWARD_PENDING' || v.status === 'IN_TRANSIT').length;
+  const totalStockCount = brandScopedVehicles.length;
+  const unallocatedStockCount = brandScopedVehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length;
+  const allocatedStockCount = brandScopedVehicles.filter(v => !!v.customer_name || v.status === 'ALLOCATED').length;
+  const pdiCertifiedStockCount = brandScopedVehicles.filter(v => v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY').length;
+  const inwardPendingCount = brandScopedVehicles.filter(v => v.status === 'YARD_RECEIVING_PENDING' || v.status === 'GATE_INWARD_PENDING' || v.status === 'IN_TRANSIT').length;
 
   return (
     <div className="space-y-4 max-w-[1600px] mx-auto select-none pb-20">

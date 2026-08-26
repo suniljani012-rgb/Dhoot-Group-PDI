@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFleetCounts } from '../hooks/useFleetCounts';
-import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards, syncWithSupabase } from '../data/seedData';
+import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards, syncWithSupabase, isTataItem, isHyundaiItem } from '../data/seedData';
 import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
 import { 
   Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, Eye, 
@@ -125,8 +125,13 @@ export const DashboardPage: React.FC = () => {
     const stockModelNames = fleetList.map(v => v.model).filter(Boolean);
     const bookingModelNames = bookingsList.map(b => b.model).filter(Boolean);
     const allUniqueNames = Array.from(new Set([...currentBrand.models, ...stockModelNames, ...bookingModelNames]));
+    const brandScopedModels = allUniqueNames.filter(mName => {
+      if (currentBrand.code === 'DHOOT-TATA') return isTataItem({ model: mName });
+      if (currentBrand.code === 'DHOOT-HYUNDAI') return isHyundaiItem({ model: mName });
+      return true;
+    });
 
-    return allUniqueNames.map(modelName => {
+    return brandScopedModels.map(modelName => {
       const normModel = cleanStr(modelName);
 
       // All Bookings for this model

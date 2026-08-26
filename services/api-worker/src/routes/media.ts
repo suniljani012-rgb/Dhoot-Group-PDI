@@ -1,8 +1,9 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
 
-export const mediaRouter = new Hono();
+export const mediaRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // POST /api/v1/media/presign-upload
 mediaRouter.post('/presign-upload', requireAuth, async (c) => {

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+
 export const TATA_ORG_ID = '11111111-1111-1111-1111-111111111111';
 export const HYUNDAI_ORG_ID = '11111111-1111-1111-1111-111111111112';
 
@@ -29,7 +30,7 @@ export interface BranchItem {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
-// 1. Tata & Hyundai Stockyards as specified by User
+// 1. Tata & Hyundai Stockyards as specified by Dealership network
 export const SEED_STOCKYARDS: YardItem[] = [
   // Tata Yards
   { id: 'yrd-t-1', code: 'YRD-BASNI', name: 'Basni Yard', brand: 'Tata Motors', city: 'Jodhpur', state: 'Rajasthan', capacity: '200 Cars', manager: 'Ramesh Choudhary', phone: '+91 98290 10001', status: 'ACTIVE' },
@@ -53,7 +54,7 @@ export const SEED_STOCKYARDS: YardItem[] = [
   { id: 'yrd-h-6', code: 'YRD-JAISAL', name: 'Jaisalmer', brand: 'Hyundai', city: 'Jaisalmer', state: 'Rajasthan', capacity: '90 Cars', manager: 'Bhanwar Singh', phone: '+91 98291 20006', status: 'ACTIVE' }
 ];
 
-// 2. Tata & Hyundai Branches / Showrooms as specified by User
+// 2. Tata & Hyundai Branches / Showrooms
 export const SEED_BRANCHES: BranchItem[] = [
   // Tata Branches
   { id: 'br-t-1', code: 'BR-PNAGAR-T', name: 'Pratap Nagar', brand: 'Tata Motors', type: 'Main Showroom', city: 'Jodhpur', state: 'Rajasthan', capacity: '50 Cars', manager: 'Rajesh Sharma', phone: '+91 98290 10008', status: 'ACTIVE' },
@@ -85,7 +86,7 @@ export const getStockyards = (brandCode?: string): YardItem[] => {
     }
   } catch (e) {}
 
-  if (!brandCode || brandCode === 'DHOOT-ALL') return list;
+  if (!brandCode || brandCode === 'DHOOT-ALL' || brandCode === 'ALL') return list;
   if (brandCode === 'DHOOT-TATA' || brandCode.toLowerCase().includes('tata')) {
     return list.filter(y => y.brand === 'Tata Motors' || y.brand === 'Shared');
   }
@@ -116,7 +117,7 @@ export const getBranches = (brandCode?: string): BranchItem[] => {
     }
   } catch (e) {}
 
-  if (!brandCode || brandCode === 'DHOOT-ALL') return list;
+  if (!brandCode || brandCode === 'DHOOT-ALL' || brandCode === 'ALL') return list;
   if (brandCode === 'DHOOT-TATA' || brandCode.toLowerCase().includes('tata')) {
     return list.filter(b => b.brand === 'Tata Motors' || b.brand === 'Shared');
   }
@@ -135,10 +136,34 @@ export const saveBranches = (branches: BranchItem[]) => {
   window.dispatchEvent(new Event('branches-updated'));
 };
 
-// Clean zero dummy data: Start empty so real imports dictate counts
-export const SEED_VEHICLES: any[] = [];
-export const SEED_BOOKINGS: any[] = [];
-export const SEED_CHALLANS: any[] = [];
+// ============================================================================
+// SMART BRAND CLASSIFICATION ENGINE (TATA VS HYUNDAI VS ALL)
+// ============================================================================
+export const isTataItem = (item: any): boolean => {
+  if (!item) return false;
+  if (item.organization_id === TATA_ORG_ID) return true;
+  if (item.brand && String(item.brand).toLowerCase().includes('tata')) return true;
+  
+  const vin = String(item.vin || item.allocated_vin_no || '').toUpperCase().trim();
+  if (vin.startsWith('MAT')) return true;
+
+  const m = String(item.model || '').toLowerCase();
+  const tataKeywords = ['tata', 'nexon', 'harrier', 'safari', 'curvv', 'punch', 'tiago', 'tigor', 'altroz'];
+  return tataKeywords.some(kw => m.includes(kw));
+};
+
+export const isHyundaiItem = (item: any): boolean => {
+  if (!item) return false;
+  if (item.organization_id === HYUNDAI_ORG_ID) return true;
+  if (item.brand && String(item.brand).toLowerCase().includes('hyundai')) return true;
+
+  const vin = String(item.vin || item.allocated_vin_no || '').toUpperCase().trim();
+  if (vin.startsWith('MAL')) return true;
+
+  const m = String(item.model || '').toLowerCase();
+  const hyundaiKeywords = ['hyundai', 'creta', 'venue', 'verna', 'ioniq', 'exter', 'i20', 'i10', 'tucson', 'alcazar', 'aura', 'grand'];
+  return hyundaiKeywords.some(kw => m.includes(kw));
+};
 
 export const getVehiclesForBrand = (brandCode: string) => {
   try {
@@ -146,9 +171,13 @@ export const getVehiclesForBrand = (brandCode: string) => {
     if (saved) {
       const parsed: any[] = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        if (brandCode === 'DHOOT-TATA') return parsed.filter(v => (v.organization_id === TATA_ORG_ID || (v.model && v.model.toLowerCase().includes('tata'))));
-        if (brandCode === 'DHOOT-HYUNDAI') return parsed.filter(v => (v.organization_id === HYUNDAI_ORG_ID || (v.model && v.model.toLowerCase().includes('hyundai'))));
-        return parsed;
+        if (brandCode === 'DHOOT-TATA' || brandCode.toLowerCase().includes('tata')) {
+          return parsed.filter(isTataItem);
+        }
+        if (brandCode === 'DHOOT-HYUNDAI' || brandCode.toLowerCase().includes('hyundai')) {
+          return parsed.filter(isHyundaiItem);
+        }
+        return parsed; // DHOOT-ALL
       }
     }
   } catch (e) {
@@ -173,9 +202,13 @@ export const getBookingsForBrand = (brandCode: string) => {
     if (saved) {
       const parsed: any[] = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        if (brandCode === 'DHOOT-TATA') return parsed.filter(b => (b.organization_id === TATA_ORG_ID || (b.model && b.model.toLowerCase().includes('tata'))));
-        if (brandCode === 'DHOOT-HYUNDAI') return parsed.filter(b => (b.organization_id === HYUNDAI_ORG_ID || (b.model && b.model.toLowerCase().includes('hyundai'))));
-        return parsed;
+        if (brandCode === 'DHOOT-TATA' || brandCode.toLowerCase().includes('tata')) {
+          return parsed.filter(isTataItem);
+        }
+        if (brandCode === 'DHOOT-HYUNDAI' || brandCode.toLowerCase().includes('hyundai')) {
+          return parsed.filter(isHyundaiItem);
+        }
+        return parsed; // DHOOT-ALL
       }
     }
   } catch (e) {
@@ -200,9 +233,13 @@ export const getChallansForBrand = (brandCode: string) => {
     if (saved) {
       const parsed: any[] = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        if (brandCode === 'DHOOT-TATA') return parsed.filter(c => (c.model && c.model.toLowerCase().includes('tata')));
-        if (brandCode === 'DHOOT-HYUNDAI') return parsed.filter(c => (c.model && c.model.toLowerCase().includes('hyundai')));
-        return parsed;
+        if (brandCode === 'DHOOT-TATA' || brandCode.toLowerCase().includes('tata')) {
+          return parsed.filter(isTataItem);
+        }
+        if (brandCode === 'DHOOT-HYUNDAI' || brandCode.toLowerCase().includes('hyundai')) {
+          return parsed.filter(isHyundaiItem);
+        }
+        return parsed; // DHOOT-ALL
       }
     }
   } catch (e) {
@@ -221,10 +258,12 @@ export const clearChallansInventory = () => {
   window.dispatchEvent(new Event('challans-updated'));
 };
 
-
+// ============================================================================
+// BIDIRECTIONAL REALTIME SUPABASE CLOUD SYNCHRONIZATION
+// ============================================================================
 export const syncWithSupabase = async () => {
   try {
-    // 1. Fetch Bookings from Supabase
+    // 1. Fetch Live Bookings from Supabase
     const { data: dbBookings, error: bErr } = await supabase.from('bookings').select('*');
     if (!bErr && dbBookings && Array.isArray(dbBookings) && dbBookings.length > 0) {
       const local = getBookingsForBrand('DHOOT-ALL');
@@ -236,7 +275,7 @@ export const syncWithSupabase = async () => {
       window.dispatchEvent(new Event('bookings-updated'));
     }
 
-    // 2. Fetch Vehicles from Supabase
+    // 2. Fetch Live Vehicles from Supabase
     const { data: dbVehicles, error: vErr } = await supabase.from('vehicles').select('*');
     if (!vErr && dbVehicles && Array.isArray(dbVehicles) && dbVehicles.length > 0) {
       const local = getVehiclesForBrand('DHOOT-ALL');
@@ -248,25 +287,25 @@ export const syncWithSupabase = async () => {
       window.dispatchEvent(new Event('stock-updated'));
     }
 
-    // 3. Fetch Stockyards from Supabase
+    // 3. Fetch Live Stockyards from Supabase
     const { data: dbYards, error: yErr } = await supabase.from('stockyards').select('*');
     if (!yErr && dbYards && Array.isArray(dbYards) && dbYards.length > 0) {
       localStorage.setItem('autoprime_stockyards', JSON.stringify(dbYards));
       window.dispatchEvent(new Event('stockyards-updated'));
     }
 
-    // 4. Fetch Branches from Supabase
+    // 4. Fetch Live Branches from Supabase
     const { data: dbBranches, error: brErr } = await supabase.from('branches').select('*');
     if (!brErr && dbBranches && Array.isArray(dbBranches) && dbBranches.length > 0) {
       localStorage.setItem('autoprime_branches', JSON.stringify(dbBranches));
       window.dispatchEvent(new Event('branches-updated'));
     }
   } catch (e) {
-    console.warn('Sync with Supabase error:', e);
+    console.warn('Sync with Supabase note:', e);
   }
 };
 
-// Trigger background sync on module load
+// Trigger immediate background sync on module execution
 if (typeof window !== 'undefined') {
   syncWithSupabase();
 }

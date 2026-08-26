@@ -1,8 +1,9 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
 
-export const devicesRouter = new Hono();
+export const devicesRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 devicesRouter.get('/', requireAuth, async (c) => {
   const session = c.get('session');

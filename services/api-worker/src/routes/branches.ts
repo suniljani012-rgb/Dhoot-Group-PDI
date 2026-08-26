@@ -1,8 +1,9 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
 
-export const branchesRouter = new Hono();
+export const branchesRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 branchesRouter.get('/', requireAuth, async (c) => {
   const session = c.get('session');

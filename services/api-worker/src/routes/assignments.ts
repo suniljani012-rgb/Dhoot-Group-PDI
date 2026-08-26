@@ -1,9 +1,10 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
 import { CreateAssignmentSchema } from '@autoprime/validation';
 
-export const assignmentsRouter = new Hono();
+export const assignmentsRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/assignments
 assignmentsRouter.get('/', requireAuth, async (c) => {

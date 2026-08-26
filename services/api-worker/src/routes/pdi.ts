@@ -1,10 +1,11 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
 import { BatchSaveResponsesSchema, CreatePdiSessionSchema, SubmitPdiSessionSchema } from '@autoprime/validation';
 import { calculatePdiProgress } from '@autoprime/domain';
 
-export const pdiRouter = new Hono();
+export const pdiRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/pdi (List sessions)
 pdiRouter.get('/', requireAuth, async (c) => {

@@ -1,6 +1,7 @@
+import { Env } from '../index';
 import { Hono } from 'hono';
 
-export const repairsRouter = new Hono();
+export const repairsRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 let localRepairsStore: any[] = [
   {

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { Env } from '../index';
 
-export const stockRouter = new Hono<{ Bindings: Env }>();
+export const stockRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 const TATA_ORG_ID = '11111111-1111-1111-1111-111111111111';
 const HYUNDAI_ORG_ID = '11111111-1111-1111-1111-111111111112';
@@ -36,6 +36,28 @@ stockRouter.get('/', async (c) => {
   const orgId = c.req.query('organization_id');
   const search = c.req.query('search');
 
+  try {
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY || c.env.SUPABASE_ANON_KEY);
+    let query = supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+    if (orgId && orgId !== 'ALL') {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data: dbData, error } = await query;
+    if (!error && dbData && dbData.length > 0) {
+      let filtered = dbData;
+      if (search) {
+        const q = search.toLowerCase();
+        filtered = filtered.filter((v: any) => 
+          (v.vin || '').toLowerCase().includes(q) ||
+          (v.model || '').toLowerCase().includes(q) ||
+          (v.customer_name || '').toLowerCase().includes(q) ||
+          (v.location || '').toLowerCase().includes(q)
+        );
+      }
+      return c.json({ success: true, data: filtered, meta: { total: filtered.length, source: 'supabase' } });
+    }
+  } catch (e) {}
+
   let results = [...localVehiclesStore];
 
   if (orgId && orgId !== 'ALL') {
@@ -52,7 +74,7 @@ stockRouter.get('/', async (c) => {
     );
   }
 
-  return c.json({ success: true, data: results, meta: { total: results.length } });
+  return c.json({ success: true, data: results, meta: { total: results.length, source: 'local' } });
 });
 
 // PATCH /api/v1/stock/:vin — Update vehicle status / allocation

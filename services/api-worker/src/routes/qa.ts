@@ -1,6 +1,7 @@
+import { Env } from '../index';
 import { Hono } from 'hono';
 
-export const qaRouter = new Hono();
+export const qaRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 let localQaStore: any[] = [
   {

@@ -6,7 +6,6 @@
     "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
-    "suppressImplicitAnyIndexErrors": true,
     "types": ["@cloudflare/workers-types"]
   },
   "include": ["src/**/*"]

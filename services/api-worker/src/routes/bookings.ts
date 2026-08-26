@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from '../index';
 
-export const bookingsRouter = new Hono<{ Bindings: Env }>();
+export const bookingsRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 const TATA_ORG_ID = '11111111-1111-1111-1111-111111111111';
 const HYUNDAI_ORG_ID = '11111111-1111-1111-1111-111111111112';
@@ -36,6 +36,35 @@ bookingsRouter.get('/', async (c) => {
   const search = c.req.query('search');
   const status = c.req.query('status');
 
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY || c.env.SUPABASE_ANON_KEY);
+    let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
+    if (orgId && orgId !== 'ALL') {
+      query = query.eq('organization_id', orgId);
+    }
+    const { data: dbData, error } = await query;
+    if (!error && dbData && dbData.length > 0) {
+      let filtered = dbData;
+      if (status && status !== 'ALL') {
+        if (status === 'ALLOCATED') filtered = filtered.filter((b: any) => b.status === 'ALLOCATED' || !!b.allocated_vin_no);
+        else if (status === 'PENDING_ALLOCATION' || status === 'BOOKED') filtered = filtered.filter((b: any) => !b.allocated_vin_no);
+        else filtered = filtered.filter((b: any) => b.status === status);
+      }
+      if (search) {
+        const q = search.toLowerCase();
+        filtered = filtered.filter((b: any) => 
+          (b.customer_name || '').toLowerCase().includes(q) ||
+          (b.receipt_no || '').toLowerCase().includes(q) ||
+          (b.allocated_vin_no || '').toLowerCase().includes(q) ||
+          (b.mobile_number || '').includes(q) ||
+          (b.model || '').toLowerCase().includes(q)
+        );
+      }
+      return c.json({ success: true, data: filtered, meta: { total: filtered.length, source: 'supabase' } });
+    }
+  } catch (e) {}
+
   let results = [...localBookingsStore];
 
   if (orgId && orgId !== 'ALL') {
@@ -62,7 +91,7 @@ bookingsRouter.get('/', async (c) => {
   return c.json({
     success: true,
     data: results,
-    meta: { total: results.length }
+    meta: { total: results.length, source: 'local' }
   });
 });
 

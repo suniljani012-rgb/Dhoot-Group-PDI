@@ -1,3 +1,4 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
@@ -5,7 +6,7 @@ import { CreateVehicleSchema, TransitionVehicleStatusSchema } from '@autoprime/v
 import { isValidVehicleTransition } from '@autoprime/domain';
 import { VehicleStatus } from '@autoprime/types';
 
-export const vehiclesRouter = new Hono();
+export const vehiclesRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/vehicles (List with filters & search)
 vehiclesRouter.get('/', requireAuth, async (c) => {

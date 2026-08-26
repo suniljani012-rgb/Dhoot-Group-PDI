@@ -1,8 +1,9 @@
+import { Env } from '../index';
 ﻿import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from '../middleware/auth';
 
-export const certificatesRouter = new Hono();
+export const certificatesRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/certificates/:id
 certificatesRouter.get('/:id', requireAuth, async (c) => {
@@ -24,7 +25,7 @@ certificatesRouter.get('/:id', requireAuth, async (c) => {
 });
 
 // GET /api/v1/verify/:qrToken (PUBLIC QR VERIFICATION)
-export const publicVerifyRouter = new Hono();
+export const publicVerifyRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 publicVerifyRouter.get('/:qrToken', async (c) => {
   const qrToken = c.req.param('qrToken');

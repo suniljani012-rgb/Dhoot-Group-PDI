@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { Env } from '../index';
 
-export const usersRouter = new Hono<{ Bindings: Env }>();
+export const usersRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/users — List all enterprise users
 usersRouter.get('/', async (c) => {

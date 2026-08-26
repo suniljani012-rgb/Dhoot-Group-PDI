@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
 import { Env } from '../index';
 
-export const mastersRouter = new Hono<{ Bindings: Env }>();
+export const mastersRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
 // GET /api/v1/masters/all — Comprehensive Automotive Masters
 mastersRouter.get('/all', async (c) => {

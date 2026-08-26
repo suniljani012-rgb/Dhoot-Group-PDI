@@ -13,8 +13,11 @@ import { formatDate } from '../utils/dateUtils';
 import { 
   getBookingsForBrand, saveBookingsInventory, 
   getVehiclesForBrand, saveStockInventory,
-  getActiveBranches, syncWithSupabase
+  getActiveBranches, syncWithSupabase,
+  isTataItem, isHyundaiItem,
+  TATA_ORG_ID, HYUNDAI_ORG_ID
 } from '../data/seedData';
+import { supabase } from '../lib/supabase';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface BookingRecord {
@@ -60,6 +63,7 @@ export const BookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [brandFilter, setBrandFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING_ALLOCATION' | 'ALLOCATED'>('ALL');
   
   // Real Database Stock For Live VIN Allocation Dropdown
@@ -97,6 +101,7 @@ export const BookingsPage: React.FC = () => {
   });
 
   useEffect(() => {
+    setBrandFilter(currentBrand.code === 'DHOOT-ALL' ? 'ALL' : currentBrand.code);
     fetchBookingsAndStock();
 
     const handleUpdate = () => {
@@ -156,6 +161,28 @@ export const BookingsPage: React.FC = () => {
     saveBookingsInventory(updated);
 
     setShowNewModal(false);
+
+    try {
+      const isHyn = isHyundaiItem(newRecord);
+      const targetOrg = isHyn ? HYUNDAI_ORG_ID : TATA_ORG_ID;
+      supabase.from('bookings').upsert({
+        receipt_no: newRecord.receipt_no,
+        customer_name: newRecord.customer_name,
+        mobile_number: newRecord.mobile_number,
+        sales_consultant: newRecord.sales_consultant,
+        team_leader: newRecord.team_leader,
+        model: newRecord.model,
+        variant: newRecord.variant,
+        colour: newRecord.colour,
+        allocated_vin_no: newRecord.allocated_vin_no || null,
+        promise_delivery_date: newRecord.delivery_date || null,
+        receipt_amt: newRecord.receipt_amt || 0,
+        status: newRecord.allocated_vin_no ? 'ALLOCATED' : 'BOOKED',
+        organization_id: targetOrg
+      }).then();
+    } catch (e) {
+      console.warn('Supabase booking insert note:', e);
+    }
     setNewBooking({
       receipt_date: new Date().toISOString().split('T')[0],
       receipt_no: `BK-${Date.now().toString().slice(-6)}`,
@@ -385,6 +412,31 @@ export const BookingsPage: React.FC = () => {
       saveBookingsInventory(updated);
 
       setIsImportModalOpen(false);
+
+      try {
+        const rowsToSync = parsedRows.map(r => {
+          const isHyn = isHyundaiItem(r);
+          return {
+            receipt_no: r.receipt_no,
+            customer_name: r.customer_name,
+            mobile_number: r.mobile_number,
+            sales_consultant: r.sales_consultant,
+            team_leader: r.team_leader,
+            model: r.model,
+            variant: r.variant,
+            colour: r.colour,
+            allocated_vin_no: r.allocated_vin_no || null,
+            promise_delivery_date: r.delivery_date || null,
+            receipt_amt: r.receipt_amt || 0,
+            status: r.allocated_vin_no ? 'ALLOCATED' : 'BOOKED',
+            organization_id: isHyn ? HYUNDAI_ORG_ID : TATA_ORG_ID
+          };
+        });
+
+        supabase.from('bookings').upsert(rowsToSync, { onConflict: 'receipt_no' }).then();
+      } catch (e) {
+        console.warn('Supabase bulk bookings sync note:', e);
+      }
       setParsedRows([]);
       setImportSummary(null);
     } catch (e: any) {
@@ -427,9 +479,16 @@ export const BookingsPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Brand Scoped Bookings
+  const brandScopedBookings = React.useMemo(() => {
+    if (brandFilter === 'DHOOT-TATA') return bookings.filter(isTataItem);
+    if (brandFilter === 'DHOOT-HYUNDAI') return bookings.filter(isHyundaiItem);
+    return bookings;
+  }, [bookings, brandFilter]);
+
   // Filter Bookings
   const cleanSearch = search.trim().toLowerCase();
-  const filteredBookings = bookings.filter(b => {
+  const filteredBookings = brandScopedBookings.filter(b => {
     const matchesSearch = 
       !cleanSearch ||
       (b.customer_name || '').toLowerCase().includes(cleanSearch) ||
@@ -447,9 +506,9 @@ export const BookingsPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const allocatedCount = bookings.filter(b => !!b.allocated_vin_no).length;
-  const pendingAllocationCount = bookings.filter(b => !b.allocated_vin_no).length;
-  const totalAmountReceived = bookings.reduce((sum, b) => sum + (Number(b.receipt_amt) || 0), 0);
+  const allocatedCount = brandScopedBookings.filter(b => !!b.allocated_vin_no).length;
+  const pendingAllocationCount = brandScopedBookings.filter(b => !b.allocated_vin_no).length;
+  const totalAmountReceived = brandScopedBookings.reduce((sum, b) => sum + (Number(b.receipt_amt) || 0), 0);
 
   return (
     <div className="space-y-4 max-w-[1600px] mx-auto select-none pb-20">
@@ -502,10 +561,10 @@ export const BookingsPage: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Total Bookings" value={bookings.length} note="Customer Ledger" />
+        <Stat label="Total Bookings" value={brandScopedBookings.length} note="Customer Ledger" />
         <Stat label="VIN Allocated" value={allocatedCount} note="Ready for Invoicing" tone="ok" />
-        <Stat label="PBNA (In Stock)" value={bookings.filter(b => !b.allocated_vin_no && stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Ready for Allotment" tone="warn" />
-        <Stat label="Not in Stock (VNA)" value={bookings.filter(b => !b.allocated_vin_no && !stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Factory Indent Needed" tone="danger" />
+        <Stat label="PBNA (In Stock)" value={brandScopedBookings.filter(b => !b.allocated_vin_no && stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Ready for Allotment" tone="warn" />
+        <Stat label="Not in Stock (VNA)" value={brandScopedBookings.filter(b => !b.allocated_vin_no && !stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Factory Indent Needed" tone="danger" />
         <Stat label="Total Advance Collected" value={`₹${(totalAmountReceived / 100000).toFixed(2)} L`} note="Receipts Total" tone="accent" />
       </div>
 

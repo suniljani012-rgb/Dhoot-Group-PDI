@@ -1,6 +1,15 @@
-﻿import { Context, Next } from 'hono';
+import { Context, Next } from 'hono';
 import { createClient } from '@supabase/supabase-js';
-import { SessionContext, UserRole } from '@autoprime/types';
+
+export interface SessionContext {
+  userId: string;
+  email: string;
+  employeeId?: string;
+  role: string;
+  organizationId: string;
+  branchId?: string;
+  sessionId?: string;
+}
 
 export async function requireAuth(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization');
@@ -47,7 +56,7 @@ export async function requireAuth(c: Context, next: Next) {
     }, 403);
   }
 
-  const roleCode = (userProfile.user_roles as any)?.[0]?.roles?.code as UserRole || 'VIEWER';
+  const roleCode = ((userProfile.user_roles as any)?.[0]?.roles?.code as string) || 'VIEWER';
 
   const session: SessionContext = {
     userId: userProfile.id,
