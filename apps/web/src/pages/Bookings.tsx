@@ -37,6 +37,19 @@ export interface BookingRecord {
   created_at?: string;
 }
 
+// Smart PBNA to VNA Matcher (Model + Variant + Colour)
+const normalizeStr = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const getMatchScore = (booking: BookingRecord, stock: any): number => {
+  const mMatch = normalizeStr(booking.model) === normalizeStr(stock.model);
+  const vMatch = normalizeStr(booking.variant) === normalizeStr(stock.variant);
+  const cMatch = normalizeStr(booking.colour) === normalizeStr(stock.color || stock.colour);
+  if (mMatch && vMatch && cMatch) return 3; // Exact Match (Model + Variant + Colour)
+  if (mMatch && vMatch) return 2; // Model & Variant Match
+  if (mMatch) return 1; // Model Match
+  return 0;
+};
+
 export const BookingsPage: React.FC = () => {
   const { currentBrand } = useAuth();
 
@@ -108,6 +121,76 @@ export const BookingsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 1-Click Auto-Match PBNA (Unallocated Bookings) with VNA (Available Stock)
+  const handleAutoMatchPbnaToVna = () => {
+    const unallocatedBookings = bookings.filter(b => !b.allocated_vin_no);
+    if (unallocatedBookings.length === 0) {
+      alert('All customer bookings already have allocated VINs!');
+      return;
+    }
+
+    const availableStock = stockVehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED');
+    if (availableStock.length === 0) {
+      alert('No unallocated free vehicle stock available to match!');
+      return;
+    }
+
+    let matchCount = 0;
+    const allocatedVinSet = new Set<string>();
+    const updatedBookings = [...bookings];
+    const updatedStock = [...stockVehicles];
+
+    // Priority 1: Exact Match (Model + Variant + Colour)
+    // Priority 2: Model + Variant Match
+    for (let priority = 3; priority >= 2; priority--) {
+      for (let i = 0; i < updatedBookings.length; i++) {
+        const b = updatedBookings[i];
+        if (b.allocated_vin_no) continue;
+
+        const matchingStockIndex = updatedStock.findIndex(v => {
+          if (v.customer_name || v.status === 'ALLOCATED' || allocatedVinSet.has(v.vin)) return false;
+          return getMatchScore(b, v) === priority;
+        });
+
+        if (matchingStockIndex !== -1) {
+          const matchedVeh = updatedStock[matchingStockIndex];
+          allocatedVinSet.add(matchedVeh.vin);
+
+          // Update Booking
+          updatedBookings[i] = {
+            ...b,
+            allocated_vin_no: matchedVeh.vin,
+            status: 'ALLOCATED'
+          };
+
+          // Update Vehicle Stock
+          updatedStock[matchingStockIndex] = {
+            ...matchedVeh,
+            customer_name: b.customer_name,
+            status: 'ALLOCATED',
+            vehicle_status: 'ALLOCATED',
+            allocation_date: new Date().toISOString().split('T')[0],
+            allocated_days: 0
+          };
+
+          matchCount++;
+        }
+      }
+    }
+
+    if (matchCount === 0) {
+      alert('No matching unallocated stock found with identical Model, Variant and Colour.');
+      return;
+    }
+
+    setBookings(updatedBookings);
+    setStockVehicles(updatedStock);
+    saveBookingsInventory(updatedBookings);
+    saveStockInventory(updatedStock);
+
+    alert(`✨ Successfully auto-matched ${matchCount} PBNA Booking(s) with VNA Stock by Model, Variant & Colour!`);
   };
 
   const handleCreateBooking = (e: React.FormEvent) => {
@@ -458,6 +541,16 @@ export const BookingsPage: React.FC = () => {
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-accent" />
               <span>Bulk Import Bookings</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAutoMatchPbnaToVna}
+              className="h-8 px-3.5 rounded bg-ok hover:bg-ok-600 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              title="Auto-match Unallocated Bookings (PBNA) to Unallocated Stock (VNA) by Model, Variant & Colour"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              <span>Auto-Match PBNA & VNA</span>
             </button>
 
             <button
@@ -996,22 +1089,61 @@ export const BookingsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-ink mb-1.5">
-                  Select Unallocated Stock VIN *
+                  Select Stock VIN (Matched by Model, Variant & Colour) *
                 </label>
-                <select
-                  value={selectedStockVin}
-                  onChange={(e) => setSelectedStockVin(e.target.value)}
-                  className="w-full p-2.5 bg-canvas border border-line rounded text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent"
-                >
-                  <option value="">-- Choose Stock Vehicle --</option>
-                  {stockVehicles
-                    .filter(v => !v.customer_name && v.status !== 'ALLOCATED')
-                    .map(v => (
-                      <option key={v.vin} value={v.vin}>
-                        {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location}
-                      </option>
-                    ))}
-                </select>
+                {(() => {
+                  const unallocated = stockVehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED');
+                  const exactMatches = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 3);
+                  const variantMatches = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 2);
+                  const modelMatches = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 1);
+                  const otherStock = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 0);
+
+                  return (
+                    <select
+                      value={selectedStockVin}
+                      onChange={(e) => setSelectedStockVin(e.target.value)}
+                      className="w-full p-2.5 bg-canvas border border-line rounded text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent"
+                    >
+                      <option value="">-- Choose Stock Vehicle --</option>
+                      {exactMatches.length > 0 && (
+                        <optgroup label="✨ EXACT MATCHES (Model + Variant + Colour)">
+                          {exactMatches.map(v => (
+                            <option key={v.vin} value={v.vin}>
+                              {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {variantMatches.length > 0 && (
+                        <optgroup label="Model & Variant Matches">
+                          {variantMatches.map(v => (
+                            <option key={v.vin} value={v.vin}>
+                              {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {modelMatches.length > 0 && (
+                        <optgroup label="Model Only Matches">
+                          {modelMatches.map(v => (
+                            <option key={v.vin} value={v.vin}>
+                              {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {otherStock.length > 0 && (
+                        <optgroup label="Other Available Vehicles">
+                          {otherStock.map(v => (
+                            <option key={v.vin} value={v.vin}>
+                              {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  );
+                })()}
               </div>
 
               <div className="flex justify-end gap-2.5 pt-2 border-t border-line">

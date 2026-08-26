@@ -72,6 +72,15 @@ const getYardLocation = (yardName?: string, locationFallback?: string): string =
   return locationFallback || yardName || 'Central Stockyard';
 };
 
+// Helper to get active yards specifically for a vehicle's brand
+const getYardsForVehicle = (v: StockVehicle): string[] => {
+  const isHyundai = (v.organization_id && v.organization_id.includes('1112')) || 
+                    (v.model && v.model.toLowerCase().includes('hyundai')) ||
+                    (v.vin && v.vin.toUpperCase().startsWith('MAL'));
+  const brandCode = isHyundai ? 'DHOOT-HYUNDAI' : 'DHOOT-TATA';
+  return getActiveStockyards(brandCode).map(y => y.name);
+};
+
 export const VehiclesPage: React.FC = () => {
   const { currentBrand } = useAuth();
 
@@ -197,7 +206,7 @@ export const VehiclesPage: React.FC = () => {
     return 'neutral';
   };
 
-  // Distinct Models & Yard Locations for Filter Dropdowns (including In Transit & In OEM Plant)
+  // Distinct Models & Yard Locations for Filter Dropdowns (strictly for current brand)
   const uniqueModels = Array.from(new Set(vehicles.map(v => v.model).filter(Boolean)));
   const activeYards = getActiveStockyards(currentBrand.code).map(y => y.name);
   const vehicleLocations = vehicles.map(v => v.location).filter(Boolean);
@@ -447,27 +456,32 @@ export const VehiclesPage: React.FC = () => {
                         {v.quantity || 1}
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <select
-                          value={v.location || (activeYards[0] || 'Basni Yard')}
-                          onChange={(e) => handleUpdateVehicleYard(v.vin, e.target.value)}
-                          className={`h-7 text-xs font-semibold rounded px-2.5 border cursor-pointer focus:outline-none focus:border-accent transition-colors shadow-xs ${
-                            v.location === 'In Transit'
-                              ? 'bg-warn/10 text-warn border-warn/30 hover:bg-warn/20 font-bold'
-                              : v.location === 'In OEM Plant'
-                              ? 'bg-accent-soft text-accent border-accent/30 hover:bg-accent-soft/80 font-bold'
-                              : 'bg-canvas text-ink border-line hover:border-line-strong'
-                          }`}
-                        >
-                          <optgroup label="Transit & OEM Factory">
-                            <option value="In Transit">🚚 In Transit</option>
-                            <option value="In OEM Plant">🏭 In OEM Plant</option>
-                          </optgroup>
-                          <optgroup label="Active Dealership Stockyards">
-                            {activeYards.map(y => (
-                              <option key={y} value={y}>{y}</option>
-                            ))}
-                          </optgroup>
-                        </select>
+                        {(() => {
+                          const brandYards = getYardsForVehicle(v);
+                          return (
+                            <select
+                              value={v.location || (brandYards[0] || 'Basni Yard')}
+                              onChange={(e) => handleUpdateVehicleYard(v.vin, e.target.value)}
+                              className={`h-7 text-xs font-semibold rounded px-2.5 border cursor-pointer focus:outline-none focus:border-accent transition-colors shadow-xs ${
+                                v.location === 'In Transit'
+                                  ? 'bg-warn/10 text-warn border-warn/30 hover:bg-warn/20 font-bold'
+                                  : v.location === 'In OEM Plant'
+                                  ? 'bg-accent-soft text-accent border-accent/30 hover:bg-accent-soft/80 font-bold'
+                                  : 'bg-canvas text-ink border-line hover:border-line-strong'
+                              }`}
+                            >
+                              <optgroup label="Transit & Plant">
+                                <option value="In Transit">In Transit</option>
+                                <option value="In OEM Plant">In OEM Plant</option>
+                              </optgroup>
+                              <optgroup label="Active Brand Stockyards">
+                                {brandYards.map(y => (
+                                  <option key={y} value={y}>{y}</option>
+                                ))}
+                              </optgroup>
+                            </select>
+                          );
+                        })()}
                       </td>
                       <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
                         {getYardLocation(v.location)}
