@@ -402,11 +402,20 @@ export const ChallanInvoicingPage: React.FC = () => {
     setIsImporting(true);
 
     try {
-      // Smart Map-based Merge (Field-level update for existing records, append for new)
+      // 1. Read entire existing inventory from localStorage
+      let fullExisting: ChallanRecord[] = [];
+      try {
+        const saved = localStorage.getItem('dhoot_challans_inventory');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) fullExisting = parsed;
+        }
+      } catch (e) {}
+
+      // 2. Map-based Merge (Field-level update for existing records, append for new)
       const combinedMap = new Map<string, ChallanRecord>();
 
-      // 1. Load existing records into Map
-      records.forEach(r => {
+      fullExisting.forEach(r => {
         const key = (r.challan_no || r.invoice_no || r.vin_no || '').toUpperCase().trim();
         if (key) combinedMap.set(key, r);
       });
@@ -414,13 +423,11 @@ export const ChallanInvoicingPage: React.FC = () => {
       let updatedCount = 0;
       let newCount = 0;
 
-      // 2. Merge incoming rows
       parsedRows.forEach(incoming => {
         const key = (incoming.challan_no || incoming.invoice_no || incoming.vin_no || '').toUpperCase().trim();
         const prev = key ? combinedMap.get(key) : undefined;
 
         if (prev) {
-          // Existing Record -> Merge non-empty updated fields
           updatedCount++;
           combinedMap.set(key, {
             ...prev,
@@ -467,7 +474,6 @@ export const ChallanInvoicingPage: React.FC = () => {
             status: incoming.status || prev.status
           });
         } else {
-          // New Record -> Insert
           newCount++;
           const newKey = key || `CHL-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
           combinedMap.set(newKey, incoming);
@@ -475,20 +481,67 @@ export const ChallanInvoicingPage: React.FC = () => {
       });
 
       const finalRecords = Array.from(combinedMap.values());
-      setRecords(finalRecords);
       saveChallansInventory(finalRecords);
+      setRecords(getChallansForBrand(currentBrand.code || 'DHOOT-ALL'));
 
       setIsImportModalOpen(false);
 
-      try {
-        fetch(getApiUrl('/api/v1/challans/bulk-import'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ records: finalRecords })
-        }).catch(() => {});
+      // 3. Prepare exact Schema-aligned payload for Supabase Cloud Database
+      const rowsToSync = finalRecords.map(r => ({
+        booking_date: r.booking_date && r.booking_date !== '—' ? r.booking_date : null,
+        challan_no: r.challan_no || `CH-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        challan_date: r.challan_date && r.challan_date !== '—' ? r.challan_date : null,
+        delivery_date: r.delivery_date && r.delivery_date !== '—' ? r.delivery_date : null,
+        challan_type: r.challan_type || 'TAX_INVOICE_DELIVERY',
+        vin_no: r.vin_no || 'VIN-PENDING',
+        customer_name: r.customer_name || 'Valued Customer',
+        mobile_no: r.mobile || null,
+        city: r.city || null,
+        model: r.model || 'Standard Model',
+        variant: r.variant || 'Standard Variant',
+        colour: r.colour || 'Standard Colour',
+        sale_consultant: r.sale_consultant || null,
+        team_leader: r.team_leader || null,
+        financier_name: r.financier_name || null,
+        corporate: Number(r.corporate) || 0,
+        exchange: Number(r.exchange) || 0,
+        ex_showroom: Number(r.ex_showroom) || 0,
+        discount: Number(r.discount) || 0,
+        net: Number(r.net) || 0,
+        insurance_per: Number(r.insurance_per) || 0,
+        insurance_amount: Number(r.insurance_amount) || 0,
+        ep: Number(r.ep) || 0,
+        rti: Number(r.rti) || 0,
+        cm: Number(r.cm) || 0,
+        rto_city: r.rto_city || r.city || null,
+        rto_amount: Number(r.rto_amount) || 0,
+        hml_acc: Number(r.hml_acc) || 0,
+        own_acc: Number(r.own_acc) || 0,
+        acc_discount_amount: Number(r.acc_discount_amount) || 0,
+        acc_amount: Number(r.acc_amount) || 0,
+        trc: Number(r.trc) || 0,
+        warranty: Number(r.warranty) || 0,
+        handling_charges: Number(r.handling_charges) || 0,
+        other_charges: Number(r.other) || 0,
+        fast_tag: Number(r.fast_tag) || 500,
+        tcs: Number(r.tcs) || 0,
+        net_amount: Number(r.net_amount) || 0,
+        invoice_date: r.invoice_date && r.invoice_date !== '—' ? r.invoice_date : null,
+        invoice_no: r.invoice_no || `INV-${Date.now()}`,
+        status: r.status || 'INVOICED',
+        organization_id: '11111111-1111-1111-1111-111111111111'
+      }));
 
-        supabase.from('challan_invoices').upsert(finalRecords, { onConflict: 'challan_no' }).then();
-      } catch (e) {}
+      // Async persistence to Cloud Database & Worker API
+      supabase.from('challan_invoices').upsert(rowsToSync, { onConflict: 'challan_no' }).then(({ error }) => {
+        if (error) console.warn('Supabase Challan Upsert Error:', error);
+      });
+
+      fetch(getApiUrl('/api/v1/challans/bulk-import'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: rowsToSync })
+      }).catch(() => {});
 
       setParsedRows([]);
       setImportSummary(null);
@@ -861,6 +914,7 @@ export const ChallanInvoicingPage: React.FC = () => {
                     type="file"
                     accept=".xlsx,.xls,.csv,.tsv,.txt"
                     className="hidden"
+                    onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                     onChange={handleChallanFileUpload}
                   />
                 </label>
