@@ -1,5 +1,5 @@
 import { formatDate } from '../utils/dateUtils';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, Filter, FileSpreadsheet, X, Loader2, ChevronRight,
@@ -18,6 +18,7 @@ export interface StockVehicle {
   model: string;
   variant: string;
   color: string;
+  brand?: string;
   fuel_type?: string;
   fsc_code?: string;
   dealer_code?: string;
@@ -85,6 +86,7 @@ export const VehiclesPage: React.FC = () => {
   const { currentBrand } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [brandFilter, setBrandFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [modelFilter, setModelFilter] = useState('ALL');
   const [locationFilter, setLocationFilter] = useState('ALL');
@@ -206,14 +208,33 @@ export const VehiclesPage: React.FC = () => {
     return 'neutral';
   };
 
-  // Distinct Models & Yard Locations for Filter Dropdowns (strictly for current brand)
-  const uniqueModels = Array.from(new Set(vehicles.map(v => v.model).filter(Boolean)));
-  const activeYards = getActiveStockyards(currentBrand.code).map(y => y.name);
-  const vehicleLocations = vehicles.map(v => v.location).filter(Boolean);
-  const customYardOptions = ['In Transit', 'In OEM Plant'];
-  const uniqueLocations = Array.from(new Set([...customYardOptions, ...activeYards, ...vehicleLocations]));
+  const isTataVehicle = (v: StockVehicle) => {
+    const m = (v.model || '').toLowerCase();
+    const b = (v.brand || '').toLowerCase();
+    return b.includes('tata') || ['nexon', 'punch', 'harrier', 'safari', 'curvv', 'altroz', 'tiago', 'tigor'].some(x => m.includes(x));
+  };
 
-  const filtered = vehicles.filter(v => {
+  const isHyundaiVehicle = (v: StockVehicle) => {
+    const m = (v.model || '').toLowerCase();
+    const b = (v.brand || '').toLowerCase();
+    return b.includes('hyundai') || ['creta', 'venue', 'exter', 'i20', 'verna', 'tucson', 'alcazar', 'aura', 'nios'].some(x => m.includes(x));
+  };
+
+  // Filter vehicles by Brand first
+  const brandScopedVehicles = useMemo(() => {
+    if (brandFilter === 'DHOOT-TATA') return vehicles.filter(isTataVehicle);
+    if (brandFilter === 'DHOOT-HYUNDAI') return vehicles.filter(isHyundaiVehicle);
+    return vehicles;
+  }, [vehicles, brandFilter]);
+
+  // Distinct Models & Yard Locations for Filter Dropdowns
+  const uniqueModels = Array.from(new Set(brandScopedVehicles.map(v => v.model).filter(Boolean))).sort();
+  const activeYards = getActiveStockyards(brandFilter !== 'ALL' ? brandFilter : currentBrand.code).map(y => y.name);
+  const vehicleLocations = brandScopedVehicles.map(v => v.location).filter(Boolean);
+  const customYardOptions = ['In Transit', 'In OEM Plant'];
+  const uniqueLocations = Array.from(new Set([...customYardOptions, ...activeYards, ...vehicleLocations])).sort();
+
+  const filtered = brandScopedVehicles.filter(v => {
     const s = searchTerm.toLowerCase();
     const matchesSearch = 
       (v.vin || '').toLowerCase().includes(s) ||
@@ -291,6 +312,21 @@ export const VehiclesPage: React.FC = () => {
         }
         action={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Brand Filter */}
+            <select
+              value={brandFilter}
+              onChange={(e) => {
+                setBrandFilter(e.target.value);
+                setModelFilter('ALL');
+                setLocationFilter('ALL');
+              }}
+              className="h-7 text-xs bg-canvas border border-line rounded px-2.5 text-ink focus:outline-none focus:border-accent font-bold cursor-pointer shadow-xs"
+            >
+              <option value="ALL">🏢 All Brands</option>
+              <option value="DHOOT-TATA">Tata Motors</option>
+              <option value="DHOOT-HYUNDAI">Hyundai</option>
+            </select>
+
             {/* Search */}
             <div className="relative w-44 sm:w-60">
               <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
