@@ -234,7 +234,7 @@ export const DashboardPage: React.FC = () => {
           pbna: subPbna,
           vna: subVna,
           freeStock: subFreeVehicles.length,
-          matchedVins: subFreeVehicles.map(v => `${v.vin} (${v.location || 'Basni Yard'})`),
+          matchedVins: subFreeVehicles.map(v => `${v.vin} (${v.location || (isHyundaiItem(v) ? 'Shantinath Yard' : 'Basni Yard')})`),
           freeVehiclesDetails: subFreeVehicles.map(v => {
             const pDate = v.purchase_date || v.created_at || '';
             const ageing = pDate ? Math.max(0, Math.floor((Date.now() - new Date(pDate).getTime()) / (1000 * 60 * 60 * 24))) : 0;
@@ -243,7 +243,7 @@ export const DashboardPage: React.FC = () => {
               model: v.model,
               variant: v.variant || variant,
               color: v.color || v.colour || colour,
-              location: v.location || 'Basni Yard',
+              location: v.location || (isHyundaiItem(v) ? 'Shantinath Yard' : 'Basni Yard'),
               status: v.status || v.vehicle_status || 'RECEIVED',
               purchase_date: pDate,
               ageing_days: ageing
@@ -265,7 +265,7 @@ export const DashboardPage: React.FC = () => {
           stockStatus = 'ALLOCATED';
           matchedStockVin = b.allocated_vin_no;
           const foundVeh = fleetList.find(v => v.vin === b.allocated_vin_no);
-          matchedLocation = foundVeh?.location || 'Basni Yard';
+          matchedLocation = foundVeh?.location || (isHyundaiItem(b) ? 'Shantinath Yard' : 'Basni Yard');
         } else {
           const freeMatch = modelVehicles.find(v => {
             if (bookingVinMatchSet.has(v.vin)) return false;
@@ -281,7 +281,7 @@ export const DashboardPage: React.FC = () => {
             bookingVinMatchSet.add(freeMatch.vin);
             stockStatus = 'PBNA';
             matchedStockVin = freeMatch.vin;
-            matchedLocation = freeMatch.location || 'Basni Yard';
+            matchedLocation = freeMatch.location || (isHyundaiItem(b) ? 'Shantinath Yard' : 'Basni Yard');
           } else {
             stockStatus = 'VNA';
           }

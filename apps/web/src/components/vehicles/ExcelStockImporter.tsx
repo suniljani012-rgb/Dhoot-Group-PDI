@@ -6,7 +6,7 @@ import {
 import * as XLSX from 'xlsx';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { saveStockInventory } from '../../data/seedData';
+import { saveStockInventory, isHyundaiItem } from '../../data/seedData';
 import { formatDate } from '../../utils/dateUtils';
 import { StockVehicle } from '../../pages/Vehicles';
 import { getApiUrl } from '../../utils/apiConfig';
@@ -229,23 +229,29 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       const rawDeliveryDate = getVal(idxDeliveryDate);
       const rawAllocationDate = getVal(idxAllocationDate);
 
+      const modelVal = getVal(idxModel) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari');
+      const isHyundai = isHyundaiItem({ model: modelVal }) || currentBrand.code === 'DHOOT-HYUNDAI';
+      const defaultYard = isHyundai ? 'Shantinath Yard' : 'Basni Yard';
+      const userLoc = getVal(idxLocation);
+      const resolvedLoc = userLoc && !['Basni Yard', 'Shantinath Yard', 'Stockyard', 'Yard'].includes(userLoc) ? userLoc : defaultYard;
+
       rows.push({
         _rowNum: i + 1,
         _isValid: isValidVin,
         _isDuplicateInFile: isDuplicateInFile,
         _isAlreadyInDb: isAlreadyInDb,
         vin: vinRaw || `VIN-TEMP-${i}`,
-        model: getVal(idxModel) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari'),
+        model: modelVal,
         variant: getVal(idxVariant) || 'Standard Variant',
         color: getVal(idxColour) || 'Standard Colour',
         fuel_type: getVal(idxFuel) || 'PETROL',
         fsc_code: getVal(idxFscCode) || 'FSC-001',
         dealer_code: getVal(idxDealerCode) || 'DLR-MH01',
-        plant_code: getVal(idxPlantCode) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'PLT-CHE' : 'PLT-PUN'),
+        plant_code: getVal(idxPlantCode) || (isHyundai ? 'PLT-CHE' : 'PLT-PUN'),
         manufacturing_year: parseInt(getVal(idxYear)) || 2026,
         status: getVal(idxStatus) || 'RECEIVED',
         quantity: parseInt(getVal(idxQuantity)) || 1,
-        location: getVal(idxLocation) || 'Basni Yard',
+        location: resolvedLoc,
         customer_name: getVal(idxCustomerName) || '',
         sales_consultant: getVal(idxSalesConsultant) || '',
         accessories_amount: parseFloat(getVal(idxAccessoriesAmount).replace(/[^0-9.]/g, '')) || 0,
