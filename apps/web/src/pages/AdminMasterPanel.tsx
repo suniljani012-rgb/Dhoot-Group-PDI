@@ -279,7 +279,7 @@ export const AdminMasterPanel: React.FC = () => {
   });
 
   // =========================================================================
-  // 6. Insurance Providers State
+  // 6. Insurance Providers State & Handlers
   // =========================================================================
   const [insuranceProviders, setInsuranceProviders] = useState<InsuranceItem[]>(() => {
     const saved = localStorage.getItem('autoprime_insurance');
@@ -294,6 +294,68 @@ export const AdminMasterPanel: React.FC = () => {
       { id: 'ins-5', name: 'National Insurance Company Ltd', code: 'INS-NIC-05', claimsHead: 'R. K. Verma (Divisional Officer)', surveyorName: 'Prakash Rao', surveyorContact: '+91 1800 345 0330', cashlessTieUp: true, discountPercentage: 50, policyTypes: 'Comprehensive Standard Package' },
     ];
   });
+
+  const [insuranceSearch, setInsuranceSearch] = useState('');
+  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
+  const [editingInsurance, setEditingInsurance] = useState<InsuranceItem | null>(null);
+  const [insuranceForm, setInsuranceForm] = useState<InsuranceItem>({
+    id: '',
+    name: '',
+    code: '',
+    claimsHead: '',
+    surveyorName: '',
+    surveyorContact: '+91 ',
+    cashlessTieUp: true,
+    discountPercentage: 60,
+    policyTypes: 'Zero Dep, RTI, Engine Protect'
+  });
+
+  const saveInsuranceProviders = (list: InsuranceItem[]) => {
+    setInsuranceProviders(list);
+    localStorage.setItem('autoprime_insurance', JSON.stringify(list));
+  };
+
+  const handleOpenAddInsurance = () => {
+    setEditingInsurance(null);
+    setInsuranceForm({
+      id: `ins-${Date.now()}`,
+      name: '',
+      code: `INS-${Date.now().toString().slice(-4)}`,
+      claimsHead: '',
+      surveyorName: '',
+      surveyorContact: '+91 ',
+      cashlessTieUp: true,
+      discountPercentage: 60,
+      policyTypes: 'Zero Dep, RTI, Engine Protect, Key Replacement'
+    });
+    setShowInsuranceModal(true);
+  };
+
+  const handleOpenEditInsurance = (item: InsuranceItem) => {
+    setEditingInsurance(item);
+    setInsuranceForm({ ...item });
+    setShowInsuranceModal(true);
+  };
+
+  const handleSaveInsurance = (e: React.FormEvent) => {
+    e.preventDefault();
+    let updated: InsuranceItem[];
+    if (editingInsurance) {
+      updated = insuranceProviders.map(i => i.id === editingInsurance.id ? { ...insuranceForm, id: editingInsurance.id } : i);
+    } else {
+      updated = [{ ...insuranceForm, id: `ins-${Date.now()}` }, ...insuranceProviders];
+    }
+    saveInsuranceProviders(updated);
+    setShowInsuranceModal(false);
+    setEditingInsurance(null);
+  };
+
+  const handleDeleteInsurance = (id: string) => {
+    if (confirm('Are you sure you want to remove this insurance tie-up partner?')) {
+      const updated = insuranceProviders.filter(i => i.id !== id);
+      saveInsuranceProviders(updated);
+    }
+  };
 
   // Filtered lists
   const filteredYards = yards.filter(y => {
@@ -765,20 +827,140 @@ export const AdminMasterPanel: React.FC = () => {
       )}
 
       {activeTab === 'INSURANCE' && (
-        <Panel title="General Insurance Tie-ups">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-            {insuranceProviders.map(i => (
-              <div key={i.id} className="p-3.5 bg-canvas border border-line rounded space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-ink">{i.name}</span>
-                  <Badge tone="accent">Discount: {i.discountPercentage}%</Badge>
-                </div>
-                <p className="text-xs text-ink-2">Claims Lead: {i.claimsHead} ({i.surveyorContact})</p>
-                <p className="text-xs text-ink-3">Covers: {i.policyTypes}</p>
+        <div className="space-y-3">
+          {/* Action Bar */}
+          <div className="p-3 bg-canvas border border-line rounded flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search Insurance Company, Claims Lead, Phone or Covers..."
+                  value={insuranceSearch}
+                  onChange={(e) => setInsuranceSearch(e.target.value)}
+                  className="w-full h-8 pl-9 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+                />
               </div>
-            ))}
+              {insuranceSearch && (
+                <button
+                  onClick={() => setInsuranceSearch('')}
+                  className="h-8 px-2.5 bg-surface border border-line hover:bg-canvas text-xs font-medium text-ink-3 rounded transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleOpenAddInsurance}
+              className="h-8 px-3.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Insurance Partner</span>
+            </button>
           </div>
-        </Panel>
+
+          {/* Insurance Table */}
+          <Panel
+            title={
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-accent" />
+                <span>General Insurance Tie-up Partners</span>
+                <Badge tone="accent">{insuranceProviders.length} Partners</Badge>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Insurance Company</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Tie-Up Discount</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Claims Lead / In-Charge</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Surveyor / Contact Phone</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Coverage Packages (Covers)</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Cashless Tie-Up</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line text-ink-2 text-xs">
+                  {insuranceProviders
+                    .filter(i => {
+                      const q = insuranceSearch.toLowerCase().trim();
+                      if (!q) return true;
+                      return (
+                        i.name.toLowerCase().includes(q) ||
+                        i.claimsHead.toLowerCase().includes(q) ||
+                        i.surveyorContact.toLowerCase().includes(q) ||
+                        (i.policyTypes && i.policyTypes.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((i, idx) => (
+                      <tr key={i.id || idx} className="hover:bg-canvas transition-colors">
+                        <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-3.5 h-3.5 text-accent" />
+                            <span>{i.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <span className="font-bold text-accent bg-accent-soft px-2 py-0.5 rounded border border-accent/20">
+                            {i.discountPercentage}%
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                          {i.claimsHead}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-ink-2 whitespace-nowrap">
+                          {i.surveyorContact}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2">
+                          <span className="inline-block max-w-xs truncate text-[11px]" title={i.policyTypes}>
+                            {i.policyTypes}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          {i.cashlessTieUp ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ok bg-ok/10 px-2 py-0.5 rounded border border-ok/20">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Approved</span>
+                            </span>
+                          ) : (
+                            <span className="text-ink-3 text-[11px]">Reimbursement</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditInsurance(i)}
+                              className="w-7 h-7 rounded hover:bg-canvas border border-line hover:border-line-strong text-ink flex items-center justify-center transition-colors cursor-pointer"
+                              title="Edit Insurance Partner"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-ink-2" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteInsurance(i.id)}
+                              className="w-7 h-7 rounded hover:bg-danger-soft border border-line hover:border-danger/40 text-danger flex items-center justify-center transition-colors cursor-pointer"
+                              title="Remove Partner"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </div>
       )}
 
       {/* ========================================================================= */}
@@ -1067,6 +1249,143 @@ export const AdminMasterPanel: React.FC = () => {
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>{editingBranch ? 'Save Changes' : 'Create Branch'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD / EDIT INSURANCE PARTNER                                       */}
+      {/* ========================================================================= */}
+      {showInsuranceModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">
+                    {editingInsurance ? 'Edit Insurance Tie-up' : 'Add Insurance Partner'}
+                  </h2>
+                  <p className="text-xs text-ink-3">Configure insurance company, tie-up discount, claims desk and coverages</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInsuranceModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveInsurance} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Insurance Company Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Tata AIG General Insurance, ICICI Lombard..."
+                    value={insuranceForm.name}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, name: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Tie-Up Discount (%) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    max={100}
+                    placeholder="e.g. 60"
+                    value={insuranceForm.discountPercentage}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, discountPercentage: Number(e.target.value) })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-bold text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Cashless Tie-Up Facility *
+                  </label>
+                  <select
+                    value={insuranceForm.cashlessTieUp ? 'YES' : 'NO'}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, cashlessTieUp: e.target.value === 'YES' })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="YES">Yes - Cashless Approved</option>
+                    <option value="NO">No - Reimbursement Only</option>
+                  </select>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Claims Lead / Contact Officer *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Kavita Sen (Zonal Claims Lead)"
+                    value={insuranceForm.claimsHead}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, claimsHead: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Surveyor Contact / Toll Free Phone *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+91 1800 266 7780"
+                    value={insuranceForm.surveyorContact}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, surveyorContact: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Policy Coverage Packages (Covers) *
+                  </label>
+                  <textarea
+                    required
+                    rows={2}
+                    placeholder="e.g. Zero Dep, Engine Protect, RTI, Key Replacement, Consumables Cover"
+                    value={insuranceForm.policyTypes}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, policyTypes: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowInsuranceModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingInsurance ? 'Save Changes' : 'Create Tie-up'}</span>
                 </button>
               </div>
             </form>
