@@ -24,11 +24,13 @@ export interface PdiRuleItem {
   code?: string;
   title: string;
   description: string;
+  standardRemark?: string;
   mandatory: boolean;
   photosRequired: number;
   videoRequired: boolean;
   severity: 'CRITICAL' | 'MAJOR' | 'MINOR' | 'OBSERVATION';
   toolRequired?: string;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 export interface FinancierItem {
@@ -228,15 +230,15 @@ export const AdminMasterPanel: React.FC = () => {
       try { return JSON.parse(saved); } catch (e) {}
     }
     return [
-      { id: 'RULE-01', stage: 'Exterior', category: 'Body Panels', code: 'EXT-01', title: 'Body Panel Alignment & Gap Uniformity', description: 'Inspect hood, fenders, doors, and tailgate shutlines for uniform flushness (3.5mm ± 0.5mm)', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: 'Feeler Gap Gauge' },
-      { id: 'RULE-02', stage: 'Exterior', category: 'Paint Finish', code: 'EXT-02', title: 'Paint Gloss & Clear Coat Transit Inspection', description: '360° visual scan under diffused inspection lights for orange peel, dust nibs, transit scratches, or buffer swirl marks', mandatory: true, photosRequired: 4, videoRequired: true, severity: 'CRITICAL', toolRequired: 'Defect Marker Lamp' },
-      { id: 'RULE-03', stage: 'Exterior', category: 'Glass & Seals', code: 'EXT-03', title: 'Windshield, Windows & Beading Weatherstrips', description: 'Inspect laminated windshield, side glasses for scratches/pits, and check perimeter rubber weatherstrip fitment', mandatory: true, photosRequired: 1, videoRequired: false, severity: 'MAJOR', toolRequired: 'Visual / Tactile' },
-      { id: 'RULE-04', stage: 'Electricals', category: 'Lighting', code: 'ELE-01', title: 'Full LED Headlamps, DRLs & Connected Lightbars', description: 'Verify Bi-LED projectors high/low beam leveler, sequential turn indicators, and rear connected taillight animation', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: 'Beam Tester' },
-      { id: 'RULE-05', stage: 'Electricals', category: 'Infotainment', code: 'ELE-02', title: 'Digital Instrument Cluster & Infotainment Display', description: 'Check 10.25-inch instrument cluster dials, Harman touchscreen, wireless Android Auto / Apple CarPlay pairing', mandatory: true, photosRequired: 1, videoRequired: false, severity: 'MAJOR', toolRequired: 'System Diagnostic USB' },
-      { id: 'RULE-06', stage: 'Interior', category: 'Cockpit', code: 'INT-01', title: 'Leatherette Upholstery, Stitching & Sunroof Operation', description: 'Check ventilated front seats, leatherette seat covers, panoramic sunroof open/close/tilt one-touch anti-pinch action', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'MAJOR', toolRequired: 'Operation Test' },
-      { id: 'RULE-07', stage: 'Engine Bay', category: 'Fluids', code: 'ENG-01', title: 'Engine Oil, Coolant, Brake Fluid & Battery SOC', description: 'Verify oil dipstick level, coolant reservoir MAX mark, DOT4 brake fluid, and 12V auxiliary battery terminal voltage (>12.6V)', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: 'Multimeter & Refractometer' },
-      { id: 'RULE-08', stage: 'Underbody', category: 'Chassis', code: 'UND-01', title: 'Floor Pan Anti-Rust Coating & Suspension Mounting', description: 'Inspect exhaust heat shields, catalytic converter shields, brake line routing, and check for hydraulic transit leaks', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: '2-Post Hydraulic Lift' },
-      { id: 'RULE-09', stage: 'Road Test', category: 'Dynamics', code: 'ROA-01', title: 'Steering Centering, ABS Braking & ADAS Calibration', description: 'Conduct 2.5 km dynamic road test: steering wheel center tracking, emergency braking straightness, and Lane Keep Assist beep test', mandatory: true, photosRequired: 1, videoRequired: true, severity: 'CRITICAL', toolRequired: 'VCI Scanner' },
+      { id: 'RULE-01', stage: 'Exterior', category: 'Body Panels', code: 'EXT-01', title: 'Body Panel Alignment & Gap Uniformity', description: 'Inspect hood, fenders, doors, and tailgate shutlines for uniform flushness (3.5mm ± 0.5mm)', standardRemark: 'All panel gaps uniform (3.5mm) & factory aligned', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: 'Feeler Gap Gauge', status: 'ACTIVE' },
+      { id: 'RULE-02', stage: 'Exterior', category: 'Paint Finish', code: 'EXT-02', title: 'Paint Gloss & Clear Coat Transit Inspection', description: '360° visual scan under diffused inspection lights for orange peel, dust nibs, transit scratches, or buffer swirl marks', standardRemark: 'High-gloss clear coat verified; zero transit scratches/swirls', mandatory: true, photosRequired: 4, videoRequired: true, severity: 'CRITICAL', toolRequired: 'Defect Marker Lamp', status: 'ACTIVE' },
+      { id: 'RULE-03', stage: 'Exterior', category: 'Glass & Seals', code: 'EXT-03', title: 'Windshield, Windows & Beading Weatherstrips', description: 'Inspect laminated windshield, side glasses for scratches/pits, and check perimeter rubber weatherstrip fitment', standardRemark: 'Glass manufacturing date stamps match; seals watertight', mandatory: true, photosRequired: 1, videoRequired: false, severity: 'MAJOR', toolRequired: 'Visual / Tactile', status: 'ACTIVE' },
+      { id: 'RULE-04', stage: 'Electricals', category: 'Lighting', code: 'ELE-01', title: 'Full LED Headlamps, DRLs & Connected Lightbars', description: 'Verify Bi-LED projectors high/low beam leveler, sequential turn indicators, and rear connected taillight animation', standardRemark: 'Bi-LED leveler & sequential animations verified functioning', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: 'Beam Tester', status: 'ACTIVE' },
+      { id: 'RULE-05', stage: 'Electricals', category: 'Infotainment', code: 'ELE-02', title: 'Digital Instrument Cluster & Infotainment Display', description: 'Check 10.25-inch instrument cluster dials, Harman touchscreen, wireless Android Auto / Apple CarPlay pairing', standardRemark: 'Display cluster responsive & smartphone projection connected', mandatory: true, photosRequired: 1, videoRequired: false, severity: 'MAJOR', toolRequired: 'System Diagnostic USB', status: 'ACTIVE' },
+      { id: 'RULE-06', stage: 'Interior', category: 'Cockpit', code: 'INT-01', title: 'Leatherette Upholstery, Stitching & Sunroof Operation', description: 'Check ventilated front seats, leatherette seat covers, panoramic sunroof open/close/tilt one-touch anti-pinch action', standardRemark: 'Seat ventilation active; sunroof anti-pinch calibrated', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'MAJOR', toolRequired: 'Operation Test', status: 'ACTIVE' },
+      { id: 'RULE-07', stage: 'Engine Bay', category: 'Fluids', code: 'ENG-01', title: 'Engine Oil, Coolant, Brake Fluid & Battery SOC', description: 'Verify oil dipstick level, coolant reservoir MAX mark, DOT4 brake fluid, and 12V auxiliary battery terminal voltage (>12.6V)', standardRemark: 'Fluid levels at MAX line; 12V auxiliary battery at 12.8V', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: 'Multimeter & Refractometer', status: 'ACTIVE' },
+      { id: 'RULE-08', stage: 'Underbody', category: 'Chassis', code: 'UND-01', title: 'Floor Pan Anti-Rust Coating & Suspension Mounting', description: 'Inspect exhaust heat shields, catalytic converter shields, brake line routing, and check for hydraulic transit leaks', standardRemark: 'Underbody anti-rust intact; zero hydraulic leaks found', mandatory: true, photosRequired: 2, videoRequired: false, severity: 'CRITICAL', toolRequired: '2-Post Hydraulic Lift', status: 'ACTIVE' },
+      { id: 'RULE-09', stage: 'Road Test', category: 'Dynamics', code: 'ROA-01', title: 'Steering Centering, ABS Braking & ADAS Calibration', description: 'Conduct 2.5 km dynamic road test: steering wheel center tracking, emergency braking straightness, and Lane Keep Assist beep test', standardRemark: 'Zero pulling; straight-line ABS braking & ADAS beep tested OK', mandatory: true, photosRequired: 1, videoRequired: true, severity: 'CRITICAL', toolRequired: 'VCI Scanner', status: 'ACTIVE' },
     ];
   });
 
@@ -250,16 +252,30 @@ export const AdminMasterPanel: React.FC = () => {
     code: '',
     title: '',
     description: '',
+    standardRemark: 'Inspected and verified OK',
     mandatory: true,
     photosRequired: 1,
     videoRequired: false,
     severity: 'MAJOR',
-    toolRequired: 'Visual'
+    toolRequired: 'Visual',
+    status: 'ACTIVE'
   });
 
   const savePdiRules = (rules: PdiRuleItem[]) => {
     setPdiRules(rules);
     localStorage.setItem('autoprime_pdi_rules', JSON.stringify(rules));
+    window.dispatchEvent(new Event('pdi-rules-updated'));
+  };
+
+  const handleTogglePdiStatus = (id: string) => {
+    const updated = pdiRules.map(r => {
+      if (r.id === id) {
+        const nextStatus = r.status === 'ACTIVE' ? ('INACTIVE' as const) : ('ACTIVE' as const);
+        return { ...r, status: nextStatus };
+      }
+      return r;
+    });
+    savePdiRules(updated);
   };
 
   const handleOpenAddPdi = () => {
@@ -271,11 +287,13 @@ export const AdminMasterPanel: React.FC = () => {
       code: `CHK-${Date.now().toString().slice(-3)}`,
       title: '',
       description: '',
+      standardRemark: 'Inspected and verified OK',
       mandatory: true,
       photosRequired: 1,
       videoRequired: false,
       severity: 'MAJOR',
-      toolRequired: 'Visual'
+      toolRequired: 'Visual',
+      status: 'ACTIVE'
     });
     setShowPdiModal(true);
   };
@@ -1740,6 +1758,18 @@ export const AdminMasterPanel: React.FC = () => {
                     placeholder="e.g. Feeler Gauge, Multimeter, Visual"
                     value={pdiForm.toolRequired}
                     onChange={(e) => setPdiForm({ ...pdiForm, toolRequired: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">Default / Standard Remark (Auto-filled on PASS) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. All panel gaps uniform (3.5mm) & factory aligned"
+                    value={pdiForm.standardRemark || ''}
+                    onChange={(e) => setPdiForm({ ...pdiForm, standardRemark: e.target.value })}
                     className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
                   />
                 </div>

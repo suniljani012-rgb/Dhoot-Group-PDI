@@ -11,6 +11,7 @@ interface ChecklistItem {
   code: string;
   title: string;
   instruction: string;
+  standardRemark?: string;
   allowsVideo?: boolean;
   videoHint?: string;
   photosRequired?: number;
@@ -99,7 +100,7 @@ export const PdiSessionPage: React.FC = () => {
           ];
 
           return stages.map((s, idx) => {
-            const itemsInStage = rules.filter((r: any) => r.stage === s.stage);
+            const itemsInStage = rules.filter((r: any) => r.stage === s.stage && r.status !== 'INACTIVE');
             return {
               id: `cat-${idx + 1}`,
               stepNumber: s.stepNumber,
@@ -107,9 +108,10 @@ export const PdiSessionPage: React.FC = () => {
               shortName: s.shortName,
               items: itemsInStage.map((r: any) => ({
                 id: r.id,
-                code: r.id,
+                code: r.code || r.id,
                 title: r.title,
                 instruction: r.description || 'Follow standard inspection procedure.',
+                standardRemark: r.standardRemark || 'Inspected and verified OK',
                 allowsVideo: r.videoRequired,
                 photosRequired: r.photosRequired || 0,
                 videoHint: r.videoRequired ? 'Mandatory video recording required' : undefined
@@ -217,11 +219,12 @@ export const PdiSessionPage: React.FC = () => {
 
   const checklistCategories = getDynamicChecklistCategories();
 
-  // Responses State (status, photos, video, defect note, severity)
+  // Responses State (status, photos, video, defect note, severity, remark)
   const [responses, setResponses] = useState<Record<string, {
     status?: 'PASS' | 'FAIL' | 'NA';
     photos: string[];
     video?: string;
+    remark?: string;
     defectNote?: string;
     severity?: 'MINOR' | 'MAJOR' | 'CRITICAL';
   }>>({
@@ -231,11 +234,28 @@ export const PdiSessionPage: React.FC = () => {
   });
 
   const updateItemStatus = (itemId: string, status: 'PASS' | 'FAIL' | 'NA') => {
+    const itemObj = allItems.find(i => i.id === itemId);
+    setResponses((prev) => {
+      const existingRemark = prev[itemId]?.remark;
+      const autoRemark = (status === 'PASS' && !existingRemark) ? (itemObj?.standardRemark || 'Inspected and verified OK') : existingRemark;
+      return {
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          status,
+          remark: autoRemark,
+          photos: prev[itemId]?.photos || []
+        }
+      };
+    });
+  };
+
+  const updateItemRemark = (itemId: string, remarkText: string) => {
     setResponses((prev) => ({
       ...prev,
       [itemId]: {
         ...prev[itemId],
-        status,
+        remark: remarkText,
         photos: prev[itemId]?.photos || []
       }
     }));
@@ -692,8 +712,22 @@ export const PdiSessionPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Engineer Inspection Remark Input */}
+                <div className="mt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider shrink-0">Remark:</span>
+                    <input
+                      type="text"
+                      placeholder={item.standardRemark ? `e.g. ${item.standardRemark}` : 'Enter inspection remarks or measurements...'}
+                      value={resp?.remark || ''}
+                      onChange={(e) => updateItemRemark(item.id, e.target.value)}
+                      className="w-full h-7 px-2.5 bg-canvas border border-line focus:border-accent rounded text-xs text-ink placeholder:text-ink-3 font-medium shadow-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+
                 {/* Evidence & Media Section */}
-                <div className="mt-3 pt-2.5 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 flex-wrap">
+                <div className="mt-2.5 pt-2 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 flex-wrap">
                   
                   {/* Photo & Video Action Chips */}
                   <div className="flex items-center gap-1.5 flex-wrap">
