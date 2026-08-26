@@ -458,23 +458,6 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ vehicles: payload })
         }).catch(() => {});
-
-        // Also push to Supabase bookings table with IN_STOCK tag for cloud persistence
-        supabase.from('bookings').upsert(
-          deduplicatedIncoming.map(r => ({
-            receipt_no: `STK-${r.vin}`,
-            customer_name: r.customer_name || 'Unallocated Stock',
-            mobile_number: '+91 98000 00000',
-            model: r.model,
-            variant: r.variant,
-            colour: r.color,
-            allocated_vin_no: r.vin,
-            status: r.status || 'IN_STOCK',
-            organization_id: targetOrg
-          })),
-          { onConflict: 'receipt_no' }
-        ).then();
-
       } catch (e) {
         console.warn('Backend API cloud sync notice:', e);
       }

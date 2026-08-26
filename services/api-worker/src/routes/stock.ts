@@ -1,6 +1,5 @@
 import { Env } from '../index';
 import { Hono } from 'hono';
-import { createClient } from '@supabase/supabase-js';
 
 export const stockRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
@@ -12,34 +11,6 @@ stockRouter.get('/', async (c) => {
   const search = c.req.query('search');
 
   let results: any[] = [...localVehiclesStore];
-
-  try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
-    
-    // Fetch from Supabase cloud database
-    const { data: dbData, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .like('receipt_no', 'STK-%')
-      .order('created_at', { ascending: false });
-
-    if (!error && dbData && Array.isArray(dbData) && dbData.length > 0) {
-      results = dbData.map(d => ({
-        id: d.id,
-        vin: d.allocated_vin_no || d.receipt_no.replace('STK-', ''),
-        model: d.model,
-        variant: d.variant,
-        color: d.colour,
-        fuel_type: 'PETROL/DIESEL',
-        location: d.docket_no || 'Stockyard',
-        customer_name: d.customer_name === 'Unallocated Stock' ? '' : d.customer_name,
-        sales_consultant: d.sales_consultant,
-        status: d.status || 'RECEIVED',
-        organization_id: d.organization_id,
-        created_at: d.created_at
-      }));
-    }
-  } catch (e) {}
 
   if (orgId && orgId !== 'ALL') {
     results = results.filter(v => v.organization_id === orgId);
@@ -66,28 +37,32 @@ stockRouter.post('/bulk-import', async (c) => {
     return c.json({ success: false, error: { message: 'Invalid or empty vehicles list' } }, 400);
   }
 
-  localVehiclesStore = [...items, ...localVehiclesStore];
+  // Deduplicate by VIN in worker store
+  const map = new Map<string, any>();
+  localVehiclesStore.forEach(v => {
+    if (v.vin) map.set(v.vin.toUpperCase().trim(), v);
+  });
 
-  try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
-    
-    // Save into Supabase cloud table
-    const rowsToInsert = items.map((r: any) => ({
-      receipt_no: `STK-${r.vin || Date.now() + Math.random().toString(36).substr(2, 6)}`,
-      customer_name: r.customer_name || 'Unallocated Stock',
-      mobile_number: '+91 98000 00000',
-      model: r.model || 'Standard Model',
-      variant: r.variant || 'Standard Variant',
-      colour: r.color || r.colour || 'Standard Colour',
-      allocated_vin_no: r.vin,
-      docket_no: r.location || 'Yard',
-      sales_consultant: r.sales_consultant || null,
-      status: r.status || 'RECEIVED',
-      organization_id: r.organization_id || '11111111-1111-1111-1111-111111111111'
-    }));
+  items.forEach(item => {
+    if (item.vin) {
+      const key = item.vin.toUpperCase().trim();
+      const prev = map.get(key) || {};
+      map.set(key, {
+        ...prev,
+        ...item,
+        id: prev.id || item.id || `v-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        created_at: prev.created_at || new Date().toISOString()
+      });
+    }
+  });
 
-    await supabase.from('bookings').insert(rowsToInsert);
-  } catch (e) {}
+  localVehiclesStore = Array.from(map.values());
 
-  return c.json({ success: true, data: { imported_count: items.length, total_count: localVehiclesStore.length } }, 201);
+  return c.json({ 
+    success: true, 
+    data: { 
+      imported_count: items.length, 
+      total_count: localVehiclesStore.length 
+    } 
+  }, 201);
 });
