@@ -115,25 +115,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   return (
     <aside className="w-64 bg-white text-slate-700 flex flex-col shrink-0 h-full border-r border-slate-200 shadow-xs select-none">
       
-      {/* Top Station Identification (Single Clean Header, No Duplicate Logo) */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-            {currentBrand.shortName} Station Desk
-          </span>
-        </div>
-        <span className="text-[10px] font-mono font-bold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
-          v2.4
-        </span>
-      </div>
-
-      <div className="px-4 pt-4 pb-2 uppercase text-[10px] font-bold text-slate-400 tracking-wider">
-        Enterprise Modules
-      </div>
-
       {/* Navigation Links with Live Database Counters */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
