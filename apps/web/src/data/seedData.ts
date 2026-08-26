@@ -1,28 +1,8 @@
 export const TATA_ORG_ID = '11111111-1111-1111-1111-111111111111';
 export const HYUNDAI_ORG_ID = '11111111-1111-1111-1111-111111111112';
 
-export const SEED_VEHICLES = [
-  { id: "v-1", vin: "MAT612345S9988771", brand: "Tata Motors", model: "Tata Safari", variant: "Accomplished Plus 6S AT", color: "Oberon Black", fuel_type: "DIESEL", status: "ALLOCATED", customer_name: "Ramesh Chandra Sharma", sales_consultant: "Sunil Sharma", location: "Pune Yard • Bay 2", engine_number: "ENG-SAF-9901", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-20T10:00:00Z" },
-  { id: "v-2", vin: "MAT612345H7654322", brand: "Tata Motors", model: "Tata Harrier", variant: "Fearless Plus Dark 6MT", color: "Oberon Black", fuel_type: "DIESEL", status: "PDI_APPROVED", sales_consultant: "Rajesh Nair", location: "Pune Yard • Bay 1", engine_number: "ENG-HAR-7652", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-21T11:30:00Z" },
-  { id: "v-3", vin: "MAT612345N1234563", brand: "Tata Motors", model: "Tata Nexon", variant: "Fearless Plus S DT", color: "Daytona Grey", fuel_type: "PETROL", status: "IN_REPAIR", sales_consultant: "Amit Verma", location: "Workshop Bay 1", engine_number: "ENG-NEX-1233", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-21T14:15:00Z" },
-  { id: "v-4", vin: "MAT612345C5566774", brand: "Tata Motors", model: "Tata Curvv.ev", variant: "Accomplished Plus 55", color: "Empowered Oxide", fuel_type: "EV", status: "PDI_IN_PROGRESS", sales_consultant: "Sunil Sharma", location: "Inspection Staging Bay 1", engine_number: "MOT-CRV-5564", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-22T09:00:00Z" },
-  { id: "v-5", vin: "MAT612345P4455665", brand: "Tata Motors", model: "Tata Punch", variant: "Creative DT AMT", color: "Calypso Red", fuel_type: "PETROL", status: "YARD_RECEIVING_PENDING", sales_consultant: "Pooja Patil", location: "Carrier Trailer MH-12-TR-4421", engine_number: "ENG-PUN-4455", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-25T08:00:00Z" },
-  { id: "v-6", vin: "MAT612345A3344556", brand: "Tata Motors", model: "Tata Altroz", variant: "Racer R3 Turbo", color: "Atomic Orange", fuel_type: "PETROL", status: "PDI_PENDING", sales_consultant: "Vikram Joshi", location: "Pune Yard • Bay 3", engine_number: "ENG-ALT-3346", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-23T16:45:00Z" },
-  { id: "v-7", vin: "MAT612345T2233447", brand: "Tata Motors", model: "Tata Tiago", variant: "XZ+ Dual Tone", color: "Tornado Blue", fuel_type: "PETROL", status: "ALLOCATED", customer_name: "Priya Kulkarni", sales_consultant: "Rajesh Nair", location: "Pune Yard • Bay 2", engine_number: "ENG-TIA-2237", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-22T12:00:00Z" },
-  { id: "v-8", vin: "MAT612345S8877668", brand: "Tata Motors", model: "Tata Safari", variant: "Adventure Plus AT", color: "Cosmic Gold", fuel_type: "DIESEL", status: "DELIVERED", customer_name: "Vikramaditya Singhania", sales_consultant: "Sunil Sharma", location: "Customer Handover Area", engine_number: "ENG-SAF-8878", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-18T10:00:00Z" },
-  { id: "v-9", vin: "MAT612345H9988119", brand: "Tata Motors", model: "Tata Harrier", variant: "Adventure Plus", color: "Daytona Grey", fuel_type: "DIESEL", status: "PDI_APPROVED", sales_consultant: "Pooja Patil", location: "Pune Yard • Bay 1", engine_number: "ENG-HAR-9989", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-23T11:00:00Z" },
-  { id: "v-10", vin: "MAT612345N8877220", brand: "Tata Motors", model: "Tata Nexon", variant: "Pure Plus S", color: "Calypso Red", fuel_type: "DIESEL", status: "YARD_RECEIVING_PENDING", sales_consultant: "Amit Verma", location: "Carrier Trailer GJ-01-TR-8812", engine_number: "ENG-NEX-8870", manufacturing_year: 2026, organization_id: TATA_ORG_ID, created_at: "2026-08-25T07:30:00Z" },
-  { id: "v-11", vin: "MALC12345C1122331", brand: "Hyundai", model: "Hyundai Creta", variant: "SX (O) Turbo DCT", color: "Ranger Khaki", fuel_type: "TURBO", status: "ALLOCATED", customer_name: "Rajesh Kumar Verma", sales_consultant: "Manish Rathore", location: "Jaipur Yard • Bay 1", engine_number: "ENG-CRT-1121", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-20T15:00:00Z" },
-  { id: "v-12", vin: "MALC12345V2233442", brand: "Hyundai", model: "Hyundai Venue", variant: "N Line N8 DCT", color: "Thunder Blue", fuel_type: "TURBO", status: "PDI_APPROVED", sales_consultant: "Suresh Sharma", location: "Jaipur Yard • Bay 2", engine_number: "ENG-VEN-2232", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-21T16:00:00Z" },
-  { id: "v-13", vin: "MALC12345V3344553", brand: "Hyundai", model: "Hyundai Verna", variant: "SX (O) Turbo 7DCT", color: "Abyss Black", fuel_type: "TURBO", status: "IN_REPAIR", sales_consultant: "Karan Joshi", location: "Workshop Bay 2", engine_number: "ENG-VRN-3343", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-22T13:30:00Z" },
-  { id: "v-14", vin: "MALC12345I4455664", brand: "Hyundai", model: "Hyundai Ioniq 5", variant: "RWD Long Range 72.6kWh", color: "Gravity Gold Matte", fuel_type: "EV", status: "PDI_IN_PROGRESS", sales_consultant: "Manish Rathore", location: "Inspection Staging Bay 2", engine_number: "MOT-ION-4454", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-23T10:15:00Z" },
-  { id: "v-15", vin: "MALC12345E5566775", brand: "Hyundai", model: "Hyundai Exter", variant: "SX (O) Connect AMT", color: "Cosmic Blue", fuel_type: "PETROL", status: "PDI_PENDING", sales_consultant: "Suresh Sharma", location: "Jaipur Yard • Bay 3", engine_number: "ENG-EXT-5565", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-24T09:45:00Z" },
-  { id: "v-16", vin: "MALC12345I6677886", brand: "Hyundai", model: "Hyundai i20", variant: "Asta (O) IVT", color: "Starry Night", fuel_type: "PETROL", status: "ALLOCATED", customer_name: "Anita Desai", sales_consultant: "Karan Joshi", location: "Jaipur Yard • Bay 2", engine_number: "ENG-I20-6676", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-22T11:15:00Z" },
-  { id: "v-17", vin: "MALC12345T7788997", brand: "Hyundai", model: "Hyundai Tucson", variant: "Signature 2.0L Diesel AWD", color: "Titan Grey", fuel_type: "DIESEL", status: "PDI_APPROVED", sales_consultant: "Manish Rathore", location: "Jaipur Yard • Bay 1", engine_number: "ENG-TUC-7787", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-21T08:45:00Z" },
-  { id: "v-18", vin: "MALC12345C8899008", brand: "Hyundai", model: "Hyundai Creta", variant: "Knight Edition S(O)", color: "Abyss Black", fuel_type: "DIESEL", status: "YARD_RECEIVING_PENDING", sales_consultant: "Suresh Sharma", location: "Carrier Trailer TN-04-TR-1109", engine_number: "ENG-CRT-8898", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-25T06:00:00Z" },
-  { id: "v-19", vin: "MALC12345V9900119", brand: "Hyundai", model: "Hyundai Venue", variant: "SX 1.5 CRDi Diesel", color: "Atlas White", fuel_type: "DIESEL", status: "PDI_PENDING", sales_consultant: "Karan Joshi", location: "Jaipur Yard • Bay 4", engine_number: "ENG-VEN-9909", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-24T14:30:00Z" },
-  { id: "v-20", vin: "MALC12345V0011220", brand: "Hyundai", model: "Hyundai Verna", variant: "SX 1.5 MPI IVT", color: "Fiery Red", fuel_type: "PETROL", status: "ALLOCATED", customer_name: "Sunil Gupta", sales_consultant: "Manish Rathore", location: "Jaipur Yard • Bay 1", engine_number: "ENG-VRN-0010", manufacturing_year: 2026, organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-22T17:00:00Z" }
-];
+// Empty default vehicles as requested: All old stock data removed
+export const SEED_VEHICLES: any[] = [];
 
 export const SEED_BOOKINGS = [
   { id: "bk-1", receipt_no: "BK-009101", customer_name: "Ramesh Chandra Sharma", mobile_number: "+91 98290 11223", model: "Tata Safari", variant: "Accomplished Plus 6S AT", colour: "Oberon Black", allocated_vin_no: "MAT612345S9988771", allocation_date: "2026-08-24", receipt_amt: 50000, status: "ALLOCATED", sales_consultant: "Sunil Sharma", promise_delivery_date: "2026-08-30", organization_id: TATA_ORG_ID, created_at: "2026-08-20T10:00:00Z" },
@@ -48,13 +28,37 @@ export const SEED_BOOKINGS = [
 ];
 
 export const getVehiclesForBrand = (brandCode: string) => {
+  try {
+    const saved = localStorage.getItem('dhoot_stock_inventory');
+    if (saved) {
+      const parsed: any[] = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        if (brandCode === 'DHOOT-TATA') return parsed.filter(v => (v.organization_id === TATA_ORG_ID || (v.model && v.model.toLowerCase().includes('tata'))));
+        if (brandCode === 'DHOOT-HYUNDAI') return parsed.filter(v => (v.organization_id === HYUNDAI_ORG_ID || (v.model && v.model.toLowerCase().includes('hyundai'))));
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading stock from storage:', e);
+  }
+  
   if (brandCode === 'DHOOT-TATA') return SEED_VEHICLES.filter(v => v.organization_id === TATA_ORG_ID);
   if (brandCode === 'DHOOT-HYUNDAI') return SEED_VEHICLES.filter(v => v.organization_id === HYUNDAI_ORG_ID);
-  return SEED_VEHICLES; // Consolidated ALL returns all 20 (10 Tata + 10 Hyundai)
+  return SEED_VEHICLES;
+};
+
+export const saveStockInventory = (vehicles: any[]) => {
+  localStorage.setItem('dhoot_stock_inventory', JSON.stringify(vehicles));
+  window.dispatchEvent(new Event('stock-updated'));
+};
+
+export const clearStockInventory = () => {
+  localStorage.removeItem('dhoot_stock_inventory');
+  window.dispatchEvent(new Event('stock-updated'));
 };
 
 export const getBookingsForBrand = (brandCode: string) => {
   if (brandCode === 'DHOOT-TATA') return SEED_BOOKINGS.filter(b => b.organization_id === TATA_ORG_ID);
   if (brandCode === 'DHOOT-HYUNDAI') return SEED_BOOKINGS.filter(b => b.organization_id === HYUNDAI_ORG_ID);
-  return SEED_BOOKINGS; // Consolidated ALL returns all 20 (10 Tata + 10 Hyundai)
+  return SEED_BOOKINGS;
 };
