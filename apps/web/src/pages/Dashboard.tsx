@@ -168,7 +168,7 @@ export const DashboardPage: React.FC = () => {
     <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
       
       {/* 1. Header Toolbar */}
-      <div className="bg-white border border-slate-200/80 rounded-xl px-5 py-3 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-slate-200/80 rounded-xl px-5 py-3.5 shadow-xs flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-bold text-slate-900">
@@ -181,32 +181,6 @@ export const DashboardPage: React.FC = () => {
           <p className="text-xs text-slate-500 mt-0.5">
             {brandInfo.subtitle}
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={fetchLiveFleet}
-            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-            title="Refresh Ledger"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-
-          <Link
-            to="/receiving"
-            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"
-          >
-            <Truck className="w-3.5 h-3.5 text-amber-700" />
-            <span>Gate Inward</span>
-          </Link>
-
-          <Link
-            to="/vehicles"
-            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Stock Inventory</span>
-          </Link>
         </div>
       </div>
 
