@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/apiConfig';
 import { 
   Bookmark, Search, Plus, Car, ChevronRight, Download, Upload, 
   FileSpreadsheet, X, Loader2, CheckCircle2, UserCheck,
@@ -440,6 +441,11 @@ export const BookingsPage: React.FC = () => {
         });
 
         supabase.from('bookings').upsert(rowsToSync, { onConflict: 'receipt_no' }).then();
+        fetch(getApiUrl('/api/v1/bookings/bulk-import'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookings: rowsToSync })
+        }).catch(() => {});
       } catch (e) {
         console.warn('Supabase bulk bookings sync note:', e);
       }

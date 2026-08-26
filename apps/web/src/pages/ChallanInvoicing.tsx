@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/apiConfig';
+import { supabase } from '../lib/supabase';
 import { 
   FileText, Search, Plus, Car, ChevronRight, Download, Upload, 
   FileSpreadsheet, X, Loader2, DollarSign, CheckCircle2, 
@@ -352,6 +354,17 @@ export const ChallanInvoicingPage: React.FC = () => {
       saveChallansInventory(updated);
 
       setIsImportModalOpen(false);
+
+      try {
+        fetch(getApiUrl('/api/v1/challans/bulk-import'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: parsedRows })
+        }).catch(() => {});
+
+        supabase.from('challan_invoices').upsert(parsedRows, { onConflict: 'challan_no' }).then();
+      } catch (e) {}
+
       setParsedRows([]);
       setImportSummary(null);
     } catch (e: any) {

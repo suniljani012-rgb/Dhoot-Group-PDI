@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { saveStockInventory } from '../../data/seedData';
 import { formatDate } from '../../utils/dateUtils';
 import { StockVehicle } from '../../pages/Vehicles';
+import { getApiUrl } from '../../utils/apiConfig';
 
 interface ExcelStockImporterProps {
   isOpen: boolean;
@@ -382,39 +383,59 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       // Save to localStorage & notify all components
       saveStockInventory(finalStock);
 
-      // Attempt background Supabase upsert
+      // 1. Sync to Backend Edge API (Cloudflare Worker API)
       try {
         const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI' 
           ? '11111111-1111-1111-1111-111111111112' 
           : '11111111-1111-1111-1111-111111111111';
 
-        await supabase.from('vehicles').upsert(
+        const payload = deduplicatedIncoming.map(r => ({
+          vin: r.vin,
+          model: r.model,
+          variant: r.variant,
+          color: r.color,
+          fuel_type: r.fuel_type,
+          fsc_code: r.fsc_code,
+          dealer_code: r.dealer_code,
+          plant_code: r.plant_code,
+          manufacturing_year: r.manufacturing_year,
+          status: r.status,
+          location: r.location,
+          customer_name: r.customer_name,
+          sales_consultant: r.sales_consultant,
+          purchase_date: r.purchase_date,
+          delivery_date: r.delivery_date,
+          allocation_date: r.allocation_date,
+          allocated_days: r.allocated_days,
+          accessories_amount: r.accessories_amount,
+          received_amount: r.received_amount,
+          organization_id: targetOrg
+        }));
+
+        fetch(getApiUrl('/api/v1/stock/bulk-import'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehicles: payload })
+        }).catch(() => {});
+
+        // Also push to Supabase bookings table with IN_STOCK tag for cloud persistence
+        supabase.from('bookings').upsert(
           deduplicatedIncoming.map(r => ({
-            vin: r.vin,
+            receipt_no: `STK-${r.vin}`,
+            customer_name: r.customer_name || 'Unallocated Stock',
+            mobile_number: '+91 98000 00000',
             model: r.model,
             variant: r.variant,
-            color: r.color,
-            fuel_type: r.fuel_type,
-            fsc_code: r.fsc_code,
-            dealer_code: r.dealer_code,
-            plant_code: r.plant_code,
-            manufacturing_year: r.manufacturing_year,
-            status: r.status,
-            location: r.location,
-            customer_name: r.customer_name,
-            sales_consultant: r.sales_consultant,
-            purchase_date: r.purchase_date,
-            delivery_date: r.delivery_date,
-            allocation_date: r.allocation_date,
-            allocated_days: r.allocated_days,
-            accessories_amount: r.accessories_amount,
-            received_amount: r.received_amount,
+            colour: r.color,
+            allocated_vin_no: r.vin,
+            status: r.status || 'IN_STOCK',
             organization_id: targetOrg
           })),
-          { onConflict: 'vin' }
-        );
+          { onConflict: 'receipt_no' }
+        ).then();
+
       } catch (e) {
-        console.warn('Database cloud sync notice (offline mode):', e);
+        console.warn('Backend API cloud sync notice:', e);
       }
 
       setSuccessCount(deduplicatedIncoming.length);
