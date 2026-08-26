@@ -1,3 +1,5 @@
+import { formatDate } from '../utils/dateUtils';
+import * as XLSX from 'xlsx';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -474,7 +476,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     <div className="text-[10px] text-slate-500">Gatepass No: GP-{gatepassRecord.challan_no.replace('CHL-', '')}</div>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-slate-800">Date: {new Date().toISOString().split('T')[0]}</span>
+                    <span className="font-bold text-slate-800">Date: {formatDate(new Date())}</span>
                     <div className="text-[10px] text-emerald-700 font-bold">✓ PDI Certified & Cleaned</div>
                   </div>
                 </div>
@@ -537,12 +539,16 @@ const SEED_CHALLANS: ChallanRecord[] = [
                 {/* Header Info */}
                 <div className="flex justify-between border-b border-line pb-2">
                   <div>
-                    <span className="font-bold text-slate-900 text-sm">{currentBrand.name}</span>
+                    <span className="font-bold text-ink text-sm">
+    {invoicePreviewRecord.model?.toLowerCase().includes('hyundai') 
+      ? 'Hyundai Motor India Authorized Dealership (Dhoot Hyundai)' 
+      : 'Tata Motors Authorized Dealership (Dhoot Motors)'}
+  </span>
                     <div className="text-[10px] text-slate-500">Authorized Dealership Network</div>
                   </div>
                   <div className="text-right">
                     <div>Invoice No: <strong>{invoicePreviewRecord.invoice_no}</strong></div>
-                    <div>Date: <strong>{invoicePreviewRecord.invoice_date || '2026-08-25'}</strong></div>
+                    <div>Date: <strong>{formatDate(invoicePreviewRecord.invoice_date || invoicePreviewRecord.created_at || new Date())}</strong></div>
                   </div>
                 </div>
 
@@ -602,8 +608,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                 <button
                   type="button"
                   onClick={() => {
-                    alert('Sending Tax Invoice PDF to printer...');
-                    setInvoicePreviewRecord(null);
+                    window.print();
                   }}
                   className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs flex items-center gap-1.5"
                 >

@@ -1,3 +1,4 @@
+import { formatDate } from '../utils/dateUtils';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -376,7 +377,7 @@ export const VehiclesPage: React.FC = () => {
                         {idx + 1}
                       </td>
                       <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
-                        {v.purchase_date || '—'}
+                        {formatDate(v.purchase_date)}
                       </td>
                       <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
                         {v.model}
@@ -435,10 +436,10 @@ export const VehiclesPage: React.FC = () => {
                         </Badge>
                       </td>
                       <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
-                        {v.delivery_date || '—'}
+                        {formatDate(v.delivery_date)}
                       </td>
                       <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
-                        {v.allocation_date || '—'}
+                        {formatDate(v.allocation_date)}
                       </td>
                       <td className="py-2.5 px-3 text-center text-ink-2 tnum whitespace-nowrap">
                         {v.allocated_days ? `${v.allocated_days}d` : '0d'}
@@ -581,15 +582,15 @@ export const VehiclesPage: React.FC = () => {
                 </div>
                 <div className="bg-canvas border border-line p-2.5 rounded">
                   <span className="eyebrow block">Purchase Date</span>
-                  <span className="text-ink tnum">{selectedStock.purchase_date || '—'}</span>
+                  <span className="text-ink tnum">{formatDate(selectedStock.purchase_date)}</span>
                 </div>
                 <div className="bg-canvas border border-line p-2.5 rounded">
                   <span className="eyebrow block">Delivery Date</span>
-                  <span className="text-ink tnum">{selectedStock.delivery_date || '—'}</span>
+                  <span className="text-ink tnum">{formatDate(selectedStock.delivery_date)}</span>
                 </div>
                 <div className="bg-canvas border border-line p-2.5 rounded">
                   <span className="eyebrow block">Allocation Date & Days</span>
-                  <span className="text-ink tnum">{selectedStock.allocation_date || '—'} ({selectedStock.allocated_days || 0}d)</span>
+                  <span className="text-ink tnum">{formatDate(selectedStock.allocation_date)} ({selectedStock.allocated_days || 0}d)</span>
                 </div>
                 <div className="bg-canvas border border-line p-2.5 rounded">
                   <span className="eyebrow block">Accessories Amt</span>

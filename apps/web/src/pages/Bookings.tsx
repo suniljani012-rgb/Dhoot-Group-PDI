@@ -1,3 +1,5 @@
+import { formatDate } from '../utils/dateUtils';
+import * as XLSX from 'xlsx';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -210,44 +212,137 @@ export const BookingsPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Process 2D Array of Booking rows from SheetJS or Text Split
+  const processBookingGrid = (grid: any[][]) => {
+    if (!grid || grid.length <= 1) {
+      setParsedRows([]);
+      return;
+    }
+
+    let headerRowIdx = 0;
+    for (let r = 0; r < Math.min(5, grid.length); r++) {
+      const rowStr = grid[r].map(c => String(c || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join(' ');
+      if (rowStr.includes('receipt') || rowStr.includes('customer') || rowStr.includes('booking')) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+
+    const rawHeaders = grid[headerRowIdx].map(h => String(h || '').trim());
+    const findColIndex = (names: string[]): number => {
+      return rawHeaders.findIndex(h => {
+        const clean = String(h || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return names.some(n => clean === cleanHeader(n));
+      });
+    };
+
+    const cleanHeader = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const idxReceiptDate = findColIndex(['Receipt Date', 'ReceiptDate', 'Date', 'Booking Date']);
+    const idxReceiptNo = findColIndex(['Receipt No', 'ReceiptNo', 'Receipt Number', 'Voucher No', 'Booking No']);
+    const idxCustomerName = findColIndex(['Customer Name', 'CustomerName', 'Customer', 'Buyer', 'Party Name']);
+    const idxMobile = findColIndex(['Mobile Number', 'MobileNumber', 'Mobile', 'Phone', 'Contact']);
+    const idxSalesConsultant = findColIndex(['Sales Consultant', 'SalesConsultant', 'SC', 'DSE', 'Advisor', 'Sales Executive']);
+    const idxTeamLeader = findColIndex(['Team Leader', 'TeamLeader', 'TL', 'Manager']);
+    const idxModel = findColIndex(['Model', 'Vehicle Model', 'Car Model']);
+    const idxVariant = findColIndex(['Variant', 'Trim', 'Model Variant', 'Description']);
+    const idxColour = findColIndex(['Colour', 'Color', 'Exterior Color', 'Paint']);
+    const idxPromiseDate = findColIndex(['Promise Delivery Date', 'PromiseDeliveryDate', 'Delivery Date', 'Promised Date']);
+    const idxReceiptAmt = findColIndex(['Receipt Amt', 'Receipt Amount', 'Advance Amount', 'Booking Amount', 'Amount']);
+    const idxDocketNo = findColIndex(['Docket No', 'DocketNo', 'Docket']);
+    const idxPanNo = findColIndex(['PAN No', 'PANNo', 'PAN']);
+
+    const rows: any[] = [];
+    for (let i = headerRowIdx + 1; i < grid.length; i++) {
+      const cols = grid[i];
+      if (!cols || cols.length === 0 || cols.every(c => c === undefined || c === null || String(c).trim() === '')) {
+        continue;
+      }
+
+      const getVal = (colIdx: number, fallbackIdx?: number): string => {
+        if (colIdx >= 0 && cols[colIdx] !== undefined && cols[colIdx] !== null) return String(cols[colIdx]).trim();
+        if (fallbackIdx !== undefined && cols[fallbackIdx] !== undefined && cols[fallbackIdx] !== null) return String(cols[fallbackIdx]).trim();
+        return '';
+      };
+
+      const custName = getVal(idxCustomerName, 2) || ('Customer ' + i);
+      const receiptNo = getVal(idxReceiptNo, 1) || ('BK-' + (10000 + i));
+      const modelVal = getVal(idxModel, 6) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari');
+      const rawReceiptDate = getVal(idxReceiptDate, 0);
+      const rawPromiseDate = getVal(idxPromiseDate, 10);
+      const receiptAmtRaw = getVal(idxReceiptAmt, 11);
+
+      rows.push({
+        _id: 'row-' + i,
+        receipt_date: rawReceiptDate ? formatDate(rawReceiptDate) : formatDate(new Date()),
+        receipt_no: receiptNo,
+        customer_name: custName,
+        mobile_number: getVal(idxMobile, 3) || '+91 98000 00000',
+        sales_consultant: getVal(idxSalesConsultant, 4) || 'Sales Desk',
+        team_leader: getVal(idxTeamLeader, 5) || '',
+        model: modelVal,
+        variant: getVal(idxVariant, 7) || 'Standard',
+        colour: getVal(idxColour, 8) || 'White',
+        booking_date: rawReceiptDate ? formatDate(rawReceiptDate) : formatDate(new Date()),
+        promise_delivery_date: rawPromiseDate ? formatDate(rawPromiseDate) : formatDate(new Date(Date.now() + 10 * 86400000)),
+        receipt_amt: Number(String(receiptAmtRaw || '25000').replace(/[^0-9]/g, '')) || 25000,
+        docket_no: getVal(idxDocketNo, 12) || '',
+        pan_no: getVal(idxPanNo, 13) || '',
+        organization_id: currentBrand.orgId
+      });
+    }
+
+    setParsedRows(rows);
+  };
+
   // Parse Excel / CSV Text
   const handleParseBookingsText = (text: string) => {
     setCsvText(text);
     setImportError(null);
 
-    const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
-    if (lines.length <= 1) {
+    if (!text || text.trim().length === 0) {
       setParsedRows([]);
       return;
     }
 
-    const separator = lines[0].includes('\t') ? '\t' : ',';
-    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
-    
-    const rows = lines.slice(1).map((line, idx) => {
-      const cols = line.split(separator).map(c => c.trim().replace(/^"|"$/g, ''));
-      const obj: any = { _id: `row-${idx}` };
-      headers.forEach((h, hIdx) => {
-        obj[h] = cols[hIdx] || '';
-      });
-      return {
-        _id: `row-${idx}`,
-        receipt_no: obj['Receipt No'] || obj['receipt_no'] || cols[1] || `BK-${Date.now()}${idx}`,
-        customer_name: obj['Customer Name'] || obj['customer_name'] || cols[2] || 'Customer',
-        mobile_number: obj['Mobile Number'] || obj['mobile_number'] || cols[3] || '+91 98000 00000',
-        sales_consultant: obj['Sales Consultant'] || cols[4] || 'Sales Consultant',
-        model: obj['Model'] || cols[6] || 'Tata Nexon',
-        variant: obj['Variant'] || cols[7] || 'Standard',
-        colour: obj['Colour'] || cols[8] || 'White',
-        receipt_amt: parseFloat(obj['Receipt Amt'] || cols[11] || '25000') || 25000,
-        promise_delivery_date: obj['Promise Delivery Date'] || cols[10] || '2026-09-10'
-      };
-    });
-
-    setParsedRows(rows);
+    try {
+      const workbook = XLSX.read(text, { type: 'string', raw: true });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const grid: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+      processBookingGrid(grid);
+    } catch {
+      const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
+      const separator = lines[0].includes('\t') ? '\t' : ',';
+      const grid = lines.map(l => l.split(separator).map(c => c.trim().replace(/^"|"$/g, '')));
+      processBookingGrid(grid);
+    }
   };
 
-  // Confirm Bulk Import
+  // File Upload Handler for .xlsx, .xls, .csv, .tsv
+  const handleBookingFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const grid: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+        processBookingGrid(grid);
+      } catch (err: any) {
+        console.error('File parse error:', err);
+        setImportError('Could not parse Excel/CSV file.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+    // Confirm Bulk Import
   const handleConfirmBulkImport = async () => {
     if (parsedRows.length === 0) return;
     setIsImporting(true);
@@ -632,11 +727,15 @@ export const BookingsPage: React.FC = () => {
               <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3 font-mono">
                 <div className="flex justify-between border-b border-slate-200 pb-2">
                   <div>
-                    <span className="font-bold text-slate-900 text-sm">{currentBrand.name} Dealership</span>
+                    <span className="font-bold text-ink text-sm">
+    {voucherBooking.model?.toLowerCase().includes('hyundai') 
+      ? 'Hyundai Motor India Authorized Dealership (Dhoot Hyundai)' 
+      : 'Tata Motors Authorized Dealership (Dhoot Motors)'}
+  </span>
                     <div className="text-[10px] text-slate-400">Dhoot Group Automotive Network</div>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-slate-800">Date: {voucherBooking.booking_date || '2026-08-25'}</span>
+                    <span className="font-bold text-slate-800">Date: {formatDate(voucherBooking.booking_date || voucherBooking.created_at || new Date())}</span>
                     <div className="text-[10px] text-emerald-700 font-bold">Voucher Confirmed</div>
                   </div>
                 </div>
@@ -647,7 +746,7 @@ export const BookingsPage: React.FC = () => {
                   <div>Vehicle Model: <strong>{voucherBooking.model}</strong></div>
                   <div>Variant & Color: <strong>{voucherBooking.variant} • {voucherBooking.colour}</strong></div>
                   <div>Allocated VIN: <strong>{voucherBooking.allocated_vin_no || 'Pending Allocation'}</strong></div>
-                  <div>Promised Date: <strong>{voucherBooking.promise_delivery_date}</strong></div>
+                  <div>Promised Date: <strong>{formatDate(voucherBooking.promise_delivery_date)}</strong></div>
                 </div>
 
                 <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
@@ -663,8 +762,7 @@ export const BookingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    alert('Sending booking voucher PDF to print spooler...');
-                    setVoucherBooking(null);
+                    window.print();
                   }}
                   className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs flex items-center gap-1.5"
                 >
@@ -881,16 +979,9 @@ export const BookingsPage: React.FC = () => {
                     <span>Upload CSV / TSV File</span>
                     <input
                       type="file"
-                      accept=".csv,.txt,.tsv,.xlsx"
+                      accept=".csv,.xlsx,.xls,.tsv,.txt"
                       className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => handleParseBookingsText(event.target?.result as string);
-                          reader.readAsText(file);
-                        }
-                      }}
+                      onChange={handleBookingFileUpload}
                     />
                   </label>
                 </div>
@@ -927,6 +1018,7 @@ export const BookingsPage: React.FC = () => {
                       <table className="w-full text-left text-xs border-collapse">
                         <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px] sticky top-0">
                           <tr>
+                            <th className="py-2 px-3">Receipt Date</th>
                             <th className="py-2 px-3">Receipt No</th>
                             <th className="py-2 px-3">Customer Name</th>
                             <th className="py-2 px-3">Phone</th>
@@ -939,6 +1031,7 @@ export const BookingsPage: React.FC = () => {
                         <tbody className="divide-y divide-line text-ink-2">
                           {parsedRows.map((r, i) => (
                             <tr key={i} className="hover:bg-canvas/60">
+                              <td className="py-1.5 px-3 text-ink-3 tnum whitespace-nowrap">{r.receipt_date}</td>
                               <td className="py-1.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">{r.receipt_no}</td>
                               <td className="py-1.5 px-3 font-medium text-ink whitespace-nowrap">{r.customer_name}</td>
                               <td className="py-1.5 px-3 font-mono text-ink-3 whitespace-nowrap">{r.mobile_number}</td>
