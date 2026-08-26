@@ -4,98 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 
 export const stockRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
-const TATA_ORG_ID = '11111111-1111-1111-1111-111111111111';
-const HYUNDAI_ORG_ID = '11111111-1111-1111-1111-111111111112';
-
-let localVehiclesStore: any[] = [
-  {
-    id: "v-tat-1",
-    vin: "MAT612345N1234567",
-    chassis_number: "CH-NXN-9021",
-    engine_number: "ENG-NXN-4412",
-    brand: "Tata Motors",
-    model: "Tata Nexon",
-    variant: "Fearless Plus S DT",
-    color: "Daytona Grey",
-    fuel_type: "PETROL",
-    transmission: "DCA",
-    manufacturing_year: 2026,
-    status: "ALLOCATED",
-    vehicle_status: "ALLOCATED",
-    location: "Basni Yard • Bay 1",
-    customer_name: "Rajesh Sharma",
-    sales_consultant: "Vikram Malhotra",
-    organization_id: TATA_ORG_ID,
-    created_at: "2026-08-20T10:00:00Z"
-  },
-  {
-    id: "v-tat-2",
-    vin: "MAT612345H7654321",
-    chassis_number: "CH-HAR-1082",
-    engine_number: "ENG-KRY-8819",
-    brand: "Tata Motors",
-    model: "Tata Harrier",
-    variant: "Fearless Plus Dark",
-    color: "Oberon Black",
-    fuel_type: "DIESEL",
-    transmission: "AUTOMATIC",
-    manufacturing_year: 2026,
-    status: "ALLOCATED",
-    vehicle_status: "ALLOCATED",
-    location: "Basni Yard • Bay 2",
-    customer_name: "Priya Patel",
-    sales_consultant: "Vikram Malhotra",
-    organization_id: TATA_ORG_ID,
-    created_at: "2026-08-21T11:00:00Z"
-  },
-  {
-    id: "v-hyn-1",
-    vin: "MALC12345C1122334",
-    chassis_number: "CH-CRT-1121",
-    engine_number: "ENG-CRT-1121",
-    brand: "Hyundai",
-    model: "Hyundai Creta",
-    variant: "SX(O) Turbo 1.5 DCT",
-    color: "Ranger Khaki",
-    fuel_type: "TURBO",
-    transmission: "DCT",
-    manufacturing_year: 2026,
-    status: "ALLOCATED",
-    vehicle_status: "ALLOCATED",
-    location: "Shantinath Yard • Bay 1",
-    customer_name: "Amit Singh",
-    sales_consultant: "Ramesh Choudhary",
-    organization_id: HYUNDAI_ORG_ID,
-    created_at: "2026-08-22T14:00:00Z"
-  },
-  {
-    id: "v-hyn-2",
-    vin: "MALC12345V5566778",
-    chassis_number: "CH-VEN-2232",
-    engine_number: "ENG-VEN-2232",
-    brand: "Hyundai",
-    model: "Hyundai Venue",
-    variant: "N Line N8 DCT",
-    color: "Atlas White / Abyss Black",
-    fuel_type: "TURBO",
-    transmission: "DCT",
-    manufacturing_year: 2026,
-    status: "ALLOCATED",
-    vehicle_status: "ALLOCATED",
-    location: "Shantinath Yard • Bay 2",
-    customer_name: "Neha Verma",
-    sales_consultant: "Ramesh Choudhary",
-    organization_id: HYUNDAI_ORG_ID,
-    created_at: "2026-08-23T16:00:00Z"
-  }
-];
+let localVehiclesStore: any[] = [];
 
 // GET /api/v1/stock
 stockRouter.get('/', async (c) => {
   const orgId = c.req.query('organization_id');
   const search = c.req.query('search');
 
-  let results = [...localVehiclesStore];
+  let results: any[] = [...localVehiclesStore];
 
   try {
     const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY || c.env.SUPABASE_ANON_KEY);
@@ -104,7 +20,7 @@ stockRouter.get('/', async (c) => {
       query = query.eq('organization_id', orgId);
     }
     const { data: dbData, error } = await query;
-    if (!error && dbData && Array.isArray(dbData) && dbData.length > 0) {
+    if (!error && dbData && Array.isArray(dbData)) {
       results = dbData;
     }
   } catch (e) {}
