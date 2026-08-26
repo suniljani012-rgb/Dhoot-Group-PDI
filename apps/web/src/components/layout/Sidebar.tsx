@@ -1,11 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Car, ClipboardCheck, ShieldCheck,
   Bookmark, Wrench, Receipt, FileCheck, Settings2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useFleetCounts } from '../../hooks/useFleetCounts';
 
 interface SidebarProps {
   onCloseMobile?: () => void;
@@ -19,27 +18,26 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const location = useLocation();
   const { user, isSuperAdmin } = useAuth();
-  const c = useFleetCounts();
 
   const groups: {
     heading: string;
-    items: { label: string; path: string; icon: any; count?: number; roles: string[] }[];
+    items: { label: string; path: string; icon: any; roles: string[] }[];
   }[] = [
     {
       heading: 'Operations',
       items: [
         { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, roles: ['ALL'] },
-        { label: 'Inward', path: '/receiving', icon: Truck, count: c.receivingPending, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER'] },
-        { label: 'Stock', path: '/vehicles', icon: Car, count: c.totalStock, roles: ['ALL'] },
-        { label: 'Inspections', path: '/pdi', icon: ClipboardCheck, count: c.pdiPending, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] },
-        { label: 'Quality', path: '/qa', icon: ShieldCheck, count: c.qaPending, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'QA_MANAGER'] },
-        { label: 'Workshop', path: '/repairs', icon: Wrench, count: c.inRepair, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'WORKSHOP_SUPERVISOR', 'PDI_ENGINEER'] },
+        { label: 'Inward', path: '/receiving', icon: Truck, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER'] },
+        { label: 'Stock', path: '/vehicles', icon: Car, roles: ['ALL'] },
+        { label: 'Inspections', path: '/pdi', icon: ClipboardCheck, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] },
+        { label: 'Quality', path: '/qa', icon: ShieldCheck, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'QA_MANAGER'] },
+        { label: 'Workshop', path: '/repairs', icon: Wrench, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'WORKSHOP_SUPERVISOR', 'PDI_ENGINEER'] },
       ],
     },
     {
       heading: 'Sales',
       items: [
-        { label: 'Bookings', path: '/bookings', icon: Bookmark, count: c.totalBookings, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'SALES_CONSULTANT', 'ACCOUNTS_EXECUTIVE'] },
+        { label: 'Bookings', path: '/bookings', icon: Bookmark, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'SALES_CONSULTANT', 'ACCOUNTS_EXECUTIVE'] },
         { label: 'Invoicing', path: '/invoicing', icon: Receipt, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'ACCOUNTS_EXECUTIVE', 'SALES_CONSULTANT'] },
         { label: 'Certificates', path: '/certificates/cert-101', icon: FileCheck, roles: ['ALL'] },
       ],
@@ -85,11 +83,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-accent' : 'text-ink-3'}`} />
                     <span className="flex-1 truncate">{item.label}</span>
-                    {item.count !== undefined && item.count > 0 && (
-                      <span className={`text-xs tnum ${active ? 'text-accent font-medium' : 'text-ink-3'}`}>
-                        {item.count}
-                      </span>
-                    )}
                   </Link>
                 );
               })}
