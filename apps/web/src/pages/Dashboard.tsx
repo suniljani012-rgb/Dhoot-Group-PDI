@@ -34,6 +34,7 @@ export const DashboardPage: React.FC = () => {
   const [variantFilter, setVariantFilter] = useState<string>('ALL');
   const [colourFilter, setColourFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [expandedVinRowKey, setExpandedVinRowKey] = useState<string | null>(null);
   const [viewingVinList, setViewingVinList] = useState<{ 
     variant: string; 
     colour: string; 
@@ -946,89 +947,176 @@ export const DashboardPage: React.FC = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredMatrixRows.map((row, rIdx) => (
-                            <tr key={rIdx} className="hover:bg-canvas transition-colors">
-                              <td className="py-2.5 px-3 text-center text-ink-3 font-mono text-[11px] whitespace-nowrap">
-                                {rIdx + 1}
-                              </td>
-                              <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
-                                {row.variant}
-                              </td>
-                              <td className="py-2.5 px-3 whitespace-nowrap">
-                                <div className="flex items-center gap-1.5">
-                                  <Palette className="w-3.5 h-3.5 text-accent shrink-0" />
-                                  <span className="font-medium text-ink">{row.colour}</span>
-                                </div>
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-medium text-ink tnum whitespace-nowrap">
-                                {row.bookings}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-medium text-ok tnum whitespace-nowrap">
-                                {row.allocated}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-bold text-warn tnum whitespace-nowrap">
-                                {row.pbna}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-bold tnum whitespace-nowrap">
-                                {row.vna > 0 ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setVariantFilter(row.variant);
-                                      setColourFilter(row.colour);
-                                      setStatusFilter('VNA');
-                                      setModalActiveTab('CUSTOMERS');
-                                    }}
-                                    className="px-2 py-0.5 rounded bg-danger/10 text-danger hover:bg-danger/20 border border-danger/30 font-bold transition-colors cursor-pointer"
-                                    title="Click to view Customer Indent Details"
-                                  >
-                                    +{row.vna} Indent Needed
-                                  </button>
-                                ) : (
-                                  <span className="text-ink-3">0</span>
+                          filteredMatrixRows.map((row, rIdx) => {
+                            const rowKey = `${row.variant}___${row.colour}`;
+                            const isExpanded = expandedVinRowKey === rowKey;
+                            const vehicles = (row as any).freeVehiclesDetails || [];
+
+                            return (
+                              <React.Fragment key={rIdx}>
+                                <tr className={`transition-colors ${isExpanded ? 'bg-accent/5' : 'hover:bg-canvas'}`}>
+                                  <td className="py-2.5 px-3 text-center text-ink-3 font-mono text-[11px] whitespace-nowrap">
+                                    {rIdx + 1}
+                                  </td>
+                                  <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                                    {row.variant}
+                                  </td>
+                                  <td className="py-2.5 px-3 whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5">
+                                      <Palette className="w-3.5 h-3.5 text-accent shrink-0" />
+                                      <span className="font-medium text-ink">{row.colour}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-medium text-ink tnum whitespace-nowrap">
+                                    {row.bookings}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-medium text-ok tnum whitespace-nowrap">
+                                    {row.allocated}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-bold text-warn tnum whitespace-nowrap">
+                                    {row.pbna}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-bold tnum whitespace-nowrap">
+                                    {row.vna > 0 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setVariantFilter(row.variant);
+                                          setColourFilter(row.colour);
+                                          setStatusFilter('VNA');
+                                          setModalActiveTab('CUSTOMERS');
+                                        }}
+                                        className="px-2 py-0.5 rounded bg-danger/10 text-danger hover:bg-danger/20 border border-danger/30 font-bold transition-colors cursor-pointer"
+                                        title="Click to view Customer Indent Details"
+                                      >
+                                        +{row.vna} Indent Needed
+                                      </button>
+                                    ) : (
+                                      <span className="text-ink-3">0</span>
+                                    )}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-bold text-ok tnum whitespace-nowrap">
+                                    {row.freeStock}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                    {row.vna > 0 ? (
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-danger/10 text-danger border border-danger/30">
+                                        Indent Needed ({row.vna})
+                                      </span>
+                                    ) : row.pbna > 0 ? (
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-warn/10 text-warn border border-warn/30">
+                                        Ready to Allot ({row.pbna})
+                                      </span>
+                                    ) : row.freeStock > 0 ? (
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/30">
+                                        Available Free ({row.freeStock})
+                                      </span>
+                                    ) : (
+                                      <span className="text-ink-3 text-[11px]">All Settled</span>
+                                    )}
+                                  </td>
+                                  <td className="py-2.5 px-3 whitespace-nowrap">
+                                    {vehicles.length > 0 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setExpandedVinRowKey(isExpanded ? null : rowKey);
+                                        }}
+                                        className={`px-2.5 py-1 rounded border text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer ${
+                                          isExpanded 
+                                            ? 'bg-accent text-white border-accent' 
+                                            : 'bg-surface border-line hover:border-accent text-accent hover:bg-accent/5'
+                                        }`}
+                                        title="Click to view free vehicle VIN numbers and yard location directly below"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                        <span>{vehicles.length} Stock Units {isExpanded ? '▲' : '▼'}</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-ink-3 font-mono text-xs">—</span>
+                                    )}
+                                  </td>
+                                </tr>
+
+                                {/* INLINE EXPANDED VIN DETAILS ROW DIRECTLY BELOW */}
+                                {isExpanded && vehicles.length > 0 && (
+                                  <tr className="bg-canvas border-y-2 border-accent/40 animate-in fade-in">
+                                    <td colSpan={10} className="p-4">
+                                      <div className="bg-surface rounded-md border border-line p-3 shadow-xs space-y-3">
+                                        
+                                        <div className="flex items-center justify-between pb-2 border-b border-line">
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded bg-accent text-white flex items-center justify-center text-xs">
+                                              <Eye className="w-3.5 h-3.5" />
+                                            </div>
+                                            <div>
+                                              <h4 className="font-bold text-ink text-xs">
+                                                Available Physical Chassis Numbers: {row.variant} • {row.colour}
+                                              </h4>
+                                              <span className="text-[10px] text-ink-3">
+                                                Matched with Live Dealership Stock Sheet • {vehicles.length} Units Ready to Allot
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => setExpandedVinRowKey(null)}
+                                            className="text-xs text-ink-3 hover:text-ink px-2 py-0.5 rounded bg-canvas border border-line cursor-pointer"
+                                          >
+                                            ✕ Close View
+                                          </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                                          {vehicles.map((vItem: any, vIdx: number) => (
+                                            <div key={vIdx} className="p-2.5 bg-canvas border border-line rounded hover:border-accent/50 transition-colors space-y-1.5">
+                                              <div className="flex items-center justify-between">
+                                                <span className="font-mono font-bold text-ink text-xs text-accent">
+                                                  {vItem.vin}
+                                                </span>
+                                                <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/20">
+                                                  {vItem.status}
+                                                </span>
+                                              </div>
+
+                                              <div className="text-[11px] text-ink-2 space-y-0.5">
+                                                <div className="flex items-center gap-1 font-semibold text-ink">
+                                                  <Warehouse className="w-3 h-3 text-accent shrink-0" />
+                                                  <span>{vItem.location}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-ink-3 text-[10px]">
+                                                  <span>Ageing: <strong className="text-ink">{vItem.ageing_days} Days</strong></span>
+                                                  {vItem.purchase_date && (
+                                                    <span>Billed: {formatDate(vItem.purchase_date)}</span>
+                                                  )}
+                                                </div>
+                                              </div>
+
+                                              <div className="pt-1.5 border-t border-line flex items-center justify-between">
+                                                <span className="text-[10px] text-ok font-semibold">Ready for Allotment</span>
+                                                <Link
+                                                  to="/vehicles"
+                                                  onClick={() => {
+                                                    setSelectedModalModel(null);
+                                                  }}
+                                                  className="text-[10px] text-accent hover:underline font-semibold flex items-center gap-0.5"
+                                                >
+                                                  <span>Open in Stock</span>
+                                                  <ArrowRight className="w-2.5 h-2.5" />
+                                                </Link>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+
+                                      </div>
+                                    </td>
+                                  </tr>
                                 )}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-bold text-ok tnum whitespace-nowrap">
-                                {row.freeStock}
-                              </td>
-                              <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                {row.vna > 0 ? (
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-danger/10 text-danger border border-danger/30">
-                                    Indent Needed ({row.vna})
-                                  </span>
-                                ) : row.pbna > 0 ? (
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-warn/10 text-warn border border-warn/30">
-                                    Ready to Allot ({row.pbna})
-                                  </span>
-                                ) : row.freeStock > 0 ? (
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/30">
-                                    Available Free ({row.freeStock})
-                                  </span>
-                                ) : (
-                                  <span className="text-ink-3 text-[11px]">All Settled</span>
-                                )}
-                              </td>
-                              <td className="py-2.5 px-3 whitespace-nowrap">
-                                {((row as any).freeVehiclesDetails || []).length > 0 ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setViewingVinList({
-                                      variant: row.variant,
-                                      colour: row.colour,
-                                      vehicles: (row as any).freeVehiclesDetails
-                                    })}
-                                    className="px-2.5 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer hover:bg-accent/5"
-                                    title="Click to view full live vehicle stock details & yard locations"
-                                  >
-                                    <Eye className="w-3.5 h-3.5 text-accent" />
-                                    <span>{((row as any).freeVehiclesDetails || []).length} Stock Units</span>
-                                  </button>
-                                ) : (
-                                  <span className="text-ink-3 font-mono text-xs">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
+                              </React.Fragment>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
