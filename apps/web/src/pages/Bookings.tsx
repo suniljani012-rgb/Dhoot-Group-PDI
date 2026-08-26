@@ -415,7 +415,7 @@ export const BookingsPage: React.FC = () => {
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Receipt / Booking</th>
@@ -877,7 +877,7 @@ export const BookingsPage: React.FC = () => {
 
                   <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
                     <table className="w-full text-left text-[10px]">
-                      <thead className="bg-slate-100 font-bold text-slate-700 sticky top-0">
+                      <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold sticky top-0">
                         <tr>
                           <th className="p-2">Receipt No</th>
                           <th className="p-2">Customer Name</th>

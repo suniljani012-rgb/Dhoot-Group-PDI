@@ -547,7 +547,7 @@ export const AdminMasterPanel: React.FC = () => {
           {/* Table */}
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">Rule ID</th>
                   <th className="py-2.5 px-3">Stage</th>
@@ -681,7 +681,7 @@ export const AdminMasterPanel: React.FC = () => {
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">Brand</th>
                   <th className="py-2.5 px-3">Model Name</th>
@@ -813,7 +813,7 @@ export const AdminMasterPanel: React.FC = () => {
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">Branch Code</th>
                   <th className="py-2.5 px-3">Facility Name</th>
@@ -911,7 +911,7 @@ export const AdminMasterPanel: React.FC = () => {
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">Institution Name</th>
                   <th className="py-2.5 px-3">Category</th>
@@ -1004,7 +1004,7 @@ export const AdminMasterPanel: React.FC = () => {
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">Insurance Company</th>
                   <th className="py-2.5 px-3">Claims Head / Desk Lead</th>

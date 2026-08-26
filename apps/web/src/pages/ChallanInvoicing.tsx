@@ -348,7 +348,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Challan / Invoice</th>
@@ -556,7 +556,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
 
                 {/* Pricing Table */}
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                  <thead className="bg-[#EEF2F8] text-[#1A3A6B] font-semibold border-b border-[#C9D6E8]">
                     <tr>
                       <th className="py-1.5 px-2">Description</th>
                       <th className="py-1.5 px-2 text-right">Amount (₹)</th>
@@ -813,7 +813,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
 
                   <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
                     <table className="w-full text-left text-[10px]">
-                      <thead className="bg-slate-100 font-bold text-slate-700 sticky top-0">
+                      <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold sticky top-0">
                         <tr>
                           <th className="p-2">Challan / Invoice</th>
                           <th className="p-2">Customer</th>

@@ -493,7 +493,7 @@ export const AdminUsersPage: React.FC = () => {
           {/* User Table */}
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">User ID</th>
                   <th className="py-2.5 px-3">Employee Name</th>
@@ -582,7 +582,7 @@ export const AdminUsersPage: React.FC = () => {
 
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[10px]">
                 <tr>
                   <th className="py-2.5 px-3">Role & Title</th>
                   <th className="py-2.5 px-2 text-center">Dashboard</th>
@@ -691,7 +691,7 @@ export const AdminUsersPage: React.FC = () => {
           {/* Designations Table */}
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
                   <th className="py-2.5 px-3">Designation Title</th>
                   <th className="py-2.5 px-3">Department Nature</th>
