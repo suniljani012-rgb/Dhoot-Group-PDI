@@ -213,31 +213,41 @@ export const PdiQueuePage: React.FC = () => {
                       <td className="py-2.5 px-3 text-ink">
                         {s.yardLocation}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <Badge tone={s.status === 'PDI_IN_PROGRESS' ? 'accent' : 'neutral'}>
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <Badge tone={s.status === 'PDI_IN_PROGRESS' ? 'accent' : 'warn'}>
                           {s.status === 'PDI_IN_PROGRESS' ? 'In Progress' : 'Pending Start'}
                         </Badge>
                       </td>
                       <td className="py-2.5 px-3">
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-[90px]">
                           <div className="flex justify-between text-[10px] tnum">
                             <span className="text-ink-3">{s.passed}/{s.total}</span>
                             <span className="font-medium text-ink">{s.progress}%</span>
                           </div>
-                          <Bar pct={s.progress} />
+                          <Bar pct={s.progress} tone={s.progress > 0 ? 'accent' : 'warn'} />
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-ink-3 tnum text-[11px]">
+                      <td className="py-2.5 px-3 text-ink-3 tnum text-[11px] whitespace-nowrap">
                         {s.elapsedTime}
                       </td>
                       <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                        <Link
-                          to={`/pdi/${s.id}`}
-                          className="h-7 px-3 rounded bg-accent text-white hover:bg-accent-600 text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer"
-                        >
-                          <span>{s.progress > 0 ? 'Resume' : 'Start PDI'}</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                        {s.progress > 0 ? (
+                          <Link
+                            to={`/pdi/${s.id}`}
+                            className="h-7 px-3 rounded bg-accent text-white hover:bg-accent-600 text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer"
+                          >
+                            <span>Resume</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                        ) : (
+                          <Link
+                            to={`/pdi/${s.id}`}
+                            className="h-7 px-3 rounded bg-ok text-white hover:bg-ok/90 text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer"
+                          >
+                            <span>Start PDI</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 /**
@@ -101,7 +101,7 @@ export const Badge: React.FC<{
   className?: string;
 }> = ({ tone = 'neutral', children, className = '' }) => (
   <span
-    className={`inline-flex items-center h-5 px-1.5 rounded-chip border text-xs font-medium tnum ${badgeTones[tone]} ${className}`}
+    className={`inline-flex items-center justify-center whitespace-nowrap h-5 px-2 rounded-chip border text-[11px] font-semibold tnum ${badgeTones[tone]} ${className}`}
   >
     {children}
   </span>
