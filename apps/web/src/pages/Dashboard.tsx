@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFleetCounts } from '../hooks/useFleetCounts';
-import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards } from '../data/seedData';
+import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards, syncWithSupabase } from '../data/seedData';
 import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
 import { 
   Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, Eye, 
@@ -69,9 +69,10 @@ export const DashboardPage: React.FC = () => {
     };
   }, [currentBrand?.code]);
 
-  const fetchDashboardData = () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
+      await syncWithSupabase();
       const stock = getVehiclesForBrand(currentBrand.code);
       const bookings = getBookingsForBrand(currentBrand.code);
       setFleetList(stock);

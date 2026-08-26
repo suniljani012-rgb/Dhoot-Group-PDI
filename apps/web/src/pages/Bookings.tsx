@@ -13,7 +13,7 @@ import { formatDate } from '../utils/dateUtils';
 import { 
   getBookingsForBrand, saveBookingsInventory, 
   getVehiclesForBrand, saveStockInventory,
-  getActiveBranches
+  getActiveBranches, syncWithSupabase
 } from '../data/seedData';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
@@ -112,9 +112,10 @@ export const BookingsPage: React.FC = () => {
     };
   }, [currentBrand?.code]);
 
-  const fetchBookingsAndStock = () => {
+  const fetchBookingsAndStock = async () => {
     setLoading(true);
     try {
+      await syncWithSupabase();
       const bList = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
       setBookings(bList);
       const sList = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');

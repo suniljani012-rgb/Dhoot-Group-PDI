@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
 import { getApiUrl } from '../utils/apiConfig';
-import { getVehiclesForBrand, clearStockInventory, getActiveStockyards } from '../data/seedData';
+import { getVehiclesForBrand, clearStockInventory, getActiveStockyards, syncWithSupabase } from '../data/seedData';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface StockVehicle {
@@ -113,6 +113,7 @@ export const VehiclesPage: React.FC = () => {
   const fetchStock = async () => {
     setLoading(true);
     try {
+      await syncWithSupabase();
       const localStock = getVehiclesForBrand(currentBrand.code);
       setVehicles(localStock as StockVehicle[]);
     } catch (e) {

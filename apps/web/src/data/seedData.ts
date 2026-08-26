@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 export const TATA_ORG_ID = '11111111-1111-1111-1111-111111111111';
 export const HYUNDAI_ORG_ID = '11111111-1111-1111-1111-111111111112';
 
@@ -219,3 +220,53 @@ export const clearChallansInventory = () => {
   localStorage.removeItem('dhoot_challans_inventory');
   window.dispatchEvent(new Event('challans-updated'));
 };
+
+
+export const syncWithSupabase = async () => {
+  try {
+    // 1. Fetch Bookings from Supabase
+    const { data: dbBookings, error: bErr } = await supabase.from('bookings').select('*');
+    if (!bErr && dbBookings && Array.isArray(dbBookings) && dbBookings.length > 0) {
+      const local = getBookingsForBrand('DHOOT-ALL');
+      const mergedMap = new Map();
+      local.forEach((b: any) => mergedMap.set(b.id || b.receipt_no, b));
+      dbBookings.forEach((b: any) => mergedMap.set(b.id || b.receipt_no, b));
+      const merged = Array.from(mergedMap.values());
+      localStorage.setItem('dhoot_bookings_inventory', JSON.stringify(merged));
+      window.dispatchEvent(new Event('bookings-updated'));
+    }
+
+    // 2. Fetch Vehicles from Supabase
+    const { data: dbVehicles, error: vErr } = await supabase.from('vehicles').select('*');
+    if (!vErr && dbVehicles && Array.isArray(dbVehicles) && dbVehicles.length > 0) {
+      const local = getVehiclesForBrand('DHOOT-ALL');
+      const mergedMap = new Map();
+      local.forEach((v: any) => mergedMap.set(v.id || v.vin, v));
+      dbVehicles.forEach((v: any) => mergedMap.set(v.id || v.vin, v));
+      const merged = Array.from(mergedMap.values());
+      localStorage.setItem('dhoot_stock_inventory', JSON.stringify(merged));
+      window.dispatchEvent(new Event('stock-updated'));
+    }
+
+    // 3. Fetch Stockyards from Supabase
+    const { data: dbYards, error: yErr } = await supabase.from('stockyards').select('*');
+    if (!yErr && dbYards && Array.isArray(dbYards) && dbYards.length > 0) {
+      localStorage.setItem('autoprime_stockyards', JSON.stringify(dbYards));
+      window.dispatchEvent(new Event('stockyards-updated'));
+    }
+
+    // 4. Fetch Branches from Supabase
+    const { data: dbBranches, error: brErr } = await supabase.from('branches').select('*');
+    if (!brErr && dbBranches && Array.isArray(dbBranches) && dbBranches.length > 0) {
+      localStorage.setItem('autoprime_branches', JSON.stringify(dbBranches));
+      window.dispatchEvent(new Event('branches-updated'));
+    }
+  } catch (e) {
+    console.warn('Sync with Supabase error:', e);
+  }
+};
+
+// Trigger background sync on module load
+if (typeof window !== 'undefined') {
+  syncWithSupabase();
+}
