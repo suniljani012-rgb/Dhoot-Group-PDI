@@ -1,5 +1,3 @@
-import { formatDate } from '../utils/dateUtils';
-import * as XLSX from 'xlsx';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -7,33 +5,36 @@ import {
   FileSpreadsheet, X, Loader2, CheckCircle2, UserCheck,
   Calendar, Phone, DollarSign, Tag, Printer, ArrowRight,
   FolderOpen, Clock, AlertCircle, Check, Factory, FileText,
-  Building2, MapPin, Mail, Copy
+  Building2, MapPin, Mail, Copy, CheckCheck, RefreshCw, Hash
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getApiUrl } from '../utils/apiConfig';
-import { getBookingsForBrand, getVehiclesForBrand } from '../data/seedData';
+import * as XLSX from 'xlsx';
+import { formatDate } from '../utils/dateUtils';
+import { 
+  getBookingsForBrand, saveBookingsInventory, 
+  getVehiclesForBrand, saveStockInventory,
+  getActiveBranches
+} from '../data/seedData';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface BookingRecord {
   id: string;
-  receipt_date?: string;
+  receipt_date: string;
   receipt_no: string;
   customer_name: string;
   mobile_number: string;
-  sales_consultant?: string;
-  team_leader?: string;
+  sales_consultant: string;
+  team_leader: string;
   model: string;
   variant: string;
   colour: string;
-  booking_date?: string;
-  promise_delivery_date?: string;
-  allocation_date?: string;
   allocated_vin_no?: string;
-  receipt_amt?: number;
-  docket_no?: string;
-  pan_no?: string;
-  status: string;
-  created_at: string;
+  delivery_date?: string;
+  hypothecation?: string;
+  receipt_amt: number;
+  status: 'ALLOCATED' | 'PENDING_ALLOCATION';
+  organization_id?: string;
+  created_at?: string;
 }
 
 export const BookingsPage: React.FC = () => {
@@ -42,7 +43,7 @@ export const BookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING_ALLOCATION' | 'ALLOCATED' | 'PLANT_ORDER_REQUIRED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING_ALLOCATION' | 'ALLOCATED'>('ALL');
   
   // Real Database Stock For Live VIN Allocation Dropdown
   const [stockVehicles, setStockVehicles] = useState<any[]>([]);
@@ -52,207 +53,228 @@ export const BookingsPage: React.FC = () => {
   const [allocatingBooking, setAllocatingBooking] = useState<BookingRecord | null>(null);
   const [selectedStockVin, setSelectedStockVin] = useState('');
   const [voucherBooking, setVoucherBooking] = useState<BookingRecord | null>(null);
-  const [plantIndentBooking, setPlantIndentBooking] = useState<BookingRecord | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Bulk Excel Import State
-  const [csvText, setCsvText] = useState('');
-  const [rawCsvPaste, setRawCsvPaste] = useState('');
-  const [parsedRows, setParsedRows] = useState<any[]>([]);
+  const [parsedRows, setParsedRows] = useState<BookingRecord[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [importSummary, setImportSummary] = useState<{ total: number; newCount: number; duplicateCount: number } | null>(null);
 
-  // New Booking Form
-  const [formData, setFormData] = useState({
-    customer_name: '',
-    mobile_number: '',
-    sales_consultant: '',
-    team_leader: '',
-    model: currentBrand.models[0] || 'Tata Nexon',
-    variant: '',
-    colour: '',
-    receipt_amt: 25000,
-    pan_no: '',
-    promise_delivery_date: '',
-  });
-
+  // New Booking Form State
   const [newBooking, setNewBooking] = useState({
+    receipt_date: new Date().toISOString().split('T')[0],
     receipt_no: `BK-${Date.now().toString().slice(-6)}`,
     customer_name: '',
     mobile_number: '',
-    sales_consultant: 'Sunil Sharma (SC-01)',
-    team_leader: 'Rajesh Nair (TL)',
+    sales_consultant: 'Sunil Sharma',
+    team_leader: 'Rajesh Nair',
     model: currentBrand.models[0] || 'Tata Nexon',
     variant: 'Fearless Plus',
     colour: 'Daytona Grey',
-    booking_date: new Date().toISOString().split('T')[0],
-    promise_delivery_date: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+    allocated_vin_no: '',
+    delivery_date: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0],
+    hypothecation: 'Self Funded',
     receipt_amt: 25000,
-    docket_no: 'DOC-8891',
-    pan_no: 'ABCDE1234F',
   });
 
   useEffect(() => {
     fetchBookingsAndStock();
-  }, [currentBrand.code]);
 
-  const fetchBookingsAndStock = async () => {
+    const handleUpdate = () => {
+      fetchBookingsAndStock();
+    };
+
+    window.addEventListener('bookings-updated', handleUpdate);
+    window.addEventListener('stock-updated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('bookings-updated', handleUpdate);
+      window.removeEventListener('stock-updated', handleUpdate);
+    };
+  }, [currentBrand?.code]);
+
+  const fetchBookingsAndStock = () => {
     setLoading(true);
     try {
-      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
-      
-      // Fetch bookings
-      const bRes = await fetch(getApiUrl(`/api/v1/bookings${orgParam}`));
-      if (bRes.ok) {
-        const json = await bRes.json();
-        if (json.data && json.data.length > 0) {
-          setBookings(json.data);
-        } else {
-          setBookings(getBookingsForBrand(currentBrand.code) as any);
-        }
-      } else {
-        setBookings(getBookingsForBrand(currentBrand.code) as any);
-      }
-
-      // Fetch stock for allocation
-      const sRes = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
-      if (sRes.ok) {
-        const json = await sRes.json();
-        if (json.data && json.data.length > 0) {
-          setStockVehicles(json.data);
-        } else {
-          setStockVehicles(getVehiclesForBrand(currentBrand.code) as any);
-        }
-      } else {
-        setStockVehicles(getVehiclesForBrand(currentBrand.code) as any);
-      }
+      const bList = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
+      setBookings(bList);
+      const sList = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');
+      setStockVehicles(sList);
     } catch (e) {
-      console.warn('Live API unreachable, using brand datasets:', e);
-      setBookings(getBookingsForBrand(currentBrand.code) as any);
-      setStockVehicles(getVehiclesForBrand(currentBrand.code) as any);
+      console.warn('Error fetching bookings:', e);
+      setBookings([]);
+      setStockVehicles([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateBooking = async (e: React.FormEvent) => {
+  const handleCreateBooking = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const res = await fetch(getApiUrl('/api/v1/bookings'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newBooking,
-          organization_id: currentBrand.orgId || '11111111-1111-1111-1111-111111111111',
-          branch_id: '22222222-2222-2222-2222-222222222221',
-          status: 'BOOKED'
-        })
-      });
+    const newRecord: BookingRecord = {
+      id: `bk-${Date.now()}`,
+      receipt_date: formatDate(newBooking.receipt_date),
+      receipt_no: newBooking.receipt_no,
+      customer_name: newBooking.customer_name,
+      mobile_number: newBooking.mobile_number,
+      sales_consultant: newBooking.sales_consultant,
+      team_leader: newBooking.team_leader,
+      model: newBooking.model,
+      variant: newBooking.variant,
+      colour: newBooking.colour,
+      allocated_vin_no: newBooking.allocated_vin_no || undefined,
+      delivery_date: newBooking.delivery_date ? formatDate(newBooking.delivery_date) : undefined,
+      hypothecation: newBooking.hypothecation || 'Self Funded',
+      receipt_amt: Number(newBooking.receipt_amt) || 25000,
+      status: newBooking.allocated_vin_no ? 'ALLOCATED' : 'PENDING_ALLOCATION',
+      organization_id: currentBrand.orgId,
+      created_at: new Date().toISOString()
+    };
 
-      if (res.ok) {
-        setShowNewModal(false);
-        fetchBookingsAndStock();
-      } else {
-        // Optimistic UI insert
-        const optim: BookingRecord = {
-          id: `bk-${Date.now()}`,
-          ...newBooking,
-          status: 'BOOKED',
-          created_at: new Date().toISOString()
-        };
-        setBookings([optim, ...bookings]);
-        setShowNewModal(false);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    const updated = [newRecord, ...bookings];
+    setBookings(updated);
+    saveBookingsInventory(updated);
+
+    setShowNewModal(false);
+    setNewBooking({
+      receipt_date: new Date().toISOString().split('T')[0],
+      receipt_no: `BK-${Date.now().toString().slice(-6)}`,
+      customer_name: '',
+      mobile_number: '',
+      sales_consultant: 'Sunil Sharma',
+      team_leader: 'Rajesh Nair',
+      model: currentBrand.models[0] || 'Tata Nexon',
+      variant: 'Fearless Plus',
+      colour: 'Daytona Grey',
+      allocated_vin_no: '',
+      delivery_date: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0],
+      hypothecation: 'Self Funded',
+      receipt_amt: 25000,
+    });
   };
 
-  // 1-Click Allocate Vehicle VIN to Booking
-  const handleConfirmAllocation = async () => {
+  // Perform VIN Allocation
+  const handleConfirmVinAllocation = () => {
     if (!allocatingBooking || !selectedStockVin) return;
 
-    // Update booking in local state and API
-    setBookings(prev => prev.map(b => {
-      if (b.id === allocatingBooking.id) {
+    // 1. Update Booking Record
+    const updatedBookings = bookings.map(b => {
+      if (b.id === allocatingBooking.id || b.receipt_no === allocatingBooking.receipt_no) {
         return {
           ...b,
           allocated_vin_no: selectedStockVin,
-          allocation_date: new Date().toISOString().split('T')[0],
-          status: 'ALLOCATED'
+          status: 'ALLOCATED' as const
         };
       }
       return b;
-    }));
+    });
+
+    setBookings(updatedBookings);
+    saveBookingsInventory(updatedBookings);
+
+    // 2. Update Vehicle Record in Stock
+    const updatedVehicles = stockVehicles.map(v => {
+      if (v.vin === selectedStockVin) {
+        return {
+          ...v,
+          customer_name: allocatingBooking.customer_name,
+          sales_consultant: allocatingBooking.sales_consultant,
+          status: 'ALLOCATED',
+          vehicle_status: 'ALLOCATED',
+          allocation_date: new Date().toISOString().split('T')[0],
+          allocated_days: 1
+        };
+      }
+      return v;
+    });
+    setStockVehicles(updatedVehicles);
+    saveStockInventory(updatedVehicles);
 
     setAllocatingBooking(null);
     setSelectedStockVin('');
   };
 
-  // Download Sample Customer Bookings Excel Template
-  const handleDownloadSampleBookings = () => {
-    const headers = [
-      'Receipt Date', 'Receipt No', 'Customer Name', 'Mobile Number', 
-      'Sales Consultant', 'Team Leader', 'Model', 'Variant', 'Colour', 
-      'Booking Date', 'Promise Delivery Date', 'Receipt Amt', 'Docket No', 'PAN No'
-    ];
+  // =========================================================================
+  // BULK EXCEL PARSER (13 EXACT COLUMNS)
+  // =========================================================================
+  const BOOKING_HEADERS = [
+    'Receipt Date',
+    'Receipt No',
+    'Customer Name',
+    'Mobile No',
+    'Sales Consultant',
+    'Team Leader',
+    'Model',
+    'Variant',
+    'Colour',
+    'Allocated Vin No',
+    'Delivery Date',
+    'Hypothecation',
+    'Received Amount'
+  ];
+
+  const handleDownloadTemplate = () => {
     const sampleRows = [
-      headers.join(','),
-      '2026-08-25,BK-009981,Sunil Jani,+91 98290 12345,Ramesh Choudhary,Rajesh Nair,Tata Safari,Accomplished Plus 6S,Oberon Black,2026-08-25,2026-09-05,50000,DOC-9912,ABCDE1234F',
-      '2026-08-25,BK-009982,Pooja Agarwal,+91 98291 54321,Manish Rathore,Suresh Sharma,Hyundai Creta,SX (O) Turbo DCT,Ranger Khaki,2026-08-25,2026-09-08,50000,DOC-9913,PQRS5678G'
+      BOOKING_HEADERS.join(','),
+      '25-Aug-2026,BK-009981,Ramesh Chandra Sharma,+91 98290 12345,Sunil Sharma,Rajesh Nair,Tata Safari,Accomplished Plus 6S,Oberon Black,,05-Sep-2026,HDFC Bank Ltd,50000',
+      '25-Aug-2026,BK-009982,Priya Kulkarni,+91 98291 54321,Manish Rathore,Suresh Sharma,Hyundai Creta,SX (O) Turbo DCT,Ranger Khaki,,08-Sep-2026,State Bank of India,50000'
     ].join('\n');
 
     const blob = new Blob([sampleRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Dhoot_Group_Customer_Bookings_Template.csv`);
+    link.setAttribute('download', 'Dhoot_Group_Customer_Bookings_Template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Process 2D Array of Booking rows from SheetJS or Text Split
   const processBookingGrid = (grid: any[][]) => {
     if (!grid || grid.length <= 1) {
       setParsedRows([]);
       return;
     }
 
+    // Auto-detect header row
     let headerRowIdx = 0;
-    for (let r = 0; r < Math.min(5, grid.length); r++) {
+    for (let r = 0; r < Math.min(6, grid.length); r++) {
       const rowStr = grid[r].map(c => String(c || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join(' ');
-      if (rowStr.includes('receipt') || rowStr.includes('customer') || rowStr.includes('booking')) {
+      if (rowStr.includes('receipt') || rowStr.includes('customer') || rowStr.includes('model')) {
         headerRowIdx = r;
         break;
       }
     }
 
     const rawHeaders = grid[headerRowIdx].map(h => String(h || '').trim());
-    const findColIndex = (names: string[]): number => {
+    const findCol = (names: string[]): number => {
       return rawHeaders.findIndex(h => {
         const clean = String(h || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        return names.some(n => clean === cleanHeader(n));
+        return names.some(n => clean === n.toLowerCase().replace(/[^a-z0-9]/g, ''));
       });
     };
 
-    const cleanHeader = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const idxReceiptDate = findCol(['Receipt Date', 'ReceiptDate', 'Date', 'Booking Date']);
+    const idxReceiptNo = findCol(['Receipt No', 'ReceiptNo', 'Receipt Number', 'Voucher No', 'Booking No']);
+    const idxCustomerName = findCol(['Customer Name', 'CustomerName', 'Customer', 'Buyer Name', 'Party Name']);
+    const idxMobile = findCol(['Mobile No', 'Mobile Number', 'Mobile', 'Phone', 'Contact']);
+    const idxSalesConsultant = findCol(['Sales Consultant', 'SalesConsultant', 'SC', 'DSE', 'Advisor', 'Sales Executive']);
+    const idxTeamLeader = findCol(['Team Leader', 'TeamLeader', 'TL', 'Manager']);
+    const idxModel = findCol(['Model', 'Vehicle Model', 'Car Model']);
+    const idxVariant = findCol(['Variant', 'Trim', 'Model Variant', 'Description']);
+    const idxColour = findCol(['Colour', 'Color', 'Paint', 'Exterior Color']);
+    const idxAllocatedVin = findCol(['Allocated Vin No', 'Allocated Vin', 'Vin No', 'Chassis No', 'VIN']);
+    const idxDeliveryDate = findCol(['Delivery Date', 'Promise Delivery Date', 'Promise Date', 'Promised Date']);
+    const idxHypothecation = findCol(['Hypothecation', 'Financier', 'Bank', 'Finance Name', 'Loan Bank']);
+    const idxReceivedAmount = findCol(['Received Amount', 'Receipt Amt', 'Receipt Amount', 'Booking Amount', 'Advance Amount', 'Amount']);
 
-    const idxReceiptDate = findColIndex(['Receipt Date', 'ReceiptDate', 'Date', 'Booking Date']);
-    const idxReceiptNo = findColIndex(['Receipt No', 'ReceiptNo', 'Receipt Number', 'Voucher No', 'Booking No']);
-    const idxCustomerName = findColIndex(['Customer Name', 'CustomerName', 'Customer', 'Buyer', 'Party Name']);
-    const idxMobile = findColIndex(['Mobile Number', 'MobileNumber', 'Mobile', 'Phone', 'Contact']);
-    const idxSalesConsultant = findColIndex(['Sales Consultant', 'SalesConsultant', 'SC', 'DSE', 'Advisor', 'Sales Executive']);
-    const idxTeamLeader = findColIndex(['Team Leader', 'TeamLeader', 'TL', 'Manager']);
-    const idxModel = findColIndex(['Model', 'Vehicle Model', 'Car Model']);
-    const idxVariant = findColIndex(['Variant', 'Trim', 'Model Variant', 'Description']);
-    const idxColour = findColIndex(['Colour', 'Color', 'Exterior Color', 'Paint']);
-    const idxPromiseDate = findColIndex(['Promise Delivery Date', 'PromiseDeliveryDate', 'Delivery Date', 'Promised Date']);
-    const idxReceiptAmt = findColIndex(['Receipt Amt', 'Receipt Amount', 'Advance Amount', 'Booking Amount', 'Amount']);
-    const idxDocketNo = findColIndex(['Docket No', 'DocketNo', 'Docket']);
-    const idxPanNo = findColIndex(['PAN No', 'PANNo', 'PAN']);
+    const existingReceipts = new Set(bookings.map(b => (b.receipt_no || '').toUpperCase().trim()));
+    const seenInSheet = new Set<string>();
 
-    const rows: any[] = [];
+    const rows: BookingRecord[] = [];
+    let duplicateCount = 0;
+
     for (let i = headerRowIdx + 1; i < grid.length; i++) {
       const cols = grid[i];
       if (!cols || cols.length === 0 || cols.every(c => c === undefined || c === null || String(c).trim() === '')) {
@@ -265,15 +287,24 @@ export const BookingsPage: React.FC = () => {
         return '';
       };
 
-      const custName = getVal(idxCustomerName, 2) || ('Customer ' + i);
-      const receiptNo = getVal(idxReceiptNo, 1) || ('BK-' + (10000 + i));
+      const receiptNo = getVal(idxReceiptNo, 1) || `BK-${10000 + i}`;
+      const cleanReceiptNo = receiptNo.toUpperCase().trim();
+
+      if (existingReceipts.has(cleanReceiptNo) || seenInSheet.has(cleanReceiptNo)) {
+        duplicateCount++;
+        continue;
+      }
+      seenInSheet.add(cleanReceiptNo);
+
+      const custName = getVal(idxCustomerName, 2) || `Customer ${i}`;
       const modelVal = getVal(idxModel, 6) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari');
       const rawReceiptDate = getVal(idxReceiptDate, 0);
-      const rawPromiseDate = getVal(idxPromiseDate, 10);
-      const receiptAmtRaw = getVal(idxReceiptAmt, 11);
+      const rawDeliveryDate = getVal(idxDeliveryDate, 10);
+      const allocatedVin = getVal(idxAllocatedVin, 9);
+      const rawReceivedAmt = getVal(idxReceivedAmount, 12);
 
       rows.push({
-        _id: 'row-' + i,
+        id: `bk-${Date.now()}-${i}`,
         receipt_date: rawReceiptDate ? formatDate(rawReceiptDate) : formatDate(new Date()),
         receipt_no: receiptNo,
         customer_name: custName,
@@ -283,48 +314,31 @@ export const BookingsPage: React.FC = () => {
         model: modelVal,
         variant: getVal(idxVariant, 7) || 'Standard',
         colour: getVal(idxColour, 8) || 'White',
-        booking_date: rawReceiptDate ? formatDate(rawReceiptDate) : formatDate(new Date()),
-        promise_delivery_date: rawPromiseDate ? formatDate(rawPromiseDate) : formatDate(new Date(Date.now() + 10 * 86400000)),
-        receipt_amt: Number(String(receiptAmtRaw || '25000').replace(/[^0-9]/g, '')) || 25000,
-        docket_no: getVal(idxDocketNo, 12) || '',
-        pan_no: getVal(idxPanNo, 13) || '',
-        organization_id: currentBrand.orgId
+        allocated_vin_no: allocatedVin || undefined,
+        delivery_date: rawDeliveryDate ? formatDate(rawDeliveryDate) : undefined,
+        hypothecation: getVal(idxHypothecation, 11) || 'Self Funded',
+        receipt_amt: Number(String(rawReceivedAmt || '25000').replace(/[^0-9]/g, '')) || 25000,
+        status: allocatedVin ? 'ALLOCATED' : 'PENDING_ALLOCATION',
+        organization_id: currentBrand.orgId,
+        created_at: new Date().toISOString()
       });
     }
 
     setParsedRows(rows);
+    setImportSummary({
+      total: grid.length - (headerRowIdx + 1),
+      newCount: rows.length,
+      duplicateCount
+    });
   };
 
-  // Parse Excel / CSV Text
-  const handleParseBookingsText = (text: string) => {
-    setCsvText(text);
-    setImportError(null);
-
-    if (!text || text.trim().length === 0) {
-      setParsedRows([]);
-      return;
-    }
-
-    try {
-      const workbook = XLSX.read(text, { type: 'string', raw: true });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const grid: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
-      processBookingGrid(grid);
-    } catch {
-      const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
-      const separator = lines[0].includes('\t') ? '\t' : ',';
-      const grid = lines.map(l => l.split(separator).map(c => c.trim().replace(/^"|"$/g, '')));
-      processBookingGrid(grid);
-    }
-  };
-
-  // File Upload Handler for .xlsx, .xls, .csv, .tsv
   const handleBookingFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setImportError(null);
+    setImportSummary(null);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -336,32 +350,24 @@ export const BookingsPage: React.FC = () => {
         processBookingGrid(grid);
       } catch (err: any) {
         console.error('File parse error:', err);
-        setImportError('Could not parse Excel/CSV file.');
+        setImportError('Could not parse Excel/CSV file. Ensure file format is valid.');
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
-    // Confirm Bulk Import
-  const handleConfirmBulkImport = async () => {
+  const handleConfirmBulkImport = () => {
     if (parsedRows.length === 0) return;
     setIsImporting(true);
-    try {
-      const res = await fetch(getApiUrl('/api/v1/bookings/bulk-import'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId: currentBrand.orgId,
-          bookings: parsedRows
-        })
-      });
 
-      if (res.ok) {
-        setIsImportModalOpen(false);
-        setCsvText('');
-        setParsedRows([]);
-        fetchBookingsAndStock();
-      }
+    try {
+      const updated = [...parsedRows, ...bookings];
+      setBookings(updated);
+      saveBookingsInventory(updated);
+
+      setIsImportModalOpen(false);
+      setParsedRows([]);
+      setImportSummary(null);
     } catch (e: any) {
       setImportError(e.message || 'Import failed.');
     } finally {
@@ -369,142 +375,152 @@ export const BookingsPage: React.FC = () => {
     }
   };
 
-  // Dynamic Stock & Booking Lookup Analytics
-  const totalBookingsCount = bookings.length;
-  const allocatedBookingsCount = bookings.filter(b => !!b.allocated_vin_no || b.status === 'ALLOCATED' || b.status === 'DELIVERED').length;
-  const pendingAllocBookingsCount = bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED').length;
-  const totalAdvanceReceived = bookings.reduce((acc, b) => acc + (Number(b.receipt_amt) || 25000), 0);
+  // Export CSV
+  const handleExportBookingsCSV = () => {
+    if (bookings.length === 0) return;
 
-  // Model-wise Lookup: Check unallocated stock available vs pending demand
-  const unallocatedStockByModel: Record<string, number> = {};
-  stockVehicles.forEach(v => {
-    if (v.status !== 'ALLOCATED' && v.status !== 'DELIVERED') {
-      const m = (v.model || '').trim().toLowerCase();
-      unallocatedStockByModel[m] = (unallocatedStockByModel[m] || 0) + 1;
-    }
-  });
+    const rows = [
+      BOOKING_HEADERS.join(','),
+      ...bookings.map(b => [
+        `"${b.receipt_date}"`,
+        `"${b.receipt_no}"`,
+        `"${b.customer_name}"`,
+        `"${b.mobile_number}"`,
+        `"${b.sales_consultant}"`,
+        `"${b.team_leader}"`,
+        `"${b.model}"`,
+        `"${b.variant}"`,
+        `"${b.colour}"`,
+        `"${b.allocated_vin_no || ''}"`,
+        `"${b.delivery_date || ''}"`,
+        `"${b.hypothecation || ''}"`,
+        b.receipt_amt || 0
+      ].join(','))
+    ].join('\n');
 
-  // Track which bookings need factory reorder
-  const tempStockLookup = { ...unallocatedStockByModel };
-  const bookingsWithDeficit = new Set<string>();
+    const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Dhoot_Bookings_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-  bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED').forEach(b => {
-    const m = (b.model || '').trim().toLowerCase();
-    if ((tempStockLookup[m] || 0) <= 0) {
-      bookingsWithDeficit.add(b.id);
-    } else {
-      tempStockLookup[m]--;
-    }
-  });
-
-  const plantIndentRequiredCount = bookingsWithDeficit.size;
-
+  // Filter Bookings
+  const cleanSearch = search.trim().toLowerCase();
   const filteredBookings = bookings.filter(b => {
-    const cust = (b.customer_name || '').toLowerCase();
-    const receipt = (b.receipt_no || '').toLowerCase();
-    const phone = (b.mobile_number || '').toLowerCase();
-    const model = (b.model || '').toLowerCase();
-    const vin = (b.allocated_vin_no || '').toLowerCase();
-    const q = search.toLowerCase();
+    const matchesSearch = 
+      !cleanSearch ||
+      (b.customer_name || '').toLowerCase().includes(cleanSearch) ||
+      (b.receipt_no || '').toLowerCase().includes(cleanSearch) ||
+      (b.mobile_number || '').toLowerCase().includes(cleanSearch) ||
+      (b.model || '').toLowerCase().includes(cleanSearch) ||
+      (b.sales_consultant || '').toLowerCase().includes(cleanSearch) ||
+      (b.allocated_vin_no || '').toLowerCase().includes(cleanSearch);
 
-    const matchesSearch = cust.includes(q) || receipt.includes(q) || phone.includes(q) || model.includes(q) || vin.includes(q);
+    const matchesStatus = 
+      statusFilter === 'ALL' || 
+      (statusFilter === 'ALLOCATED' && !!b.allocated_vin_no) ||
+      (statusFilter === 'PENDING_ALLOCATION' && !b.allocated_vin_no);
 
-    if (statusFilter === 'ALLOCATED') return matchesSearch && (b.status === 'ALLOCATED' || !!b.allocated_vin_no);
-    if (statusFilter === 'PENDING_ALLOCATION') return matchesSearch && !b.allocated_vin_no && !bookingsWithDeficit.has(b.id);
-    if (statusFilter === 'PLANT_ORDER_REQUIRED') return matchesSearch && !b.allocated_vin_no && bookingsWithDeficit.has(b.id);
-    return matchesSearch;
+    return matchesSearch && matchesStatus;
   });
+
+  const allocatedCount = bookings.filter(b => !!b.allocated_vin_no).length;
+  const pendingAllocationCount = bookings.filter(b => !b.allocated_vin_no).length;
+  const totalAmountReceived = bookings.reduce((sum, b) => sum + (Number(b.receipt_amt) || 0), 0);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
+    <div className="space-y-4 max-w-[1600px] mx-auto select-none pb-20">
       
-      {/* Top Header */}
+      {/* Top Banner */}
       <PageHeader
-        title="Customer Bookings & Allocation"
-        subtitle="Manage customer orders, check stockyard availability, and allocate VIN chassis"
+        title="Customer Bookings Management"
+        subtitle="13-Column Customer Booking Ledger • VIN Allocation & Realtime Advance Receipts"
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {bookings.length > 0 && (
+              <button
+                type="button"
+                onClick={handleExportBookingsCSV}
+                className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-ink-3" />
+                <span>Export CSV</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 px-3.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
-              <span>Import Excel Bookings</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 text-accent" />
+              <span>Bulk Import Bookings</span>
             </button>
 
             <button
               onClick={() => setShowNewModal(true)}
-              className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 px-3.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-white/80" />
+              <Plus className="w-3.5 h-3.5" />
               <span>New Booking</span>
             </button>
           </div>
         }
       />
 
-      {/* Smart Stock vs Bookings Lookup Analytics KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <Stat 
-          label="Total Bookings" 
-          value={totalBookingsCount} 
-          note={`₹${(totalAdvanceReceived / 100000).toFixed(2)}L Advance`} 
-        />
-        <Stat 
-          label="VIN Allocated" 
-          value={allocatedBookingsCount} 
-          note="Chassis Locked" 
-        />
-        <Stat 
-          label="Pending Allocation" 
-          value={pendingAllocBookingsCount} 
-          note="Awaiting Stock" 
-          tone="warn" 
-        />
-        <Stat 
-          label="Available Free Stock" 
-          value={stockVehicles.filter(v => v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length} 
-          note="Unassigned in Yard" 
-        />
-        <Stat 
-          label="Plant Indent Needed" 
-          value={plantIndentRequiredCount} 
-          note="Factory Reorder Needed" 
-          tone={plantIndentRequiredCount > 0 ? 'danger' : 'default'} 
-        />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Stat label="Total Bookings" value={bookings.length} note="Customer Ledger" />
+        <Stat label="VIN Allocated" value={allocatedCount} note="Ready for Invoicing" tone="ok" />
+        <Stat label="Pending Allocation" value={pendingAllocationCount} note="Waiting for Stock" tone={pendingAllocationCount > 0 ? "warn" : "default"} />
+        <Stat label="Total Advance Collected" value={`₹${(totalAmountReceived / 100000).toFixed(2)} L`} note="Receipts Total" tone="accent" />
       </div>
 
-      {/* Bookings Table Panel */}
-      <Panel
-        title="Customer Bookings Ledger"
-        action={
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
-              {(['ALL', 'PENDING_ALLOCATION', 'ALLOCATED', 'PLANT_ORDER_REQUIRED'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setStatusFilter(tab)}
-                  className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-                    statusFilter === tab
-                      ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
-                      : 'text-ink-3 hover:text-ink-2'
-                  }`}
-                >
-                  {tab === 'ALL' ? 'All Bookings' : tab === 'PLANT_ORDER_REQUIRED' ? 'Indent Needed' : tab.replace('_', ' ')}
-                </button>
-              ))}
-            </div>
+      {/* Filter & Search Bar */}
+      <div className="p-3 bg-canvas border border-line rounded flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search Customer Name, Receipt No (e.g. BK-009), Mobile, Model, or Allocated VIN..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-8 pl-9 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+            />
+          </div>
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="h-8 px-2.5 bg-surface border border-line hover:bg-canvas text-xs font-medium text-ink-3 rounded transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
-            <div className="relative w-48 sm:w-64">
-              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search customer, receipt, VIN..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
-              />
-            </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="h-8 text-xs bg-surface border border-line rounded px-2.5 text-ink focus:outline-none focus:border-accent font-medium shadow-xs"
+          >
+            <option value="ALL">All Bookings ({bookings.length})</option>
+            <option value="PENDING_ALLOCATION">Pending Allocation ({pendingAllocationCount})</option>
+            <option value="ALLOCATED">VIN Allocated ({allocatedCount})</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Bookings Ledger Table (13 Columns) */}
+      <Panel
+        title={
+          <div className="flex items-center gap-2">
+            <span>Customer Bookings Register</span>
+            <Badge tone="accent">{filteredBookings.length} Bookings</Badge>
           </div>
         }
       >
@@ -512,129 +528,126 @@ export const BookingsPage: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
               <tr>
-                <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">Receipt / Booking</th>
-                <th className="py-2.5 px-3">Customer & Contact</th>
-                <th className="py-2.5 px-3">Booked Model & Variant</th>
-                <th className="py-2.5 px-3">Colour</th>
-                <th className="py-2.5 px-3 text-right">Advance</th>
-                <th className="py-2.5 px-3">Promised Date</th>
-                <th className="py-2.5 px-3">Allocated Chassis</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-center">Actions</th>
+                <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Receipt Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Receipt No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Customer Name</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Mobile No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Sales Consultant</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Team Leader</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Model</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Variant</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Colour</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Allocated Vin No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Delivery Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Hypothecation</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Received Amount</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line text-ink-2 text-xs">
-              {filteredBookings.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400">
-                    <div className="space-y-1">
-                      <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
-                      <div className="font-bold text-slate-600">0 Customer Bookings in Database</div>
-                      <p className="text-[11px]">Register a new retail customer booking voucher to manage inventory allocation.</p>
-                      <button
-                        onClick={() => setShowNewModal(true)}
-                        className="inline-flex items-center gap-1 text-indigo-700 font-bold underline mt-2 text-xs cursor-pointer"
-                      >
-                        <span>Create First Customer Booking</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                  <td colSpan={15} className="py-12 text-center text-ink-3">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-accent" />
+                    Loading customer bookings...
+                  </td>
+                </tr>
+              ) : filteredBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={15}>
+                    <div className="py-12 text-center space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                        <Bookmark className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-ink">0 Bookings in System</p>
+                        <p className="text-xs text-ink-3 mt-1">
+                          {search ? 'No bookings matched your search query.' : 'Click Bulk Import Bookings to upload daily bookings spreadsheet.'}
+                        </p>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredBookings.map((b, idx) => {
-                  const isHyundai = b.model.toLowerCase().includes('hyundai');
                   return (
-                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                    <tr key={b.id || idx} className="hover:bg-canvas transition-colors">
+                      <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">
                         {idx + 1}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
+                        {formatDate(b.receipt_date || b.created_at)}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">
                         {b.receipt_no}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <div className="font-bold text-slate-900">{b.customer_name}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{b.mobile_number}</div>
+                      <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                        {b.customer_name}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center gap-1.5">
-                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
-                          <span className="font-medium text-ink">{b.model}</span>
-                        </div>
-                        <div className="text-[11px] text-ink-3">{b.variant}</div>
+                      <td className="py-2.5 px-3 font-mono text-ink-2 whitespace-nowrap">
+                        {b.mobile_number}
                       </td>
-                      <td className="py-2.5 px-3 text-ink-2">
-                        {b.colour}
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {b.sales_consultant || 'Sales Desk'}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-ink tnum text-right">
-                        ₹{(b.receipt_amt || 25000).toLocaleString('en-IN')}
+                      <td className="py-2.5 px-3 text-ink-3 whitespace-nowrap">
+                        {b.team_leader || '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-ink-3 text-xs">
-                        {b.promise_delivery_date || 'Within 7 Days'}
+                      <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
+                        {b.model}
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {b.variant || 'Standard'}
+                      </td>
+                      <td className="py-2.5 px-3 text-ink-3 whitespace-nowrap">
+                        {b.colour || '—'}
+                      </td>
+                      <td className="py-2.5 px-3 whitespace-nowrap font-mono">
                         {b.allocated_vin_no ? (
-                          <span className="font-mono text-xs text-ink font-medium">
+                          <span className="font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded border border-ok/20">
                             {b.allocated_vin_no}
                           </span>
                         ) : (
-                          <span className="text-warn italic text-xs">Pending</span>
+                          <span className="text-warn italic">Pending Stock</span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3">
-                        {b.allocated_vin_no ? (
-                          <Badge tone="ok">Allocated</Badge>
-                        ) : bookingsWithDeficit.has(b.id) ? (
-                          <Badge tone="danger">Indent Needed</Badge>
-                        ) : (
-                          <Badge tone="warn">In Stock</Badge>
-                        )}
+                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
+                        {b.delivery_date ? formatDate(b.delivery_date) : '—'}
                       </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {!b.allocated_vin_no ? (
-                          <>
-                            {bookingsWithDeficit.has(b.id) ? (
-                              <button
-                                onClick={() => setPlantIndentBooking(b)}
-                                className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                              >
-                                <Factory className="w-3 h-3 text-rose-200" />
-                                <span>Plant Indent Docket</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setAllocatingBooking(b);
-                                  setSelectedStockVin(stockVehicles[0]?.vin || '');
-                                }}
-                                className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                              >
-                                <Tag className="w-3 h-3" />
-                                <span>Allocate VIN</span>
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <Link
-                            to="/invoicing"
-                            className="h-6 px-2.5 bg-accent hover:bg-accent-600 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-xs cursor-pointer whitespace-nowrap"
-                          >
-                            <span>Pre-Challan</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </Link>
-                        )}
-                        <button
-                          onClick={() => setVoucherBooking(b)}
-                          title="Print Booking Voucher"
-                          className="p-1 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-all cursor-pointer"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {b.hypothecation || 'Self Funded'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-bold text-ink tnum whitespace-nowrap">
+                        ₹{(Number(b.receipt_amt) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {!b.allocated_vin_no ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAllocatingBooking(b);
+                                setSelectedStockVin('');
+                              }}
+                              className="h-7 px-2.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                            >
+                              <Car className="w-3 h-3" />
+                              <span>Allocate VIN</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setVoucherBooking(b)}
+                              className="h-7 px-2.5 rounded bg-surface border border-line hover:border-line-strong text-ink text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                            >
+                              <Printer className="w-3 h-3 text-ink-3" />
+                              <span>Voucher</span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -644,205 +657,233 @@ export const BookingsPage: React.FC = () => {
       </Panel>
 
       {/* ========================================================================= */}
-      {/* MODAL 1: 1-CLICK CHASSIS / VIN STOCK ALLOCATION                          */}
+      {/* MODAL: BULK BOOKINGS IMPORTER                                             */}
       {/* ========================================================================= */}
-      {allocatingBooking && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-slate-200 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
-              <div>
-                <h3 className="font-bold text-slate-900">Allocate Vehicle from Stockyard</h3>
-                <p className="text-xs text-slate-400">Customer: <strong className="text-slate-800">{allocatingBooking.customer_name}</strong> ({allocatingBooking.model})</p>
-              </div>
-              <button onClick={() => setAllocatingBooking(null)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Select Certified Available VIN *</label>
-                {stockVehicles.length === 0 ? (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-center space-y-1">
-                    <p className="font-bold">No vehicles currently available in stockyard database.</p>
-                    <p className="text-[11px]">Please import stock via Excel or complete gate inward receiving first.</p>
-                  </div>
-                ) : (
-                  <select
-                    value={selectedStockVin}
-                    onChange={(e) => setSelectedStockVin(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
-                  >
-                    {stockVehicles.map(v => (
-                      <option key={v.vin} value={v.vin}>
-                        {v.vin} • {v.model} ({v.color || 'White'}) • Status: {v.status}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                <div className="text-[11px] font-bold text-slate-700">Allocation Milestone:</div>
-                <div className="text-[10px] text-slate-500">
-                  Tagging this chassis VIN will lock the vehicle from other allocations, set status to <strong className="text-slate-800">ALLOCATED</strong>, and enable Pre-Challan tax invoicing.
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none">
+          <div className="bg-surface text-ink w-full max-w-4xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">
+                    Bulk Import Customer Bookings
+                  </h2>
+                  <p className="text-xs text-ink-3">Upload Excel 97-2003 (.xls), Excel (.xlsx), or CSV containing 13 Booking columns</p>
                 </div>
               </div>
-
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setAllocatingBooking(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedStockVin}
-                  onClick={handleConfirmAllocation}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs disabled:opacity-50"
-                >
-                  Confirm VIN Allocation
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL 2: CUSTOMER BOOKING VOUCHER PRINT PREVIEW                           */}
-      {/* ========================================================================= */}
-      {voucherBooking && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-slate-200 overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <div className="flex items-center gap-2">
-                <Bookmark className="w-4 h-4 text-indigo-400" />
-                <h3 className="font-bold">Official Booking Voucher • {voucherBooking.receipt_no}</h3>
-              </div>
-              <button onClick={() => setVoucherBooking(null)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs">
-              <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3 font-mono">
-                <div className="flex justify-between border-b border-slate-200 pb-2">
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              {/* Template download & upload buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 bg-canvas border border-line rounded flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-ink text-sm">
-    {voucherBooking.model?.toLowerCase().includes('hyundai') 
-      ? 'Hyundai Motor India Authorized Dealership (Dhoot Hyundai)' 
-      : 'Tata Motors Authorized Dealership (Dhoot Motors)'}
-  </span>
-                    <div className="text-[10px] text-slate-400">Dhoot Group Automotive Network</div>
+                    <h4 className="font-semibold text-ink text-xs">Download 13-Column Template</h4>
+                    <p className="text-[11px] text-ink-3 mt-0.5">Includes exact 13 headers & sample data</p>
                   </div>
-                  <div className="text-right">
-                    <span className="font-bold text-slate-800">Date: {formatDate(voucherBooking.booking_date || voucherBooking.created_at || new Date())}</span>
-                    <div className="text-[10px] text-emerald-700 font-bold">Voucher Confirmed</div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadTemplate}
+                    className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-ink font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download</span>
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div>Customer: <strong>{voucherBooking.customer_name}</strong></div>
-                  <div>Mobile: <strong>{voucherBooking.mobile_number}</strong></div>
-                  <div>Vehicle Model: <strong>{voucherBooking.model}</strong></div>
-                  <div>Variant & Color: <strong>{voucherBooking.variant} • {voucherBooking.colour}</strong></div>
-                  <div>Allocated VIN: <strong>{voucherBooking.allocated_vin_no || 'Pending Allocation'}</strong></div>
-                  <div>Promised Date: <strong>{formatDate(voucherBooking.promise_delivery_date)}</strong></div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                  <span className="font-bold text-slate-700">Booking Advance Received:</span>
-                  <span className="text-base font-bold text-emerald-700">₹{(voucherBooking.receipt_amt || 25000).toLocaleString('en-IN')}</span>
-                </div>
+                <label className="p-3.5 bg-canvas border border-dashed border-line hover:border-accent rounded flex items-center justify-between cursor-pointer transition-colors">
+                  <div>
+                    <h4 className="font-semibold text-ink text-xs">Select Excel / CSV File</h4>
+                    <p className="text-[11px] text-ink-3 mt-0.5">Supports .xlsx, .xls (97-2003), .csv, .tsv</p>
+                  </div>
+                  <div className="h-8 px-3 rounded bg-accent text-white font-semibold flex items-center gap-1.5 shadow-xs">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload File</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.tsv,.txt"
+                    className="hidden"
+                    onChange={handleBookingFileUpload}
+                  />
+                </label>
               </div>
 
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setVoucherBooking(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.print();
-                  }}
-                  className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Customer Voucher</span>
-                </button>
-              </div>
+              {/* Import Summary */}
+              {importSummary && (
+                <div className="p-3 bg-ok/10 border border-ok/30 rounded flex items-center justify-between flex-wrap gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-ok" />
+                    <span className="font-semibold text-ok">
+                      Parsed {importSummary.total} rows • {importSummary.newCount} New Bookings ready to import
+                    </span>
+                  </div>
+                  {importSummary.duplicateCount > 0 && (
+                    <span className="text-ink-3">
+                      ({importSummary.duplicateCount} duplicate receipt numbers skipped)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {importError && (
+                <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded flex items-center gap-2 text-xs">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{importError}</span>
+                </div>
+              )}
+
+              {/* Parsed Preview Table */}
+              {parsedRows.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-ink text-xs">
+                    Preview Parsed Bookings ({parsedRows.length} rows)
+                  </h4>
+                  <div className="border border-line rounded overflow-x-auto max-h-56">
+                    <table className="w-full text-left border-collapse text-[11px]">
+                      <thead className="bg-canvas border-b border-line font-semibold text-ink-2 uppercase">
+                        <tr>
+                          <th className="py-2 px-3">Receipt Date</th>
+                          <th className="py-2 px-3">Receipt No</th>
+                          <th className="py-2 px-3">Customer</th>
+                          <th className="py-2 px-3">Mobile</th>
+                          <th className="py-2 px-3">Model</th>
+                          <th className="py-2 px-3">Variant</th>
+                          <th className="py-2 px-3">Colour</th>
+                          <th className="py-2 px-3 text-right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-line text-ink-2">
+                        {parsedRows.slice(0, 10).map((r, idx) => (
+                          <tr key={idx} className="hover:bg-canvas">
+                            <td className="py-1.5 px-3 whitespace-nowrap">{r.receipt_date}</td>
+                            <td className="py-1.5 px-3 font-mono font-semibold whitespace-nowrap">{r.receipt_no}</td>
+                            <td className="py-1.5 px-3 font-medium whitespace-nowrap">{r.customer_name}</td>
+                            <td className="py-1.5 px-3 whitespace-nowrap">{r.mobile_number}</td>
+                            <td className="py-1.5 px-3 whitespace-nowrap">{r.model}</td>
+                            <td className="py-1.5 px-3 whitespace-nowrap">{r.variant}</td>
+                            <td className="py-1.5 px-3 whitespace-nowrap">{r.colour}</td>
+                            <td className="py-1.5 px-3 text-right font-semibold whitespace-nowrap">₹{Number(r.receipt_amt).toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-line flex items-center justify-end gap-2.5 bg-canvas">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="h-8 px-4 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={parsedRows.length === 0 || isImporting}
+                onClick={handleConfirmBulkImport}
+                className="h-8 px-5 rounded bg-accent hover:bg-accent-600 disabled:opacity-50 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Import {parsedRows.length} Bookings to Ledger</span>
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: NEW CUSTOMER BOOKING FORM                                        */}
+      {/* MODAL: NEW BOOKING MANUAL REGISTRATION                                    */}
       {/* ========================================================================= */}
       {showNewModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
-              <h3 className="font-bold text-slate-900">Register New Customer Booking</h3>
-              <button onClick={() => setShowNewModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">Register Customer Booking</h2>
+                  <p className="text-xs text-ink-3">Add booking order and issue official booking advance receipt</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateBooking} className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+            <form onSubmit={handleCreateBooking} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Receipt Number *</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Receipt Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newBooking.receipt_date}
+                    onChange={(e) => setNewBooking({ ...newBooking, receipt_date: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Receipt No *</label>
                   <input
                     type="text"
                     required
                     value={newBooking.receipt_no}
                     onChange={(e) => setNewBooking({ ...newBooking, receipt_no: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Customer Full Name *</label>
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">Customer Full Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Ramesh Chandra Sharma"
                     value={newBooking.customer_name}
                     onChange={(e) => setNewBooking({ ...newBooking, customer_name: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Mobile Contact No *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+91 98765 43210"
-                    value={newBooking.mobile_number}
-                    onChange={(e) => setNewBooking({ ...newBooking, mobile_number: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Customer PAN Number</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Mobile Number *</label>
                   <input
                     type="text"
-                    placeholder="ABCDE1234F"
-                    value={newBooking.pan_no}
-                    onChange={(e) => setNewBooking({ ...newBooking, pan_no: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase"
+                    required
+                    placeholder="+91 98290 00000"
+                    value={newBooking.mobile_number}
+                    onChange={(e) => setNewBooking({ ...newBooking, mobile_number: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Vehicle Model *</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Vehicle Model *</label>
                   <select
                     value={newBooking.model}
                     onChange={(e) => setNewBooking({ ...newBooking, model: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
                   >
                     {currentBrand.models.map(m => (
                       <option key={m} value={m}>{m}</option>
@@ -851,67 +892,64 @@ export const BookingsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Variant & Trim *</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Variant</label>
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. Fearless Plus S DT"
+                    placeholder="e.g. Accomplished Plus 6S"
                     value={newBooking.variant}
                     onChange={(e) => setNewBooking({ ...newBooking, variant: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Colour Preference</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Colour</label>
                   <input
                     type="text"
-                    placeholder="e.g. Daytona Grey"
+                    placeholder="e.g. Oberon Black"
                     value={newBooking.colour}
                     onChange={(e) => setNewBooking({ ...newBooking, colour: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Booking Advance Paid (₹) *</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Advance Amount Received (₹) *</label>
                   <input
                     type="number"
                     required
                     value={newBooking.receipt_amt}
                     onChange={(e) => setNewBooking({ ...newBooking, receipt_amt: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-bold text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Promised Delivery Date</label>
-                  <input
-                    type="date"
-                    value={newBooking.promise_delivery_date}
-                    onChange={(e) => setNewBooking({ ...newBooking, promise_delivery_date: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Sales Consultant</label>
+                  <label className="block text-xs font-semibold text-ink mb-1">Hypothecation / Financier</label>
                   <input
                     type="text"
-                    value={newBooking.sales_consultant}
-                    onChange={(e) => setNewBooking({ ...newBooking, sales_consultant: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    placeholder="e.g. HDFC Bank Ltd / Self"
+                    value={newBooking.hypothecation}
+                    onChange={(e) => setNewBooking({ ...newBooking, hypothecation: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
                   />
                 </div>
-
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowNewModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  Create Booking Voucher
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save Booking</span>
                 </button>
               </div>
             </form>
@@ -920,335 +958,167 @@ export const BookingsPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 4: BULK EXCEL BOOKING IMPORTER                                       */}
+      {/* MODAL: LIVE VIN ALLOCATION                                                */}
       {/* ========================================================================= */}
-      {isImportModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 select-none">
-          <div className="bg-surface text-ink w-full max-w-5xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[92vh]">
-            
-            {/* Header */}
+      {allocatingBooking && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
             <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <Car className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">Bulk Import Customer Bookings from Excel / CSV</h3>
-                  <p className="text-xs text-ink-3 mt-0.5">Official 14-Column Retail Booking Ledger • Fast Spreadsheet Parser</p>
+                  <h2 className="text-sm font-semibold text-ink">Allocate Stock VIN</h2>
+                  <p className="text-xs text-ink-3">Customer: <strong>{allocatingBooking.customer_name}</strong> • {allocatingBooking.model}</p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadSampleBookings}
-                  className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Download className="w-3.5 h-3.5 text-accent" />
-                  <span>Download Sample CSV</span>
-                </button>
-                <button 
-                  onClick={() => setIsImportModalOpen(false)} 
-                  className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setAllocatingBooking(null)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* Body */}
-            <div className="p-5 space-y-4 overflow-y-auto text-xs flex-1">
-              
-              {/* Recognized Columns Pill */}
-              <div className="p-3 bg-canvas border border-line rounded space-y-1.5 text-xs">
-                <span className="eyebrow block text-accent">Recognized 14 Booking Columns:</span>
-                <p className="text-ink-2 font-mono text-[11px] leading-relaxed break-words">
-                  Receipt Date • <strong className="text-accent underline font-semibold">Receipt No</strong> • Customer Name • Mobile Number • Sales Consultant • Team Leader • Model • Variant • Colour • Booking Date • Promise Delivery Date • Receipt Amt • Docket No • PAN No
-                </p>
+            <div className="p-5 space-y-4 text-xs">
+              <div className="p-3 bg-canvas border border-line rounded space-y-1">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-ink">Required Model:</span>
+                  <span className="font-bold text-accent">{allocatingBooking.model} ({allocatingBooking.variant})</span>
+                </div>
+                <div className="flex justify-between text-ink-3">
+                  <span>Colour Preference:</span>
+                  <span>{allocatingBooking.colour}</span>
+                </div>
               </div>
 
-              {/* Paste or Upload Area */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-ink">
-                    Paste Spreadsheet Data (from Excel / CSV / Google Sheets):
-                  </label>
-
-                  <label className="h-7 px-2.5 bg-accent-soft hover:bg-accent-line/30 border border-accent-line text-accent text-xs font-semibold rounded transition-colors inline-flex items-center gap-1.5 cursor-pointer">
-                    <Upload className="w-3 h-3" />
-                    <span>Upload CSV / TSV File</span>
-                    <input
-                      type="file"
-                      accept=".csv,.xlsx,.xls,.tsv,.txt"
-                      className="hidden"
-                      onChange={handleBookingFileUpload}
-                    />
-                  </label>
-                </div>
-
-                <textarea
-                  rows={5}
-                  placeholder="Receipt Date\tReceipt No\tCustomer Name\tMobile Number\tSales Consultant\tTeam Leader\tModel\tVariant\tColour\tBooking Date\tPromise Delivery Date\tReceipt Amt\tDocket No\tPAN No"
-                  value={csvText}
-                  onChange={(e) => handleParseBookingsText(e.target.value)}
-                  className="w-full p-3 font-mono text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent"
-                />
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1.5">
+                  Select Unallocated Stock VIN *
+                </label>
+                <select
+                  value={selectedStockVin}
+                  onChange={(e) => setSelectedStockVin(e.target.value)}
+                  className="w-full p-2.5 bg-canvas border border-line rounded text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent"
+                >
+                  <option value="">-- Choose Stock Vehicle --</option>
+                  {stockVehicles
+                    .filter(v => !v.customer_name && v.status !== 'ALLOCATED')
+                    .map(v => (
+                      <option key={v.vin} value={v.vin}>
+                        {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location}
+                      </option>
+                    ))}
+                </select>
               </div>
 
-              {/* Parsed Verification Summary & Table */}
-              {parsedRows.length > 0 && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                    <div className="p-2.5 bg-canvas border border-line rounded">
-                      <span className="eyebrow block">Total Rows</span>
-                      <div className="text-base font-semibold text-ink tnum mt-0.5">{parsedRows.length}</div>
-                    </div>
-                    <div className="p-2.5 bg-ok/10 border border-ok/20 rounded">
-                      <span className="eyebrow block text-ok">Valid Customer Bookings</span>
-                      <div className="text-base font-semibold text-ok tnum mt-0.5">{parsedRows.length}</div>
-                    </div>
-                    <div className="p-2.5 bg-accent-soft border border-accent-line rounded">
-                      <span className="eyebrow block text-accent">Target Dealership</span>
-                      <div className="text-base font-semibold text-accent mt-0.5 truncate">{currentBrand.name}</div>
-                    </div>
-                  </div>
-
-                  <div className="border border-line rounded overflow-hidden">
-                    <div className="max-h-52 overflow-y-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px] sticky top-0">
-                          <tr>
-                            <th className="py-2 px-3">Receipt Date</th>
-                            <th className="py-2 px-3">Receipt No</th>
-                            <th className="py-2 px-3">Customer Name</th>
-                            <th className="py-2 px-3">Phone</th>
-                            <th className="py-2 px-3">Model & Variant</th>
-                            <th className="py-2 px-3">Colour</th>
-                            <th className="py-2 px-3">Sales Consultant</th>
-                            <th className="py-2 px-3 text-right">Advance Received</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-line text-ink-2">
-                          {parsedRows.map((r, i) => (
-                            <tr key={i} className="hover:bg-canvas/60">
-                              <td className="py-1.5 px-3 text-ink-3 tnum whitespace-nowrap">{r.receipt_date}</td>
-                              <td className="py-1.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">{r.receipt_no}</td>
-                              <td className="py-1.5 px-3 font-medium text-ink whitespace-nowrap">{r.customer_name}</td>
-                              <td className="py-1.5 px-3 font-mono text-ink-3 whitespace-nowrap">{r.mobile_number}</td>
-                              <td className="py-1.5 px-3 whitespace-nowrap">{r.model} {r.variant}</td>
-                              <td className="py-1.5 px-3 text-ink-3 whitespace-nowrap">{r.colour}</td>
-                              <td className="py-1.5 px-3 text-ink-2 whitespace-nowrap">{r.sales_consultant || '—'}</td>
-                              <td className="py-1.5 px-3 font-semibold text-ok tnum text-right whitespace-nowrap">₹{r.receipt_amt}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {importError && (
-                <div className="p-3 bg-danger/10 border border-danger/20 rounded text-danger text-xs font-semibold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{importError}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="px-5 py-3.5 border-t border-line bg-canvas flex items-center justify-between">
-              <div className="text-xs text-ink-3 font-medium">
-                {parsedRows.length > 0 ? (
-                  <span>Ready to import <strong>{parsedRows.length}</strong> bookings</span>
-                ) : (
-                  <span>Paste spreadsheet data or upload file above</span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2.5">
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-line">
                 <button
                   type="button"
-                  onClick={() => setIsImportModalOpen(false)}
-                  className="h-8 px-4 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors cursor-pointer"
+                  onClick={() => setAllocatingBooking(null)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line text-xs font-semibold text-ink"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  disabled={parsedRows.length === 0 || isImporting}
-                  onClick={handleConfirmBulkImport}
-                  className="h-8 px-5 rounded bg-accent hover:bg-accent-600 disabled:opacity-40 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  disabled={!selectedStockVin}
+                  onClick={handleConfirmVinAllocation}
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
-                  {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  <span>Import {parsedRows.length} Bookings to Database</span>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Confirm Allocation</span>
                 </button>
               </div>
             </div>
-
           </div>
         </div>
       )}
-{/* ========================================================================= */}
-      {/* MODAL 5: CUSTOMER OEM PLANT INDENT & FACTORY REQUISITION DOCKET          */}
+
       {/* ========================================================================= */}
-      {plantIndentBooking && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-panel shadow-pop border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
-            
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
-                  <Factory className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm leading-tight">OEM Plant Indent & Factory Order Requisition</h3>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                    REF: DHOOT-IND-2026-{plantIndentBooking.receipt_no?.replace(/\D/g, '') || '8819'}
-                  </p>
-                </div>
+      {/* MODAL: PRINTABLE BOOKING VOUCHER                                          */}
+      {/* ========================================================================= */}
+      {voucherBooking && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2">
+                <Printer className="w-4 h-4 text-accent" />
+                <span className="text-sm font-semibold text-ink">Official Booking Voucher Preview</span>
               </div>
-              <button 
-                onClick={() => setPlantIndentBooking(null)}
-                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content Body */}
-            <div className="p-6 space-y-4 overflow-y-auto text-xs">
-              
-              {/* Alert Status Banner */}
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-rose-900">Stockyard Inventory Deficit (0 Units in Free Stock)</div>
-                  <div className="text-[11px] text-rose-700 mt-0.5">
-                    This vehicle is not currently available in yard inventory. An official plant indent must be dispatched to the OEM factory to fulfill this customer booking before promised delivery.
-                  </div>
-                </div>
-              </div>
-
-              {/* 1. Customer Details Card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Customer & Booking Credentials</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Customer Name</span>
-                    <span className="font-bold text-slate-900 text-xs block">{plantIndentBooking.customer_name}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Contact Phone</span>
-                    <span className="font-mono font-bold text-slate-900 text-xs block">{plantIndentBooking.mobile_number}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Booking Receipt No</span>
-                    <span className="font-mono font-bold text-indigo-700 text-xs block">{plantIndentBooking.receipt_no}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Advance Collected</span>
-                    <span className="font-mono font-bold text-emerald-700 text-xs block">
-                      ₹{(plantIndentBooking.receipt_amt || 25000).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Sales Consultant</span>
-                    <span className="font-semibold text-slate-800 text-xs block">{plantIndentBooking.sales_consultant || 'Sales Executive'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Promised Delivery Date</span>
-                    <span className="font-mono font-bold text-rose-700 text-xs block">{plantIndentBooking.promise_delivery_date || 'Within 10 Days'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Factory Order Vehicle Specs */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Car className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Factory Production & Configuration Specifications</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Booked Vehicle Model</span>
-                    <span className="font-bold text-slate-900 text-xs block">{plantIndentBooking.model}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Variant / Trim</span>
-                    <span className="font-semibold text-slate-800 text-xs block">{plantIndentBooking.variant}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Exterior Paint Shade</span>
-                    <span className="font-semibold text-slate-800 text-xs block">{plantIndentBooking.colour}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Target Manufacturing Plant</span>
-                    <span className="font-mono font-bold text-slate-900 text-xs block">
-                      {plantIndentBooking.model?.toLowerCase().includes('hyundai') || plantIndentBooking.model?.toLowerCase().includes('creta') || plantIndentBooking.model?.toLowerCase().includes('venue')
-                        ? 'PLT-CHE (Chennai Factory)'
-                        : 'PLT-PUN (Pune Plant)'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Target Dispatch Deadline</span>
-                    <span className="font-mono font-bold text-indigo-700 text-xs block">
-                      {new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0]} (Expedited)
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">Carrier Transit Mode</span>
-                    <span className="font-semibold text-slate-800 text-xs block">Dedicated 8-Car Trailer</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  const summary = `OEM PLANT INDENT - DHOOT GROUP\nCustomer: ${plantIndentBooking.customer_name} (${plantIndentBooking.mobile_number})\nBooking: ${plantIndentBooking.receipt_no}\nModel: ${plantIndentBooking.model} ${plantIndentBooking.variant}\nColour: ${plantIndentBooking.colour}\nDelivery Date: ${plantIndentBooking.promise_delivery_date}`;
-                  navigator.clipboard.writeText(summary);
-                  alert('Plant order summary copied to clipboard!');
-                }}
-                className="px-3 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+                onClick={() => setVoucherBooking(null)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
               >
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Summary</span>
+                <X className="w-4 h-4" />
               </button>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.print();
-                  }}
-                  className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Plant Indent</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    alert(`Plant order marked as placed with OEM factory for ${plantIndentBooking.customer_name}!`);
-                    setPlantIndentBooking(null);
-                  }}
-                  className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Mark Factory Order Placed</span>
-                </button>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs font-sans">
+              <div className="border border-line rounded p-5 space-y-4 bg-white text-slate-900">
+                <div className="flex justify-between items-start border-b pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">
+                      {voucherBooking.model?.toLowerCase().includes('hyundai') 
+                        ? 'Hyundai Motor India Authorized Dealership (Dhoot Hyundai)' 
+                        : 'Tata Motors Authorized Dealership (Dhoot Motors)'}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">Official Customer Vehicle Booking Docket</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-sm text-slate-800">{voucherBooking.receipt_no}</span>
+                    <p className="text-[11px] text-slate-500">Date: {voucherBooking.receipt_date}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Customer Details</span>
+                    <strong className="block text-slate-900">{voucherBooking.customer_name}</strong>
+                    <span className="text-slate-600 font-mono">{voucherBooking.mobile_number}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Vehicle Ordered</span>
+                    <strong className="block text-slate-900">{voucherBooking.model}</strong>
+                    <span className="text-slate-600">{voucherBooking.variant} • {voucherBooking.colour}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Allocated VIN</span>
+                    <span className="font-mono font-bold text-slate-900">{voucherBooking.allocated_vin_no || 'Pending Allocation'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Hypothecation</span>
+                    <span className="text-slate-900 font-medium">{voucherBooking.hypothecation || 'Self Funded'}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded border border-slate-200 flex justify-between items-center">
+                  <span className="font-semibold text-slate-700">Advance Amount Received:</span>
+                  <span className="text-base font-bold text-slate-900">₹{Number(voucherBooking.receipt_amt).toLocaleString('en-IN')}</span>
+                </div>
               </div>
             </div>
 
+            <div className="p-4 border-t border-line flex items-center justify-end gap-2.5 bg-canvas">
+              <button
+                type="button"
+                onClick={() => setVoucherBooking(null)}
+                className="h-8 px-4 rounded bg-surface border border-line text-xs font-semibold text-ink"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="h-8 px-5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Voucher PDF</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

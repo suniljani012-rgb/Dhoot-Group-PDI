@@ -1,5 +1,3 @@
-import { formatDate } from '../utils/dateUtils';
-import * as XLSX from 'xlsx';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -7,41 +5,60 @@ import {
   FileSpreadsheet, X, Loader2, DollarSign, CheckCircle2, 
   Receipt, Building, ShieldCheck, Printer, Calendar,
   Key, UserCheck, Truck, ArrowRight, FolderOpen, Clock,
-  AlertCircle
+  AlertCircle, Check, MapPin, Phone, Hash
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getApiUrl } from '../utils/apiConfig';
+import * as XLSX from 'xlsx';
+import { formatDate } from '../utils/dateUtils';
+import { 
+  getChallansForBrand, saveChallansInventory,
+  getVehiclesForBrand
+} from '../data/seedData';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface ChallanRecord {
   id: string;
-  booking_date?: string;
+  booking_date: string;
   challan_no: string;
-  challan_date?: string;
-  vaahan_date?: string;
-  delivery_date?: string;
+  challan_date: string;
+  delivery_date: string;
   challan_type: string;
   vin_no: string;
   customer_name: string;
-  address?: string;
-  city?: string;
-  mobile_no?: string;
+  mobile: string;
+  city: string;
   model: string;
   variant: string;
   colour: string;
-  sale_consultant?: string;
-  financier_name?: string;
-  ex_showroom?: number;
-  discount?: number;
-  insurance_amount?: number;
-  rto_amount?: number;
-  acc_amount?: number;
-  fast_tag?: number;
-  net_amount?: number;
-  invoice_date?: string;
-  invoice_no?: string;
+  sale_consultant: string;
+  team_leader: string;
+  financier_name: string;
+  corporate: string;
+  exchange: string;
+  ex_showroom: number;
+  discount: number;
+  net: number;
+  insurance_per: number;
+  insurance_amount: number;
+  ep: number;
+  rti: number;
+  cm: number;
+  rto_city: string;
+  rto_amount: number;
+  hml_acc: number;
+  own_acc: number;
+  acc_discount_amount: number;
+  acc_amount: number;
+  trc: number;
+  warranty: number;
+  handling_charges: number;
+  other: number;
+  fast_tag: number;
+  tcs: number;
+  net_amount: number;
+  invoice_date: string;
+  invoice_no: string;
   status: string;
-  odometer_at_delivery?: number;
   created_at?: string;
 }
 
@@ -58,293 +75,442 @@ export const ChallanInvoicingPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<ChallanRecord | null>(null);
   const [gatepassRecord, setGatepassRecord] = useState<ChallanRecord | null>(null);
   const [invoicePreviewRecord, setInvoicePreviewRecord] = useState<ChallanRecord | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  // New Challan / Invoice State
-  const [newInvoice, setNewInvoice] = useState({
-    challan_no: `CHL-${Date.now().toString().slice(-6)}`,
-    invoice_no: `INV-${Date.now().toString().slice(-6)}`,
-    vin_no: '',
-    customer_name: '',
-    mobile_no: '',
-    city: 'Pune',
-    model: currentBrand.models[0] || 'Tata Nexon',
-    variant: 'Fearless Plus',
-    colour: 'Daytona Grey',
-    sale_consultant: 'Sunil Sharma',
-    financier_name: 'HDFC Bank Ltd',
-    ex_showroom: 1250000,
-    discount: 25000,
-    insurance_amount: 42000,
-    rto_amount: 145000,
-    acc_amount: 18000,
-    fast_tag: 500,
-    challan_date: new Date().toISOString().split('T')[0],
-    invoice_date: new Date().toISOString().split('T')[0],
-    delivery_date: new Date().toISOString().split('T')[0],
-  });
+  // Bulk Excel Import State
+  const [parsedRows, setParsedRows] = useState<ChallanRecord[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSummary, setImportSummary] = useState<{ total: number; newCount: number; duplicateCount: number } | null>(null);
 
-const SEED_CHALLANS: ChallanRecord[] = [
-  { id: 'chl-1', challan_no: 'CHL-2026-0801', challan_date: '2026-08-25', delivery_date: '2026-08-28', challan_type: 'TAX_INVOICE_DELIVERY', vin_no: 'MAT612345S8877668', customer_name: 'Vikramaditya Singhania', mobile_no: '+91 98293 22334', model: 'Tata Safari', variant: 'Adventure Plus AT', colour: 'Cosmic Gold', sale_consultant: 'Sunil Sharma', financier_name: 'HDFC Bank', ex_showroom: 2450000, discount: 25000, insurance_amount: 68000, rto_amount: 245000, acc_amount: 15000, fast_tag: 500, net_amount: 2753500, invoice_no: 'INV-2026-TAT-0091', invoice_date: '2026-08-25', status: 'INVOICED' },
-  { id: 'chl-2', challan_no: 'CHL-2026-0802', challan_date: '2026-08-24', delivery_date: '2026-08-29', challan_type: 'GATE_PASS', vin_no: 'MALC12345C1122331', customer_name: 'Rajesh Kumar Verma', mobile_no: '+91 94140 55667', model: 'Hyundai Creta', variant: 'SX (O) Turbo DCT', colour: 'Ranger Khaki', sale_consultant: 'Manish Rathore', financier_name: 'State Bank of India', ex_showroom: 1980000, discount: 15000, insurance_amount: 52000, rto_amount: 198000, acc_amount: 12000, fast_tag: 500, net_amount: 2227500, invoice_no: 'INV-2026-HYN-0045', invoice_date: '2026-08-24', status: 'INVOICED' },
-  { id: 'chl-3', challan_no: 'CHL-2026-0803', challan_date: '2026-08-25', delivery_date: '2026-08-30', challan_type: 'TAX_INVOICE_DELIVERY', vin_no: 'MAT612345S9988771', customer_name: 'Ramesh Chandra Sharma', mobile_no: '+91 98290 11223', model: 'Tata Safari', variant: 'Accomplished Plus 6S AT', colour: 'Oberon Black', sale_consultant: 'Sunil Sharma', financier_name: 'ICICI Bank', ex_showroom: 2650000, discount: 30000, insurance_amount: 72000, rto_amount: 265000, acc_amount: 18000, fast_tag: 500, net_amount: 2975500, invoice_no: 'INV-2026-TAT-0092', invoice_date: '2026-08-25', status: 'PENDING_DELIVERY' },
-  { id: 'chl-4', challan_no: 'CHL-2026-0804', challan_date: '2026-08-25', delivery_date: '2026-08-28', challan_type: 'TAX_INVOICE_DELIVERY', vin_no: 'MAT612345T2233447', customer_name: 'Priya Kulkarni', mobile_no: '+91 98220 33445', model: 'Tata Tiago', variant: 'XZ+ Dual Tone', colour: 'Tornado Blue', sale_consultant: 'Rajesh Nair', financier_name: 'Axis Bank', ex_showroom: 780000, discount: 10000, insurance_amount: 28000, rto_amount: 78000, acc_amount: 8000, fast_tag: 500, net_amount: 884500, invoice_no: 'INV-2026-TAT-0093', invoice_date: '2026-08-25', status: 'PENDING_DELIVERY' },
-  { id: 'chl-5', challan_no: 'CHL-2026-0805', challan_date: '2026-08-25', delivery_date: '2026-08-31', challan_type: 'TAX_INVOICE_DELIVERY', vin_no: 'MALC12345I6677886', customer_name: 'Anita Desai', mobile_no: '+91 98291 77889', model: 'Hyundai i20', variant: 'Asta (O) IVT', colour: 'Starry Night', sale_consultant: 'Karan Joshi', financier_name: 'Kotak Mahindra Bank', ex_showroom: 1120000, discount: 15000, insurance_amount: 38000, rto_amount: 112000, acc_amount: 10000, fast_tag: 500, net_amount: 1265500, invoice_no: 'INV-2026-HYN-0046', invoice_date: '2026-08-25', status: 'PENDING_DELIVERY' }
-];
+  // 40 HEADERS DEFINITION
+  const CHALLAN_HEADERS = [
+    'Booking Date',
+    'Challan No',
+    'Challan Date',
+    'Delivery Date',
+    'Challan Type',
+    'Vin No',
+    'Customer Name',
+    'Mobile',
+    'City',
+    'Model',
+    'Variant',
+    'Colour',
+    'Sale Consultant',
+    'Team Leader',
+    'Financier Name',
+    'Corporate',
+    'Exchange',
+    'Ex Show Room',
+    'Discount',
+    'Net',
+    'Insurance Per',
+    'Insurance Amount',
+    'Ep',
+    'Rti',
+    'Cm',
+    'Rto City',
+    'Rto Amount',
+    'Hml Acc',
+    'Own Acc',
+    'Acc Discount Amount',
+    'Acc Amount',
+    'Trc',
+    'Warranty',
+    'Handling Charges',
+    'Other',
+    'Fast Tag',
+    'TCS',
+    'Net Amount',
+    'Invoice Date',
+    'Invoice No.'
+  ];
 
   useEffect(() => {
     fetchChallans();
-  }, [currentBrand.code]);
 
-  const fetchChallans = async () => {
+    const handleUpdate = () => {
+      fetchChallans();
+    };
+
+    window.addEventListener('challans-updated', handleUpdate);
+    return () => window.removeEventListener('challans-updated', handleUpdate);
+  }, [currentBrand?.code]);
+
+  const fetchChallans = () => {
     setLoading(true);
     try {
-      const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
-      const res = await fetch(getApiUrl(`/api/v1/challans${orgParam}`));
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data && json.data.length > 0) {
-          setRecords(json.data);
-          setLoading(false);
-          return;
-        }
-      }
-      // Multi-brand filter fallback
-      if (currentBrand.code === 'DHOOT-TATA') {
-        setRecords(SEED_CHALLANS.filter(c => c.model.includes('Tata')));
-      } else if (currentBrand.code === 'DHOOT-HYUNDAI') {
-        setRecords(SEED_CHALLANS.filter(c => c.model.includes('Hyundai')));
-      } else {
-        setRecords(SEED_CHALLANS); // All 5 (Tata + Hyundai)
-      }
+      const list = getChallansForBrand(currentBrand?.code || 'DHOOT-ALL');
+      setRecords(list);
     } catch (e) {
-      if (currentBrand.code === 'DHOOT-TATA') {
-        setRecords(SEED_CHALLANS.filter(c => c.model.includes('Tata')));
-      } else if (currentBrand.code === 'DHOOT-HYUNDAI') {
-        setRecords(SEED_CHALLANS.filter(c => c.model.includes('Hyundai')));
-      } else {
-        setRecords(SEED_CHALLANS);
-      }
+      console.warn('Error loading challans:', e);
+      setRecords([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateInvoice = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const net = Number(newInvoice.ex_showroom) - Number(newInvoice.discount) + Number(newInvoice.insurance_amount) + Number(newInvoice.rto_amount) + Number(newInvoice.acc_amount) + Number(newInvoice.fast_tag);
-    
-    const newRec: ChallanRecord = {
-      id: `chl-${Date.now()}`,
-      challan_no: newInvoice.challan_no,
-      invoice_no: newInvoice.invoice_no,
-      vin_no: newInvoice.vin_no || `MAT612345${Date.now().toString().slice(-7)}`,
-      customer_name: newInvoice.customer_name,
-      mobile_no: newInvoice.mobile_no,
-      city: newInvoice.city,
-      model: newInvoice.model,
-      variant: newInvoice.variant,
-      colour: newInvoice.colour,
-      sale_consultant: newInvoice.sale_consultant,
-      financier_name: newInvoice.financier_name,
-      ex_showroom: Number(newInvoice.ex_showroom),
-      discount: Number(newInvoice.discount),
-      insurance_amount: Number(newInvoice.insurance_amount),
-      rto_amount: Number(newInvoice.rto_amount),
-      acc_amount: Number(newInvoice.acc_amount),
-      fast_tag: Number(newInvoice.fast_tag),
-      net_amount: net,
-      challan_date: newInvoice.challan_date,
-      invoice_date: newInvoice.invoice_date,
-      delivery_date: newInvoice.delivery_date,
-      challan_type: 'TAX_INVOICE',
-      status: 'INVOICED',
-      created_at: new Date().toISOString()
-    };
-
-    setRecords([newRec, ...records]);
-    setShowNewModal(false);
-  };
-
-  // Bulk Excel Import State
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [csvText, setCsvText] = useState('');
-  const [parsedRows, setParsedRows] = useState<any[]>([]);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-
-  // Download Sample Invoicing CSV Template
-  const handleDownloadSampleChallans = () => {
-    const headers = [
-      'Challan No', 'Invoice No', 'Challan Date', 'Invoice Date', 'Customer Name', 
-      'Mobile No', 'Model', 'Variant', 'Colour', 'VIN Number', 'Ex-Showroom', 
-      'Insurance Amount', 'RTO Amount', 'Discount', 'Net Amount', 'Financier'
-    ];
+  const handleDownloadTemplate = () => {
     const sampleRows = [
-      headers.join(','),
-      'CHL-009981,INV-009981,2026-08-25,2026-08-25,Ramesh Chandra Sharma,+91 98290 11223,Tata Safari,Accomplished Plus,Oberon Black,MAT612345S9988771,1950000,85000,195000,50000,2180000,HDFC Bank Ltd',
-      'CHL-009982,INV-009982,2026-08-25,2026-08-25,Rajesh Kumar Verma,+91 94140 55667,Hyundai Creta,SX (O) Turbo,Ranger Khaki,MALC12345C1122331,1540000,65000,154000,30000,1729000,State Bank of India'
+      CHALLAN_HEADERS.join(','),
+      '20-Aug-2026,CHL-2026-0801,25-Aug-2026,28-Aug-2026,TAX_INVOICE_DELIVERY,MAT612345S8877668,Vikramaditya Singhania,+91 98293 22334,Jodhpur,Tata Safari,Adventure Plus AT,Cosmic Gold,Sunil Sharma,Rajesh Nair,HDFC Bank Ltd,No,Yes,2450000,25000,2425000,3.5,68000,4500,2500,1000,Jodhpur,245000,10000,5000,0,15000,500,12000,2500,0,500,24250,2797750,25-Aug-2026,INV-2026-TAT-0091',
+      '22-Aug-2026,CHL-2026-0802,24-Aug-2026,29-Aug-2026,GATE_PASS,MALC12345C1122331,Rajesh Kumar Verma,+91 94140 55667,Jodhpur,Hyundai Creta,SX (O) Turbo DCT,Ranger Khaki,Manish Rathore,Suresh Sharma,State Bank of India,No,No,1980000,15000,1965000,3.2,52000,3500,2000,800,Jodhpur,198000,8000,4000,0,12000,500,10000,2000,0,500,19650,2261650,24-Aug-2026,INV-2026-HYN-0045'
     ].join('\n');
 
     const blob = new Blob([sampleRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Dhoot_Group_Tax_Invoicing_Template.csv`);
+    link.setAttribute('download', 'Dhoot_Group_Challan_Invoicing_Template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Parse Invoices Text
-  const handleParseChallanText = (text: string) => {
-    setCsvText(text);
-    setImportError(null);
-
-    const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
-    if (lines.length <= 1) {
+  const processChallanGrid = (grid: any[][]) => {
+    if (!grid || grid.length <= 1) {
       setParsedRows([]);
       return;
     }
 
-    const separator = lines[0].includes('\t') ? '\t' : ',';
-    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+    let headerRowIdx = 0;
+    for (let r = 0; r < Math.min(6, grid.length); r++) {
+      const rowStr = grid[r].map(c => String(c || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join(' ');
+      if (rowStr.includes('challan') || rowStr.includes('invoice') || rowStr.includes('customer')) {
+        headerRowIdx = r;
+        break;
+      }
+    }
 
-    const rows = lines.slice(1).map((line, idx) => {
-      const cols = line.split(separator).map(c => c.trim().replace(/^"|"$/g, ''));
-      const obj: any = {};
-      headers.forEach((h, hIdx) => {
-        obj[h] = cols[hIdx] || '';
+    const rawHeaders = grid[headerRowIdx].map(h => String(h || '').trim());
+    const findCol = (names: string[]): number => {
+      return rawHeaders.findIndex(h => {
+        const clean = String(h || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return names.some(n => clean === n.toLowerCase().replace(/[^a-z0-9]/g, ''));
       });
+    };
 
-      return {
-        id: `chl-imp-${Date.now()}-${idx}`,
-        challan_no: obj['Challan No'] || cols[0] || `CHL-00${Date.now()}${idx}`,
-        invoice_no: obj['Invoice No'] || cols[1] || `INV-00${Date.now()}${idx}`,
-        challan_date: obj['Challan Date'] || cols[2] || '2026-08-25',
-        invoice_date: obj['Invoice Date'] || cols[3] || '2026-08-25',
-        customer_name: obj['Customer Name'] || cols[4] || 'Retail Customer',
-        mobile_no: obj['Mobile No'] || cols[5] || '+91 98000 00000',
-        model: obj['Model'] || cols[6] || 'Tata Nexon',
-        variant: obj['Variant'] || cols[7] || 'Standard',
-        colour: obj['Colour'] || cols[8] || 'White',
-        vin_no: obj['VIN Number'] || cols[9] || `MAT612345${Date.now()}${idx}`,
-        ex_showroom: parseFloat(obj['Ex-Showroom'] || cols[10] || '1000000') || 1000000,
-        insurance_amount: parseFloat(obj['Insurance Amount'] || cols[11] || '50000') || 50000,
-        rto_amount: parseFloat(obj['RTO Amount'] || cols[12] || '100000') || 100000,
-        discount: parseFloat(obj['Discount'] || cols[13] || '25000') || 25000,
-        net_amount: parseFloat(obj['Net Amount'] || cols[14] || '1125000') || 1125000,
-        financier_name: obj['Financier'] || cols[15] || 'Self Financed',
-        challan_type: 'TAX_INVOICE',
+    const idxBookingDate = findCol(['Booking Date', 'BookingDate']);
+    const idxChallanNo = findCol(['Challan No', 'ChallanNo', 'Challan Number']);
+    const idxChallanDate = findCol(['Challan Date', 'ChallanDate']);
+    const idxDeliveryDate = findCol(['Delivery Date', 'DeliveryDate']);
+    const idxChallanType = findCol(['Challan Type', 'ChallanType', 'Type']);
+    const idxVinNo = findCol(['Vin No', 'VinNo', 'VIN', 'Chassis No']);
+    const idxCustomerName = findCol(['Customer Name', 'CustomerName', 'Customer']);
+    const idxMobile = findCol(['Mobile', 'Mobile No', 'Phone']);
+    const idxCity = findCol(['City', 'Location']);
+    const idxModel = findCol(['Model', 'Vehicle Model']);
+    const idxVariant = findCol(['Variant', 'Trim']);
+    const idxColour = findCol(['Colour', 'Color']);
+    const idxSalesConsultant = findCol(['Sale Consultant', 'Sales Consultant', 'SC']);
+    const idxTeamLeader = findCol(['Team Leader', 'TL']);
+    const idxFinancier = findCol(['Financier Name', 'Financier', 'Bank']);
+    const idxCorporate = findCol(['Corporate']);
+    const idxExchange = findCol(['Exchange']);
+    const idxExShowroom = findCol(['Ex Show Room', 'Ex Showroom', 'ExShowRoom']);
+    const idxDiscount = findCol(['Discount']);
+    const idxNet = findCol(['Net']);
+    const idxInsurancePer = findCol(['Insurance Per', 'Insurance %']);
+    const idxInsuranceAmt = findCol(['Insurance Amount', 'Insurance Amt']);
+    const idxEp = findCol(['Ep', 'EP']);
+    const idxRti = findCol(['Rti', 'RTI']);
+    const idxCm = findCol(['Cm', 'CM']);
+    const idxRtoCity = findCol(['Rto City', 'RTO City']);
+    const idxRtoAmt = findCol(['Rto Amount', 'RTO Amount', 'RTO']);
+    const idxHmlAcc = findCol(['Hml Acc', 'HML Acc']);
+    const idxOwnAcc = findCol(['Own Acc']);
+    const idxAccDisc = findCol(['Acc Discount Amount', 'Acc Discount']);
+    const idxAccAmt = findCol(['Acc Amount', 'Accessories Amount']);
+    const idxTrc = findCol(['Trc', 'TRC']);
+    const idxWarranty = findCol(['Warranty', 'EW']);
+    const idxHandling = findCol(['Handling Charges', 'Handling']);
+    const idxOther = findCol(['Other', 'Other Charges']);
+    const idxFastTag = findCol(['Fast Tag', 'FastTag']);
+    const idxTcs = findCol(['TCS', 'Tcs']);
+    const idxNetAmount = findCol(['Net Amount', 'Total Net Amount', 'Invoice Total']);
+    const idxInvoiceDate = findCol(['Invoice Date', 'InvoiceDate']);
+    const idxInvoiceNo = findCol(['Invoice No.', 'Invoice No', 'Invoice Number']);
+
+    const parseNum = (val: any) => Number(String(val || '0').replace(/[^0-9.-]/g, '')) || 0;
+
+    const existingKeys = new Set(records.map(r => (r.challan_no || r.invoice_no || r.vin_no).toUpperCase().trim()));
+    const seenInSheet = new Set<string>();
+
+    const rows: ChallanRecord[] = [];
+    let duplicateCount = 0;
+
+    for (let i = headerRowIdx + 1; i < grid.length; i++) {
+      const cols = grid[i];
+      if (!cols || cols.length === 0 || cols.every(c => c === undefined || c === null || String(c).trim() === '')) {
+        continue;
+      }
+
+      const getVal = (colIdx: number, fallbackIdx?: number): string => {
+        if (colIdx >= 0 && cols[colIdx] !== undefined && cols[colIdx] !== null) return String(cols[colIdx]).trim();
+        if (fallbackIdx !== undefined && cols[fallbackIdx] !== undefined && cols[fallbackIdx] !== null) return String(cols[fallbackIdx]).trim();
+        return '';
+      };
+
+      const challanNo = getVal(idxChallanNo, 1) || `CHL-${202600 + i}`;
+      const invoiceNo = getVal(idxInvoiceNo, 39) || `INV-${202600 + i}`;
+      const vinNo = getVal(idxVinNo, 5) || `MAT${Date.now()}${i}`;
+
+      const dedupeKey = (challanNo || invoiceNo || vinNo).toUpperCase().trim();
+      if (existingKeys.has(dedupeKey) || seenInSheet.has(dedupeKey)) {
+        duplicateCount++;
+        continue;
+      }
+      seenInSheet.add(dedupeKey);
+
+      rows.push({
+        id: `chl-${Date.now()}-${i}`,
+        booking_date: getVal(idxBookingDate, 0) ? formatDate(getVal(idxBookingDate, 0)) : formatDate(new Date()),
+        challan_no: challanNo,
+        challan_date: getVal(idxChallanDate, 2) ? formatDate(getVal(idxChallanDate, 2)) : formatDate(new Date()),
+        delivery_date: getVal(idxDeliveryDate, 3) ? formatDate(getVal(idxDeliveryDate, 3)) : formatDate(new Date()),
+        challan_type: getVal(idxChallanType, 4) || 'TAX_INVOICE_DELIVERY',
+        vin_no: vinNo,
+        customer_name: getVal(idxCustomerName, 6) || `Customer ${i}`,
+        mobile: getVal(idxMobile, 7) || '+91 98000 00000',
+        city: getVal(idxCity, 8) || 'Jodhpur',
+        model: getVal(idxModel, 9) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari'),
+        variant: getVal(idxVariant, 10) || 'Standard',
+        colour: getVal(idxColour, 11) || 'White',
+        sale_consultant: getVal(idxSalesConsultant, 12) || 'Sales Desk',
+        team_leader: getVal(idxTeamLeader, 13) || '',
+        financier_name: getVal(idxFinancier, 14) || 'Self Funded',
+        corporate: getVal(idxCorporate, 15) || 'No',
+        exchange: getVal(idxExchange, 16) || 'No',
+        ex_showroom: parseNum(getVal(idxExShowroom, 17)),
+        discount: parseNum(getVal(idxDiscount, 18)),
+        net: parseNum(getVal(idxNet, 19)),
+        insurance_per: parseNum(getVal(idxInsurancePer, 20)),
+        insurance_amount: parseNum(getVal(idxInsuranceAmt, 21)),
+        ep: parseNum(getVal(idxEp, 22)),
+        rti: parseNum(getVal(idxRti, 23)),
+        cm: parseNum(getVal(idxCm, 24)),
+        rto_city: getVal(idxRtoCity, 25) || 'Jodhpur',
+        rto_amount: parseNum(getVal(idxRtoAmt, 26)),
+        hml_acc: parseNum(getVal(idxHmlAcc, 27)),
+        own_acc: parseNum(getVal(idxOwnAcc, 28)),
+        acc_discount_amount: parseNum(getVal(idxAccDisc, 29)),
+        acc_amount: parseNum(getVal(idxAccAmt, 30)),
+        trc: parseNum(getVal(idxTrc, 31)),
+        warranty: parseNum(getVal(idxWarranty, 32)),
+        handling_charges: parseNum(getVal(idxHandling, 33)),
+        other: parseNum(getVal(idxOther, 34)),
+        fast_tag: parseNum(getVal(idxFastTag, 35)),
+        tcs: parseNum(getVal(idxTcs, 36)),
+        net_amount: parseNum(getVal(idxNetAmount, 37)),
+        invoice_date: getVal(idxInvoiceDate, 38) ? formatDate(getVal(idxInvoiceDate, 38)) : formatDate(new Date()),
+        invoice_no: invoiceNo,
         status: 'INVOICED',
         created_at: new Date().toISOString()
-      };
-    });
+      });
+    }
 
     setParsedRows(rows);
+    setImportSummary({
+      total: grid.length - (headerRowIdx + 1),
+      newCount: rows.length,
+      duplicateCount
+    });
   };
 
-  // Confirm Bulk Invoices Import
+  const handleChallanFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportError(null);
+    setImportSummary(null);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const grid: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+        processChallanGrid(grid);
+      } catch (err: any) {
+        console.error('File parse error:', err);
+        setImportError('Could not parse Excel/CSV file. Ensure file is valid.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const handleConfirmBulkImport = () => {
     if (parsedRows.length === 0) return;
-    setRecords([...parsedRows, ...records]);
-    setIsImportModalOpen(false);
-    setCsvText('');
-    setParsedRows([]);
+    setIsImporting(true);
+
+    try {
+      const updated = [...parsedRows, ...records];
+      setRecords(updated);
+      saveChallansInventory(updated);
+
+      setIsImportModalOpen(false);
+      setParsedRows([]);
+      setImportSummary(null);
+    } catch (e: any) {
+      setImportError(e.message || 'Import failed.');
+    } finally {
+      setIsImporting(false);
+    }
   };
 
-  const handleConfirmDelivery = (recordId: string) => {
-    setRecords(prev => prev.map(r => r.id === recordId ? { ...r, status: 'DELIVERED' } : r));
-    setGatepassRecord(null);
+  const handleExportCSV = () => {
+    if (records.length === 0) return;
+
+    const rows = [
+      CHALLAN_HEADERS.join(','),
+      ...records.map(r => [
+        `"${r.booking_date}"`,
+        `"${r.challan_no}"`,
+        `"${r.challan_date}"`,
+        `"${r.delivery_date}"`,
+        `"${r.challan_type}"`,
+        `"${r.vin_no}"`,
+        `"${r.customer_name}"`,
+        `"${r.mobile}"`,
+        `"${r.city}"`,
+        `"${r.model}"`,
+        `"${r.variant}"`,
+        `"${r.colour}"`,
+        `"${r.sale_consultant}"`,
+        `"${r.team_leader}"`,
+        `"${r.financier_name}"`,
+        `"${r.corporate}"`,
+        `"${r.exchange}"`,
+        r.ex_showroom || 0,
+        r.discount || 0,
+        r.net || 0,
+        r.insurance_per || 0,
+        r.insurance_amount || 0,
+        r.ep || 0,
+        r.rti || 0,
+        r.cm || 0,
+        `"${r.rto_city}"`,
+        r.rto_amount || 0,
+        r.hml_acc || 0,
+        r.own_acc || 0,
+        r.acc_discount_amount || 0,
+        r.acc_amount || 0,
+        r.trc || 0,
+        r.warranty || 0,
+        r.handling_charges || 0,
+        r.other || 0,
+        r.fast_tag || 0,
+        r.tcs || 0,
+        r.net_amount || 0,
+        `"${r.invoice_date}"`,
+        `"${r.invoice_no}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Dhoot_Challan_Invoicing_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
+  // Filter Challans
+  const cleanSearch = search.trim().toLowerCase();
   const filteredRecords = records.filter(r => {
-    const cust = (r.customer_name || '').toLowerCase();
-    const ch = (r.challan_no || '').toLowerCase();
-    const inv = (r.invoice_no || '').toLowerCase();
-    const vin = (r.vin_no || '').toLowerCase();
-    const model = (r.model || '').toLowerCase();
-    const q = search.toLowerCase();
+    const matchesSearch = 
+      !cleanSearch ||
+      (r.customer_name || '').toLowerCase().includes(cleanSearch) ||
+      (r.challan_no || '').toLowerCase().includes(cleanSearch) ||
+      (r.invoice_no || '').toLowerCase().includes(cleanSearch) ||
+      (r.vin_no || '').toLowerCase().includes(cleanSearch) ||
+      (r.mobile || '').toLowerCase().includes(cleanSearch) ||
+      (r.model || '').toLowerCase().includes(cleanSearch);
 
-    const matchesSearch = cust.includes(q) || ch.includes(q) || inv.includes(q) || vin.includes(q) || model.includes(q);
-
-    if (statusFilter === 'INVOICED') return matchesSearch && r.status === 'INVOICED';
-    if (statusFilter === 'DELIVERED') return matchesSearch && r.status === 'DELIVERED';
     return matchesSearch;
   });
 
-  // Dynamic Billing KPI Metrics
-  const totalBillingCount = records.length;
-  const invoicedPendingHandover = records.filter(r => r.status === 'INVOICED').length;
-  const deliveredGatepassCount = records.filter(r => r.status === 'DELIVERED').length;
-  const totalNetInvoiceValue = records.reduce((sum, r) => sum + (Number(r.net_amount) || 1500000), 0);
+  const totalInvoicedAmount = records.reduce((sum, r) => sum + (Number(r.net_amount) || 0), 0);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
+    <div className="space-y-4 max-w-[1600px] mx-auto select-none pb-20">
       
-      {/* Top Header */}
+      {/* Top Banner */}
       <PageHeader
-        title="Invoicing & Gatepass Delivery"
-        subtitle="Generate tax invoices, calculate charges, and issue gate passes for customer delivery"
+        title="Challan & Tax Invoicing Register"
+        subtitle="40-Column Financial Ledger • Delivery Gate Passes, RTO, Insurance & Tax Invoice Records"
         action={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
-              <span>Import Excel Invoices</span>
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {records.length > 0 && (
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-ink-3" />
+                <span>Export CSV</span>
+              </button>
+            )}
 
             <button
-              onClick={() => setShowNewModal(true)}
-              className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              onClick={() => setIsImportModalOpen(true)}
+              className="h-8 px-3.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-white/80" />
-              <span>New Invoice</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 text-accent" />
+              <span>Bulk Import Challans</span>
             </button>
           </div>
         }
       />
 
-      {/* Billing & Invoicing KPI Cards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Total Invoices" value={totalBillingCount} note="Vouchers Created" />
-        <Stat label="Ready for Handover" value={invoicedPendingHandover} note="Gatepass Pending" tone="warn" />
-        <Stat label="Delivered" value={deliveredGatepassCount} note="Gatepass Signed" tone="ok" />
-        <Stat label="Total Billing Value" value={`₹${(totalNetInvoiceValue / 100000).toFixed(1)}L`} note="Net Dealership Turnover" />
+        <Stat label="Total Invoices" value={records.length} note="Financial Ledger" />
+        <Stat label="Total Turnover" value={`₹${(totalInvoicedAmount / 10000000).toFixed(2)} Cr`} note="Gross Invoiced Revenue" tone="ok" />
+        <Stat label="Delivery Ready" value={records.length} note="Gate Passes Issued" />
+        <Stat label="Active Dealerships" value={currentBrand.code === 'DHOOT-ALL' ? 'Tata & Hyundai' : currentBrand.name} note="Dealership Entity" tone="accent" />
       </div>
 
-      {/* Main Table Panel */}
-      <Panel
-        title="Commercial Invoices & Gatepasses"
-        action={
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
-              {(['ALL', 'INVOICED', 'DELIVERED'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setStatusFilter(tab)}
-                  className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-                    statusFilter === tab
-                      ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
-                      : 'text-ink-3 hover:text-ink-2'
-                  }`}
-                >
-                  {tab === 'ALL' ? 'All Invoices' : tab}
-                </button>
-              ))}
-            </div>
+      {/* Filter & Search Bar */}
+      <div className="p-3 bg-canvas border border-line rounded flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search Customer Name, Challan No (e.g. CHL-2026), Invoice No., VIN, Mobile, or Model..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-8 pl-9 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+            />
+          </div>
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="h-8 px-2.5 bg-surface border border-line hover:bg-canvas text-xs font-medium text-ink-3 rounded transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
-            <div className="relative w-48 sm:w-64">
-              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search Customer, Challan, VIN..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
-              />
-            </div>
+        <div className="flex items-center gap-1.5 text-xs text-ink-3">
+          <Hash className="w-3.5 h-3.5 text-accent" />
+          <span>Showing <strong>{filteredRecords.length}</strong> records</span>
+        </div>
+      </div>
+
+      {/* 40-Column Comprehensive Ledger Panel */}
+      <Panel
+        title={
+          <div className="flex items-center gap-2">
+            <span>Challan & Invoice Ledger</span>
+            <Badge tone="accent">{filteredRecords.length} Units</Badge>
           </div>
         }
       >
@@ -352,92 +518,143 @@ const SEED_CHALLANS: ChallanRecord[] = [
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
               <tr>
-                <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">Challan / Invoice</th>
-                <th className="py-2.5 px-3">VIN / Chassis</th>
-                <th className="py-2.5 px-3">Customer Name</th>
-                <th className="py-2.5 px-3">Vehicle Model</th>
-                <th className="py-2.5 px-3">Financier</th>
-                <th className="py-2.5 px-3 text-right">Ex-Showroom</th>
-                <th className="py-2.5 px-3 text-right">Net On-Road</th>
-                <th className="py-2.5 px-3">Invoice Date</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-center">Handover Actions</th>
+                <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Invoice No.</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Invoice Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Challan No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Challan Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Delivery Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Vin No</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Customer Name</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Mobile</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">City</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Model</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Variant</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Colour</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Consultant</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Financier</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Ex Showroom</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Discount</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Insurance</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">RTO Amt</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Acc Amt</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Fast Tag</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">TCS</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-right">Net Amount</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line text-ink-2 text-xs">
-              {filteredRecords.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={11}>
-                    <Empty title="0 Billing & Delivery Records Found" hint="Allocate stock to a customer booking or create a direct invoice to issue gatepass." />
+                  <td colSpan={24} className="py-12 text-center text-ink-3">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-accent" />
+                    Loading challan & invoice ledger...
+                  </td>
+                </tr>
+              ) : filteredRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={24}>
+                    <div className="py-12 text-center space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                        <Receipt className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-ink">0 Invoices in Ledger</p>
+                        <p className="text-xs text-ink-3 mt-1">
+                          Click Bulk Import Challans to upload daily delivery challan spreadsheet.
+                        </p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 filteredRecords.map((r, idx) => {
-                  const isHyundai = r.model.toLowerCase().includes('hyundai') || r.vin_no.startsWith('MAL');
                   return (
-                    <tr key={r.id} className="hover:bg-canvas transition-colors">
-                      <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
+                    <tr 
+                      key={r.id || idx} 
+                      className="hover:bg-canvas transition-colors cursor-pointer"
+                      onClick={() => setSelectedRecord(r)}
+                    >
+                      <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">
                         {idx + 1}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-medium text-ink">
-                        <div>{r.challan_no}</div>
-                        <div className="text-[10px] text-ink-3 font-normal">{r.invoice_no}</div>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">
+                        {r.invoice_no || '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-ink">
+                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
+                        {formatDate(r.invoice_date)}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-ink whitespace-nowrap">
+                        {r.challan_no}
+                      </td>
+                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
+                        {formatDate(r.challan_date)}
+                      </td>
+                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
+                        {formatDate(r.delivery_date)}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">
                         {r.vin_no}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <div className="font-medium text-ink">{r.customer_name}</div>
-                        <div className="text-[10px] text-ink-3">{r.city || 'Dealership'}</div>
+                      <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                        {r.customer_name}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center gap-1.5">
-                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
-                          <span className="font-medium text-ink">{r.model}</span>
-                        </div>
-                        <div className="text-[10px] text-ink-3">{r.variant}</div>
+                      <td className="py-2.5 px-3 font-mono text-ink-2 whitespace-nowrap">
+                        {r.mobile}
                       </td>
-                      <td className="py-2.5 px-3 text-ink-2">
-                        {r.financier_name || 'Self-Funded'}
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {r.city}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-ink text-right tnum">
-                        ₹{(r.ex_showroom || 0).toLocaleString('en-IN')}
+                      <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
+                        {r.model}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-ok text-right tnum">
-                        ₹{(r.net_amount || (Number(r.ex_showroom) + 150000)).toLocaleString('en-IN')}
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {r.variant}
                       </td>
-                      <td className="py-2.5 px-3 text-ink-3 tnum text-[11px]">
-                        {r.invoice_date || '2026-08-25'}
+                      <td className="py-2.5 px-3 text-ink-3 whitespace-nowrap">
+                        {r.colour}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <Badge tone={r.status === 'DELIVERED' ? 'ok' : 'accent'}>
-                          {r.status === 'DELIVERED' ? 'Vehicle Delivered' : 'Invoiced / Ready'}
-                        </Badge>
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {r.sale_consultant || '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                        {r.financier_name || 'Self Funded'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-medium text-ink tnum whitespace-nowrap">
+                        ₹{(Number(r.ex_showroom) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-danger tnum whitespace-nowrap">
+                        -₹{(Number(r.discount) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-ink-2 tnum whitespace-nowrap">
+                        ₹{(Number(r.insurance_amount) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-ink-2 tnum whitespace-nowrap">
+                        ₹{(Number(r.rto_amount) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-ink-2 tnum whitespace-nowrap">
+                        ₹{(Number(r.acc_amount) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-ink-3 tnum whitespace-nowrap">
+                        ₹{(Number(r.fast_tag) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-ink-3 tnum whitespace-nowrap">
+                        ₹{(Number(r.tcs) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-bold text-ink tnum whitespace-nowrap">
+                        ₹{(Number(r.net_amount) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1.5">
                           <button
+                            type="button"
                             onClick={() => setInvoicePreviewRecord(r)}
-                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            className="h-7 px-2.5 rounded bg-surface border border-line hover:border-line-strong text-ink text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
                           >
-                            <FileText className="w-3 h-3 text-ok" />
-                            <span>Tax Invoice</span>
+                            <Printer className="w-3 h-3 text-ink-3" />
+                            <span>Invoice</span>
                           </button>
-
-                          {r.status !== 'DELIVERED' ? (
-                            <button
-                              onClick={() => setGatepassRecord(r)}
-                              className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <Key className="w-3 h-3" />
-                              <span>Gatepass</span>
-                            </button>
-                          ) : (
-                            <span className="text-[11px] font-medium text-ok inline-flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> Delivered
-                            </span>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -450,489 +667,258 @@ const SEED_CHALLANS: ChallanRecord[] = [
       </Panel>
 
       {/* ========================================================================= */}
-      {/* MODAL 1: OFFICIAL DELIVERY GATEPASS & HANDOVER DIALOG                     */}
-      {/* ========================================================================= */}
-      {gatepassRecord && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-emerald-400" />
-                <div>
-                  <h3 className="font-bold">Dealership Delivery Handover Gatepass</h3>
-                  <p className="text-[10px] text-emerald-200">Security Gate Authorization • Chassis Handover</p>
-                </div>
-              </div>
-              <button onClick={() => setGatepassRecord(null)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs">
-              <div className="border border-line rounded p-4 bg-canvas space-y-3 font-mono">
-                <div className="flex justify-between border-b border-line pb-2">
-                  <div>
-                    <span className="font-bold text-slate-900 text-sm">{currentBrand.name} Handover Desk</span>
-                    <div className="text-[10px] text-slate-500">Gatepass No: GP-{gatepassRecord.challan_no.replace('CHL-', '')}</div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-bold text-slate-800">Date: {formatDate(new Date())}</span>
-                    <div className="text-[10px] text-emerald-700 font-bold">✓ PDI Certified & Cleaned</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div>Customer: <strong>{gatepassRecord.customer_name}</strong></div>
-                  <div>Phone: <strong>{gatepassRecord.mobile_no || '+91 98765 43210'}</strong></div>
-                  <div>Model: <strong>{gatepassRecord.model}</strong></div>
-                  <div>Color: <strong>{gatepassRecord.colour}</strong></div>
-                  <div className="col-span-2">VIN Number: <strong className="text-slate-900">{gatepassRecord.vin_no}</strong></div>
-                  <div>Handover Odometer: <strong>14 KM</strong></div>
-                  <div>Keys Handed: <strong>2 Remote Fobs</strong></div>
-                </div>
-
-                <div className="pt-2 border-t border-line text-[10px] text-slate-500">
-                  Customer has inspected the vehicle, received toolkit, owner manual, Fastag and confirms delivery in pristine condition.
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setGatepassRecord(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleConfirmDelivery(gatepassRecord.id)}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Authorize Gate Exit & Mark Delivered</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL 2: OFFICIAL DEALERSHIP TAX INVOICE PRINT PREVIEW                    */}
-      {/* ========================================================================= */}
-      {invoicePreviewRecord && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-emerald-400" />
-                <div>
-                  <h3 className="font-bold">Dealership Tax Invoice • {invoicePreviewRecord.invoice_no}</h3>
-                  <p className="text-[10px] text-slate-400">GSTIN: 27AABCD1234F1Z5 • State: Maharashtra (27)</p>
-                </div>
-              </div>
-              <button onClick={() => setInvoicePreviewRecord(null)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="border border-line rounded p-4 bg-canvas/50 space-y-3 font-mono">
-                
-                {/* Header Info */}
-                <div className="flex justify-between border-b border-line pb-2">
-                  <div>
-                    <span className="font-bold text-ink text-sm">
-    {invoicePreviewRecord.model?.toLowerCase().includes('hyundai') 
-      ? 'Hyundai Motor India Authorized Dealership (Dhoot Hyundai)' 
-      : 'Tata Motors Authorized Dealership (Dhoot Motors)'}
-  </span>
-                    <div className="text-[10px] text-slate-500">Authorized Dealership Network</div>
-                  </div>
-                  <div className="text-right">
-                    <div>Invoice No: <strong>{invoicePreviewRecord.invoice_no}</strong></div>
-                    <div>Date: <strong>{formatDate(invoicePreviewRecord.invoice_date || invoicePreviewRecord.created_at || new Date())}</strong></div>
-                  </div>
-                </div>
-
-                {/* Customer Details */}
-                <div className="grid grid-cols-2 gap-2 text-[11px] border-b border-line pb-2">
-                  <div>Billed To: <strong>{invoicePreviewRecord.customer_name}</strong></div>
-                  <div>Chassis VIN: <strong>{invoicePreviewRecord.vin_no}</strong></div>
-                  <div>Model: <strong>{invoicePreviewRecord.model} ({invoicePreviewRecord.variant})</strong></div>
-                  <div>Financier: <strong>{invoicePreviewRecord.financier_name || 'Self-Funded'}</strong></div>
-                </div>
-
-                {/* Pricing Table */}
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-[#EEF2F8] text-[#1A3A6B] font-semibold border-b border-[#C9D6E8]">
-                    <tr>
-                      <th className="py-1.5 px-2">Description</th>
-                      <th className="py-1.5 px-2 text-right">Amount (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 text-slate-800">
-                    <tr>
-                      <td className="py-1.5 px-2">Ex-Showroom Price</td>
-                      <td className="py-1.5 px-2 text-right font-bold">₹{(invoicePreviewRecord.ex_showroom || 0).toLocaleString('en-IN')}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1.5 px-2">Dealership Scheme Discount</td>
-                      <td className="py-1.5 px-2 text-right text-rose-700">- ₹{(invoicePreviewRecord.discount || 0).toLocaleString('en-IN')}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1.5 px-2">Comprehensive Insurance (1+3 Years Zero Dep)</td>
-                      <td className="py-1.5 px-2 text-right">₹{(invoicePreviewRecord.insurance_amount || 42000).toLocaleString('en-IN')}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1.5 px-2">State RTO Tax & Registration Fees</td>
-                      <td className="py-1.5 px-2 text-right">₹{(invoicePreviewRecord.rto_amount || 145000).toLocaleString('en-IN')}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1.5 px-2">OEM Genuine Accessories Kit</td>
-                      <td className="py-1.5 px-2 text-right">₹{(invoicePreviewRecord.acc_amount || 18000).toLocaleString('en-IN')}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1.5 px-2">Fastag & Mandatory Handling</td>
-                      <td className="py-1.5 px-2 text-right">₹{(invoicePreviewRecord.fast_tag || 500).toLocaleString('en-IN')}</td>
-                    </tr>
-                    <tr className="bg-slate-100 font-bold text-sm">
-                      <td className="py-2 px-2 text-slate-900">Total Net On-Road Payable:</td>
-                      <td className="py-2 px-2 text-right text-emerald-700">₹{(invoicePreviewRecord.net_amount || 0).toLocaleString('en-IN')}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setInvoicePreviewRecord(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.print();
-                  }}
-                  className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Tax Invoice</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL 3: NEW PRE-CHALLAN / INVOICE FORM                                   */}
-      {/* ========================================================================= */}
-      {showNewModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <h3 className="font-bold text-slate-900">Generate Pre-Challan / Tax Invoice</h3>
-              <button onClick={() => setShowNewModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateInvoice} className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Challan Number *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newInvoice.challan_no}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, challan_no: e.target.value })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Tax Invoice Number *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newInvoice.invoice_no}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, invoice_no: e.target.value })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Customer Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Anand Mahindra"
-                    value={newInvoice.customer_name}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, customer_name: e.target.value })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-semibold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Chassis / VIN Number</label>
-                  <input
-                    type="text"
-                    placeholder="MAT612345N1234567"
-                    value={newInvoice.vin_no}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, vin_no: e.target.value })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono uppercase font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Vehicle Model *</label>
-                  <select
-                    value={newInvoice.model}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, model: e.target.value })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
-                  >
-                    {currentBrand.models.map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Financier Institution</label>
-                  <input
-                    type="text"
-                    placeholder="HDFC Bank / SBI Auto Loan"
-                    value={newInvoice.financier_name}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, financier_name: e.target.value })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Ex-Showroom Price (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={newInvoice.ex_showroom}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, ex_showroom: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Insurance Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={newInvoice.insurance_amount}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, insurance_amount: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">State RTO Tax (₹)</label>
-                  <input
-                    type="number"
-                    value={newInvoice.rto_amount}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, rto_amount: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Scheme Discount (₹)</label>
-                  <input
-                    type="number"
-                    value={newInvoice.discount}
-                    onChange={(e) => setNewInvoice({ ...newInvoice, discount: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono text-rose-700"
-                  />
-                </div>
-
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
-                  Cancel
-                </button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  Generate Pre-Challan & Invoice
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL 4: BULK EXCEL INVOICE & CHALLAN IMPORTER                             */}
+      {/* MODAL: BULK CHALLAN & INVOICE IMPORTER (40 COLUMNS)                       */}
       {/* ========================================================================= */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 select-none">
-          <div className="bg-surface text-ink w-full max-w-5xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[92vh]">
-            
-            {/* Header */}
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none">
+          <div className="bg-surface text-ink w-full max-w-4xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[90vh]">
             <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
                   <FileSpreadsheet className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">Bulk Import Dealership Tax Invoices & Pre-Challans</h3>
-                  <p className="text-xs text-ink-3 mt-0.5">Commercial 16-Field Invoicing Ledger • Fast Spreadsheet Parser</p>
+                  <h2 className="text-sm font-semibold text-ink">
+                    Bulk Import Challans & Tax Invoices
+                  </h2>
+                  <p className="text-xs text-ink-3">Upload Excel 97-2003 (.xls), Excel (.xlsx), or CSV containing 40 Delivery & Financial columns</p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadSampleChallans}
-                  className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Download className="w-3.5 h-3.5 text-accent" />
-                  <span>Download Sample CSV</span>
-                </button>
-                <button 
-                  onClick={() => setIsImportModalOpen(false)} 
-                  className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* Body */}
-            <div className="p-5 space-y-4 overflow-y-auto text-xs flex-1">
-              
-              {/* Recognized Columns */}
-              <div className="p-3 bg-canvas border border-line rounded space-y-1.5 text-xs">
-                <span className="eyebrow block text-accent">Recognized 16 Billing Columns:</span>
-                <p className="text-ink-2 font-mono text-[11px] leading-relaxed break-words">
-                  Challan No • <strong className="text-accent underline font-semibold">Invoice No</strong> • Challan Date • Invoice Date • Customer Name • Mobile No • Model • Variant • Colour • VIN Number • Ex-Showroom • Insurance • RTO Tax • Scheme Discount • Fastag • Financier
-                </p>
-              </div>
-
-              {/* Paste or Upload Area */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-ink">
-                    Paste Spreadsheet Billing Data (from Excel / CSV / Google Sheets):
-                  </label>
-
-                  <label className="h-7 px-2.5 bg-accent-soft hover:bg-accent-line/30 border border-accent-line text-accent text-xs font-semibold rounded transition-colors inline-flex items-center gap-1.5 cursor-pointer">
-                    <Upload className="w-3 h-3" />
-                    <span>Upload CSV / TSV File</span>
-                    <input
-                      type="file"
-                      accept=".csv,.txt,.tsv,.xlsx"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => handleParseChallanText(event.target?.result as string);
-                          reader.readAsText(file);
-                        }
-                      }}
-                    />
-                  </label>
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 bg-canvas border border-line rounded flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-ink text-xs">Download 40-Column Template</h4>
+                    <p className="text-[11px] text-ink-3 mt-0.5">Includes full financial, RTO, insurance headers</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadTemplate}
+                    className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-ink font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download</span>
+                  </button>
                 </div>
 
-                <textarea
-                  rows={5}
-                  placeholder="Challan No\tInvoice No\tChallan Date\tInvoice Date\tCustomer Name\tMobile No\tModel\tVariant\tColour\tVIN Number\tEx-Showroom\tInsurance\tRTO Tax\tScheme Discount\tFastag\tFinancier"
-                  value={csvText}
-                  onChange={(e) => handleParseChallanText(e.target.value)}
-                  className="w-full p-3 font-mono text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent"
-                />
+                <label className="p-3.5 bg-canvas border border-dashed border-line hover:border-accent rounded flex items-center justify-between cursor-pointer transition-colors">
+                  <div>
+                    <h4 className="font-semibold text-ink text-xs">Select Excel / CSV File</h4>
+                    <p className="text-[11px] text-ink-3 mt-0.5">Supports .xlsx, .xls (97-2003), .csv, .tsv</p>
+                  </div>
+                  <div className="h-8 px-3 rounded bg-accent text-white font-semibold flex items-center gap-1.5 shadow-xs">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload File</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.tsv,.txt"
+                    className="hidden"
+                    onChange={handleChallanFileUpload}
+                  />
+                </label>
               </div>
 
-              {/* Parsed Verification Summary & Table */}
-              {parsedRows.length > 0 && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                    <div className="p-2.5 bg-canvas border border-line rounded">
-                      <span className="eyebrow block">Total Rows</span>
-                      <div className="text-base font-semibold text-ink tnum mt-0.5">{parsedRows.length}</div>
-                    </div>
-                    <div className="p-2.5 bg-ok/10 border border-ok/20 rounded">
-                      <span className="eyebrow block text-ok">Valid Commercial Invoices</span>
-                      <div className="text-base font-semibold text-ok tnum mt-0.5">{parsedRows.length}</div>
-                    </div>
-                    <div className="p-2.5 bg-accent-soft border border-accent-line rounded">
-                      <span className="eyebrow block text-accent">Dealership Entity</span>
-                      <div className="text-base font-semibold text-accent mt-0.5 truncate">{currentBrand.name}</div>
-                    </div>
+              {/* Import Summary */}
+              {importSummary && (
+                <div className="p-3 bg-ok/10 border border-ok/30 rounded flex items-center justify-between flex-wrap gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-ok" />
+                    <span className="font-semibold text-ok">
+                      Parsed {importSummary.total} rows • {importSummary.newCount} New Challans ready to import
+                    </span>
                   </div>
-
-                  <div className="border border-line rounded overflow-hidden">
-                    <div className="max-h-52 overflow-y-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px] sticky top-0">
-                          <tr>
-                            <th className="py-2 px-3">Challan / Invoice</th>
-                            <th className="py-2 px-3">Customer</th>
-                            <th className="py-2 px-3">Model & VIN</th>
-                            <th className="py-2 px-3">Financier</th>
-                            <th className="py-2 px-3 text-right">Net Deal Payable</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-line text-ink-2">
-                          {parsedRows.map((r, i) => (
-                            <tr key={i} className="hover:bg-canvas/60">
-                              <td className="py-1.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">{r.challan_no} / {r.invoice_no}</td>
-                              <td className="py-1.5 px-3 font-medium text-ink whitespace-nowrap">{r.customer_name}</td>
-                              <td className="py-1.5 px-3 whitespace-nowrap">
-                                <span className="font-medium text-ink block">{r.model}</span>
-                                <span className="font-mono text-[10px] text-ink-3">{r.vin_no}</span>
-                              </td>
-                              <td className="py-1.5 px-3 text-ink-2 whitespace-nowrap">{r.financier_name || 'Direct / Cash'}</td>
-                              <td className="py-1.5 px-3 font-semibold text-ink tnum text-right whitespace-nowrap">₹{r.net_amount?.toLocaleString('en-IN')}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                  {importSummary.duplicateCount > 0 && (
+                    <span className="text-ink-3">
+                      ({importSummary.duplicateCount} duplicate records skipped)
+                    </span>
+                  )}
                 </div>
               )}
 
               {importError && (
-                <div className="p-3 bg-danger/10 border border-danger/20 rounded text-danger text-xs font-semibold flex items-center gap-2">
+                <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded flex items-center gap-2 text-xs">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{importError}</span>
                 </div>
               )}
+
+              {/* Parsed Preview Table */}
+              {parsedRows.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-ink text-xs">
+                    Preview Parsed Challans ({parsedRows.length} rows)
+                  </h4>
+                  <div className="border border-line rounded overflow-x-auto max-h-56">
+                    <table className="w-full text-left border-collapse text-[11px]">
+                      <thead className="bg-canvas border-b border-line font-semibold text-ink-2 uppercase">
+                        <tr>
+                          <th className="py-2 px-3">Challan No</th>
+                          <th className="py-2 px-3">Invoice No</th>
+                          <th className="py-2 px-3">VIN</th>
+                          <th className="py-2 px-3">Customer</th>
+                          <th className="py-2 px-3">Model</th>
+                          <th className="py-2 px-3 text-right">Net Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-line text-ink-2">
+                        {parsedRows.slice(0, 10).map((r, idx) => (
+                          <tr key={idx} className="hover:bg-canvas">
+                            <td className="py-1.5 px-3 font-mono font-semibold whitespace-nowrap">{r.challan_no}</td>
+                            <td className="py-1.5 px-3 font-mono whitespace-nowrap">{r.invoice_no}</td>
+                            <td className="py-1.5 px-3 font-mono whitespace-nowrap">{r.vin_no}</td>
+                            <td className="py-1.5 px-3 font-medium whitespace-nowrap">{r.customer_name}</td>
+                            <td className="py-1.5 px-3 whitespace-nowrap">{r.model}</td>
+                            <td className="py-1.5 px-3 text-right font-bold whitespace-nowrap">₹{Number(r.net_amount).toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Footer */}
-            <div className="px-5 py-3.5 border-t border-line bg-canvas flex items-center justify-between">
-              <div className="text-xs text-ink-3 font-medium">
-                {parsedRows.length > 0 ? (
-                  <span>Ready to import <strong>{parsedRows.length}</strong> invoices</span>
-                ) : (
-                  <span>Paste billing spreadsheet data or upload file above</span>
-                )}
-              </div>
+            <div className="p-4 border-t border-line flex items-center justify-end gap-2.5 bg-canvas">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="h-8 px-4 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={parsedRows.length === 0 || isImporting}
+                onClick={handleConfirmBulkImport}
+                className="h-8 px-5 rounded bg-accent hover:bg-accent-600 disabled:opacity-50 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Import {parsedRows.length} Records to Ledger</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsImportModalOpen(false)}
-                  className="h-8 px-4 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={parsedRows.length === 0 || isImporting}
-                  onClick={handleConfirmBulkImport}
-                  className="h-8 px-5 rounded bg-accent hover:bg-accent-600 disabled:opacity-40 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                  <span>Import {parsedRows.length} Invoices to Ledger</span>
-                </button>
+      {/* ========================================================================= */}
+      {/* MODAL: PRINTABLE TAX INVOICE PREVIEW                                      */}
+      {/* ========================================================================= */}
+      {invoicePreviewRecord && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-2xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2">
+                <Printer className="w-4 h-4 text-accent" />
+                <span className="text-sm font-semibold text-ink">Tax Invoice Preview</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInvoicePreviewRecord(null)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs font-sans">
+              <div className="border border-line rounded p-5 space-y-4 bg-white text-slate-900">
+                <div className="flex justify-between items-start border-b pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">
+                      {invoicePreviewRecord.model?.toLowerCase().includes('hyundai') 
+                        ? 'Hyundai Motor India Authorized Dealership (Dhoot Hyundai)' 
+                        : 'Tata Motors Authorized Dealership (Dhoot Motors)'}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">Official Commercial Tax Invoice & Vehicle Gate Delivery Pass</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-sm text-slate-800">{invoicePreviewRecord.invoice_no}</span>
+                    <p className="text-[11px] text-slate-500">Date: {invoicePreviewRecord.invoice_date}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Billed Customer</span>
+                    <strong className="block text-slate-900">{invoicePreviewRecord.customer_name}</strong>
+                    <span className="text-slate-600 font-mono">{invoicePreviewRecord.mobile} • {invoicePreviewRecord.city}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Vehicle Details</span>
+                    <strong className="block text-slate-900">{invoicePreviewRecord.model}</strong>
+                    <span className="text-slate-600">{invoicePreviewRecord.variant} • {invoicePreviewRecord.colour}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Chassis / VIN</span>
+                    <span className="font-mono font-bold text-slate-900">{invoicePreviewRecord.vin_no}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block uppercase">Financier</span>
+                    <span className="text-slate-900 font-medium">{invoicePreviewRecord.financier_name || 'Self Funded'}</span>
+                  </div>
+                </div>
+
+                {/* Financial Summary */}
+                <div className="border-t pt-3 space-y-1.5 text-[11px]">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Ex-Showroom Price:</span>
+                    <span>₹{Number(invoicePreviewRecord.ex_showroom).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-red-600">
+                    <span>Discount:</span>
+                    <span>-₹{Number(invoicePreviewRecord.discount).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Insurance Amount:</span>
+                    <span>₹{Number(invoicePreviewRecord.insurance_amount).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>RTO Registration Amount:</span>
+                    <span>₹{Number(invoicePreviewRecord.rto_amount).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Accessories Amount:</span>
+                    <span>₹{Number(invoicePreviewRecord.acc_amount).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Fast Tag & Others:</span>
+                    <span>₹{(Number(invoicePreviewRecord.fast_tag) + Number(invoicePreviewRecord.tcs)).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-sm border-t pt-2 text-slate-900">
+                    <span>Total Invoiced Net Amount:</span>
+                    <span>₹{Number(invoicePreviewRecord.net_amount).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
+            <div className="p-4 border-t border-line flex items-center justify-end gap-2.5 bg-canvas">
+              <button
+                type="button"
+                onClick={() => setInvoicePreviewRecord(null)}
+                className="h-8 px-4 rounded bg-surface border border-line text-xs font-semibold text-ink"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="h-8 px-5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Tax Invoice PDF</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

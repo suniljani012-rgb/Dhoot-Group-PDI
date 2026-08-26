@@ -19,7 +19,7 @@ export interface BranchItem {
   code: string;
   name: string;
   brand: 'Tata Motors' | 'Hyundai' | 'Shared';
-  type: string;
+  type: 'Main Showroom' | 'RSO';
   city: string;
   state: string;
   capacity: string;
@@ -134,16 +134,10 @@ export const saveBranches = (branches: BranchItem[]) => {
   window.dispatchEvent(new Event('branches-updated'));
 };
 
-// Default empty vehicles
+// Clean zero dummy data: Start empty so real imports dictate counts
 export const SEED_VEHICLES: any[] = [];
-
-export const SEED_BOOKINGS = [
-  { id: "bk-1", receipt_no: "BK-009101", customer_name: "Ramesh Chandra Sharma", mobile_number: "+91 98290 11223", model: "Tata Safari", variant: "Accomplished Plus 6S AT", colour: "Oberon Black", allocated_vin_no: "MAT612345S9988771", allocation_date: "2026-08-24", receipt_amt: 50000, status: "ALLOCATED", sales_consultant: "Sunil Sharma", promise_delivery_date: "2026-08-30", organization_id: TATA_ORG_ID, created_at: "2026-08-20T10:00:00Z" },
-  { id: "bk-2", receipt_no: "BK-009102", customer_name: "Priya Kulkarni", mobile_number: "+91 98220 33445", model: "Tata Tiago", variant: "XZ+ Dual Tone", colour: "Tornado Blue", allocated_vin_no: "MAT612345T2233447", allocation_date: "2026-08-25", receipt_amt: 25000, status: "ALLOCATED", sales_consultant: "Rajesh Nair", promise_delivery_date: "2026-08-28", organization_id: TATA_ORG_ID, created_at: "2026-08-21T11:00:00Z" },
-  { id: "bk-3", receipt_no: "BK-009103", customer_name: "Rajesh Kumar Verma", mobile_number: "+91 94140 55667", model: "Hyundai Creta", variant: "SX (O) Turbo DCT", colour: "Ranger Khaki", allocated_vin_no: "MALC12345C1122331", allocation_date: "2026-08-24", receipt_amt: 50000, status: "ALLOCATED", sales_consultant: "Manish Rathore", promise_delivery_date: "2026-08-29", organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-20T15:00:00Z" },
-  { id: "bk-4", receipt_no: "BK-009104", customer_name: "Anita Desai", mobile_number: "+91 98291 77889", model: "Hyundai i20", variant: "Asta (O) IVT", colour: "Starry Night", allocated_vin_no: "MALC12345I6677886", allocation_date: "2026-08-25", receipt_amt: 25000, status: "ALLOCATED", sales_consultant: "Karan Joshi", promise_delivery_date: "2026-08-31", organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-22T09:30:00Z" },
-  { id: "bk-5", receipt_no: "BK-009105", customer_name: "Sunil Gupta", mobile_number: "+91 98292 99001", model: "Hyundai Verna", variant: "SX 1.5 MPI IVT", colour: "Fiery Red", allocated_vin_no: "MALC12345V0011220", allocation_date: "2026-08-25", receipt_amt: 30000, status: "ALLOCATED", sales_consultant: "Manish Rathore", promise_delivery_date: "2026-09-02", organization_id: HYUNDAI_ORG_ID, created_at: "2026-08-23T14:00:00Z" }
-];
+export const SEED_BOOKINGS: any[] = [];
+export const SEED_CHALLANS: any[] = [];
 
 export const getVehiclesForBrand = (brandCode: string) => {
   try {
@@ -159,10 +153,7 @@ export const getVehiclesForBrand = (brandCode: string) => {
   } catch (e) {
     console.warn('Error reading stock from storage:', e);
   }
-  
-  if (brandCode === 'DHOOT-TATA') return SEED_VEHICLES.filter(v => v.organization_id === TATA_ORG_ID);
-  if (brandCode === 'DHOOT-HYUNDAI') return SEED_VEHICLES.filter(v => v.organization_id === HYUNDAI_ORG_ID);
-  return SEED_VEHICLES;
+  return [];
 };
 
 export const saveStockInventory = (vehicles: any[]) => {
@@ -176,7 +167,55 @@ export const clearStockInventory = () => {
 };
 
 export const getBookingsForBrand = (brandCode: string) => {
-  if (brandCode === 'DHOOT-TATA') return SEED_BOOKINGS.filter(b => b.organization_id === TATA_ORG_ID);
-  if (brandCode === 'DHOOT-HYUNDAI') return SEED_BOOKINGS.filter(b => b.organization_id === HYUNDAI_ORG_ID);
-  return SEED_BOOKINGS;
+  try {
+    const saved = localStorage.getItem('dhoot_bookings_inventory');
+    if (saved) {
+      const parsed: any[] = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        if (brandCode === 'DHOOT-TATA') return parsed.filter(b => (b.organization_id === TATA_ORG_ID || (b.model && b.model.toLowerCase().includes('tata'))));
+        if (brandCode === 'DHOOT-HYUNDAI') return parsed.filter(b => (b.organization_id === HYUNDAI_ORG_ID || (b.model && b.model.toLowerCase().includes('hyundai'))));
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading bookings from storage:', e);
+  }
+  return [];
+};
+
+export const saveBookingsInventory = (bookings: any[]) => {
+  localStorage.setItem('dhoot_bookings_inventory', JSON.stringify(bookings));
+  window.dispatchEvent(new Event('bookings-updated'));
+};
+
+export const clearBookingsInventory = () => {
+  localStorage.removeItem('dhoot_bookings_inventory');
+  window.dispatchEvent(new Event('bookings-updated'));
+};
+
+export const getChallansForBrand = (brandCode: string) => {
+  try {
+    const saved = localStorage.getItem('dhoot_challans_inventory');
+    if (saved) {
+      const parsed: any[] = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        if (brandCode === 'DHOOT-TATA') return parsed.filter(c => (c.model && c.model.toLowerCase().includes('tata')));
+        if (brandCode === 'DHOOT-HYUNDAI') return parsed.filter(c => (c.model && c.model.toLowerCase().includes('hyundai')));
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading challans from storage:', e);
+  }
+  return [];
+};
+
+export const saveChallansInventory = (challans: any[]) => {
+  localStorage.setItem('dhoot_challans_inventory', JSON.stringify(challans));
+  window.dispatchEvent(new Event('challans-updated'));
+};
+
+export const clearChallansInventory = () => {
+  localStorage.removeItem('dhoot_challans_inventory');
+  window.dispatchEvent(new Event('challans-updated'));
 };
