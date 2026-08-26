@@ -37,17 +37,21 @@ export interface BookingRecord {
   created_at?: string;
 }
 
-// Smart PBNA to VNA Matcher (Model + Variant + Colour)
-const normalizeStr = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-const getMatchScore = (booking: BookingRecord, stock: any): number => {
-  const mMatch = normalizeStr(booking.model) === normalizeStr(stock.model);
-  const vMatch = normalizeStr(booking.variant) === normalizeStr(stock.variant);
-  const cMatch = normalizeStr(booking.colour) === normalizeStr(stock.color || stock.colour);
-  if (mMatch && vMatch && cMatch) return 3; // Exact Match (Model + Variant + Colour)
-  if (mMatch && vMatch) return 2; // Model & Variant Match
-  if (mMatch) return 1; // Model Match
-  return 0;
+
+// Strict 3-Way PBNA/VNA Matcher: ALL 3 (Model, Variant, Colour) must match exactly
+const norm = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const isExact3WayMatch = (booking: BookingRecord, stock: any): boolean => {
+  const bModel = norm(booking.model);
+  const bVariant = norm(booking.variant);
+  const bColor = norm(booking.colour);
+
+  const sModel = norm(stock.model);
+  const sVariant = norm(stock.variant);
+  const sColor = norm(stock.color || stock.colour);
+
+  return bModel === sModel && bVariant === sVariant && bColor === sColor;
 };
 
 export const BookingsPage: React.FC = () => {
@@ -66,6 +70,7 @@ export const BookingsPage: React.FC = () => {
   const [allocatingBooking, setAllocatingBooking] = useState<BookingRecord | null>(null);
   const [selectedStockVin, setSelectedStockVin] = useState('');
   const [voucherBooking, setVoucherBooking] = useState<BookingRecord | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Bulk Excel Import State
@@ -121,76 +126,6 @@ export const BookingsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 1-Click Auto-Match PBNA (Unallocated Bookings) with VNA (Available Stock)
-  const handleAutoMatchPbnaToVna = () => {
-    const unallocatedBookings = bookings.filter(b => !b.allocated_vin_no);
-    if (unallocatedBookings.length === 0) {
-      alert('All customer bookings already have allocated VINs!');
-      return;
-    }
-
-    const availableStock = stockVehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED');
-    if (availableStock.length === 0) {
-      alert('No unallocated free vehicle stock available to match!');
-      return;
-    }
-
-    let matchCount = 0;
-    const allocatedVinSet = new Set<string>();
-    const updatedBookings = [...bookings];
-    const updatedStock = [...stockVehicles];
-
-    // Priority 1: Exact Match (Model + Variant + Colour)
-    // Priority 2: Model + Variant Match
-    for (let priority = 3; priority >= 2; priority--) {
-      for (let i = 0; i < updatedBookings.length; i++) {
-        const b = updatedBookings[i];
-        if (b.allocated_vin_no) continue;
-
-        const matchingStockIndex = updatedStock.findIndex(v => {
-          if (v.customer_name || v.status === 'ALLOCATED' || allocatedVinSet.has(v.vin)) return false;
-          return getMatchScore(b, v) === priority;
-        });
-
-        if (matchingStockIndex !== -1) {
-          const matchedVeh = updatedStock[matchingStockIndex];
-          allocatedVinSet.add(matchedVeh.vin);
-
-          // Update Booking
-          updatedBookings[i] = {
-            ...b,
-            allocated_vin_no: matchedVeh.vin,
-            status: 'ALLOCATED'
-          };
-
-          // Update Vehicle Stock
-          updatedStock[matchingStockIndex] = {
-            ...matchedVeh,
-            customer_name: b.customer_name,
-            status: 'ALLOCATED',
-            vehicle_status: 'ALLOCATED',
-            allocation_date: new Date().toISOString().split('T')[0],
-            allocated_days: 0
-          };
-
-          matchCount++;
-        }
-      }
-    }
-
-    if (matchCount === 0) {
-      alert('No matching unallocated stock found with identical Model, Variant and Colour.');
-      return;
-    }
-
-    setBookings(updatedBookings);
-    setStockVehicles(updatedStock);
-    saveBookingsInventory(updatedBookings);
-    saveStockInventory(updatedStock);
-
-    alert(`✨ Successfully auto-matched ${matchCount} PBNA Booking(s) with VNA Stock by Model, Variant & Colour!`);
   };
 
   const handleCreateBooking = (e: React.FormEvent) => {
@@ -545,12 +480,12 @@ export const BookingsPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={handleAutoMatchPbnaToVna}
-              className="h-8 px-3.5 rounded bg-ok hover:bg-ok-600 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-              title="Auto-match Unallocated Bookings (PBNA) to Unallocated Stock (VNA) by Model, Variant & Colour"
+              onClick={() => setShowReportModal(true)}
+              className="h-8 px-3.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              title="View Comprehensive PBNA & VNA Stock Matching & Indent Report"
             >
-              <CheckCheck className="w-3.5 h-3.5" />
-              <span>Auto-Match PBNA & VNA</span>
+              <FileText className="w-3.5 h-3.5 text-accent" />
+              <span>PBNA / VNA Report</span>
             </button>
 
             <button
@@ -568,7 +503,8 @@ export const BookingsPage: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Total Bookings" value={bookings.length} note="Customer Ledger" />
         <Stat label="VIN Allocated" value={allocatedCount} note="Ready for Invoicing" tone="ok" />
-        <Stat label="Pending Allocation" value={pendingAllocationCount} note="Waiting for Stock" tone={pendingAllocationCount > 0 ? "warn" : "default"} />
+        <Stat label="PBNA (In Stock)" value={bookings.filter(b => !b.allocated_vin_no && stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Ready for Allotment" tone="warn" />
+        <Stat label="Not in Stock (VNA)" value={bookings.filter(b => !b.allocated_vin_no && !stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Factory Indent Needed" tone="danger" />
         <Stat label="Total Advance Collected" value={`₹${(totalAmountReceived / 100000).toFixed(2)} L`} note="Receipts Total" tone="accent" />
       </div>
 
@@ -602,8 +538,8 @@ export const BookingsPage: React.FC = () => {
             className="h-8 text-xs bg-surface border border-line rounded px-2.5 text-ink focus:outline-none focus:border-accent font-medium shadow-xs"
           >
             <option value="ALL">All Bookings ({bookings.length})</option>
-            <option value="PENDING_ALLOCATION">Pending Allocation ({pendingAllocationCount})</option>
             <option value="ALLOCATED">VIN Allocated ({allocatedCount})</option>
+            <option value="PENDING_ALLOCATION">Unallocated ({pendingAllocationCount})</option>
           </select>
         </div>
       </div>
@@ -701,9 +637,18 @@ export const BookingsPage: React.FC = () => {
                           <span className="font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded border border-ok/20">
                             {b.allocated_vin_no}
                           </span>
-                        ) : (
-                          <span className="text-warn italic">Pending Stock</span>
-                        )}
+                        ) : (() => {
+                          const hasStock = stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v));
+                          return hasStock ? (
+                            <span className="font-semibold text-warn bg-warn/10 px-2 py-0.5 rounded border border-warn/30 text-[11px]">
+                              PBNA (In Stock)
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-danger bg-danger/10 px-2 py-0.5 rounded border border-danger/30 text-[11px]">
+                              Not in Stock (VNA)
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
                         {b.delivery_date ? formatDate(b.delivery_date) : '—'}
@@ -1093,10 +1038,8 @@ export const BookingsPage: React.FC = () => {
                 </label>
                 {(() => {
                   const unallocated = stockVehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED');
-                  const exactMatches = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 3);
-                  const variantMatches = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 2);
-                  const modelMatches = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 1);
-                  const otherStock = unallocated.filter(v => getMatchScore(allocatingBooking, v) === 0);
+                  const exactMatches = unallocated.filter(v => isExact3WayMatch(allocatingBooking, v));
+                  const otherStock = unallocated.filter(v => !isExact3WayMatch(allocatingBooking, v));
 
                   return (
                     <select
@@ -1106,26 +1049,8 @@ export const BookingsPage: React.FC = () => {
                     >
                       <option value="">-- Choose Stock Vehicle --</option>
                       {exactMatches.length > 0 && (
-                        <optgroup label="✨ EXACT MATCHES (Model + Variant + Colour)">
+                        <optgroup label="✨ EXACT 3-WAY MATCHES (Model + Variant + Colour)">
                           {exactMatches.map(v => (
-                            <option key={v.vin} value={v.vin}>
-                              {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {variantMatches.length > 0 && (
-                        <optgroup label="Model & Variant Matches">
-                          {variantMatches.map(v => (
-                            <option key={v.vin} value={v.vin}>
-                              {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {modelMatches.length > 0 && (
-                        <optgroup label="Model Only Matches">
-                          {modelMatches.map(v => (
                             <option key={v.vin} value={v.vin}>
                               {v.vin} • {v.model} ({v.variant}) • {v.color} • {v.location || 'Basni Yard'}
                             </option>
