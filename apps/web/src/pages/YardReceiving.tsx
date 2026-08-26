@@ -299,11 +299,11 @@ export const YardReceivingPage: React.FC = () => {
       {/* Top Banner */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-black text-slate-900 leading-tight">
-            Vehicle Inward & Gate Receiving Desk
+          <h1 className="text-sm font-bold text-slate-900 leading-tight">
+            Gate Receiving
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Receive incoming carrier trailers, verify physical OEM PDI sheets, and log video proofs
+          <p className="text-xs text-slate-500 mt-0.5">
+            Record carrier trailer arrivals, verify OEM documents, and stage vehicles in stockyard bays
           </p>
         </div>
 

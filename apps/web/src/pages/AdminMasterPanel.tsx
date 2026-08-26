@@ -430,11 +430,11 @@ export const AdminMasterPanel: React.FC = () => {
       {/* Top Header */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-black text-slate-900 leading-tight">
-            Dealership Master Administration
+          <h1 className="text-sm font-bold text-slate-900 leading-tight">
+            Master Data
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Centralized management for inspection rules, RBAC users, vehicle catalog, multi-state branches, banks, and insurance partners
+          <p className="text-xs text-slate-500 mt-0.5">
+            Configure vehicle models, inspection checklists, branches, and financier partners
           </p>
         </div>
 

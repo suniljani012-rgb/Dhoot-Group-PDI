@@ -325,11 +325,11 @@ export const BookingsPage: React.FC = () => {
       {/* Header Toolbar */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-black text-slate-900 leading-tight">
-            Customer Booking & Vehicle Stock Allocation Desk
+          <h1 className="text-sm font-bold text-slate-900 leading-tight">
+            Customer Bookings
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Register retail customer advance bookings, track sales consultants, and allocate VIN from quality certified yard stock
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage advance bookings, track sales consultants, and allocate VIN numbers
           </p>
         </div>
 

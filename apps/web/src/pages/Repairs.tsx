@@ -103,11 +103,11 @@ export const RepairsPage: React.FC = () => {
       {/* Top Header */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-black text-slate-900 leading-tight">
-            Workshop Defect & Rectification Queue
+          <h1 className="text-sm font-bold text-slate-900 leading-tight">
+            Workshop Repairs
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Defect repair tickets triggered automatically from inspection findings
+          <p className="text-xs text-slate-500 mt-0.5">
+            Track defect job cards, assign technicians, and resolve issues
           </p>
         </div>
 

@@ -398,7 +398,7 @@ export const AdminUsersPage: React.FC = () => {
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Staff User Accounts ({usersList.length})</span>
+            <span>Staff Users ({usersList.length})</span>
           </button>
 
           <button
@@ -408,7 +408,7 @@ export const AdminUsersPage: React.FC = () => {
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Roles & Window Permission Matrix ({roleConfigs.length})</span>
+            <span>Roles & Permissions ({roleConfigs.length})</span>
           </button>
 
           <button
@@ -418,7 +418,7 @@ export const AdminUsersPage: React.FC = () => {
             }`}
           >
             <Briefcase className="w-3.5 h-3.5 text-blue-400" />
-            <span>Master Designations & Natures ({designations.length})</span>
+            <span>Designations ({designations.length})</span>
           </button>
         </div>
 

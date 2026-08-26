@@ -49,23 +49,23 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Dynamic Dhoot Group Franchise Intelligence
+  // Dynamic Franchise Title & Context
   const getBrandHeader = () => {
     if (currentBrand.code === 'DHOOT-TATA') {
       return {
-        title: 'Dhoot Group • Tata Motors Command Center',
-        subtitle: 'Executive dealership overview for Tata Motors passenger and commercial vehicle fleet operations'
+        title: 'Tata Motors Dealership',
+        subtitle: 'Fleet tracking, PDI inspection pipeline, and yard inventory'
       };
     }
     if (currentBrand.code === 'DHOOT-HYUNDAI') {
       return {
-        title: 'Dhoot Group • Hyundai Command Center',
-        subtitle: 'Executive dealership overview for Hyundai Motor passenger vehicle fleet operations'
+        title: 'Hyundai Dealership',
+        subtitle: 'Fleet tracking, PDI inspection pipeline, and yard inventory'
       };
     }
     return {
-      title: 'Dhoot Group Operations Command Center',
-      subtitle: 'Consolidated multi-franchise dealership operations across Tata Motors and Hyundai franchises'
+      title: 'Operations Dashboard',
+      subtitle: 'Live vehicle tracking, inspection pipeline, and inventory status'
     };
   };
 
@@ -233,23 +233,18 @@ export const DashboardPage: React.FC = () => {
         ))}
       </div>
 
-      {/* 3. Central Full-Width Operations Telemetry Ledger Table */}
+      {/* 3. Central Full-Width Operations Table */}
       <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
         
         {/* Table Toolbar Header */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Vehicle Operations & Staging Ledger
-              </h2>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full">
-                {filteredFleet.length} Units Listed
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live operational staging across carrier receiving, technical inspection, QA certification, and delivery bays
-            </p>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              Vehicle Inventory
+            </h2>
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full">
+              {filteredFleet.length} Units
+            </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -415,7 +410,7 @@ export const DashboardPage: React.FC = () => {
         <div className="lg:col-span-6 bg-white border border-slate-200/80 rounded-xl p-4 shadow-xs space-y-3">
           <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Stock Distribution by OEM Model
+              Stock by Model
             </h2>
             <span className="text-xs font-mono font-bold text-slate-600">{counts.totalStock} Units</span>
           </div>
@@ -449,7 +444,7 @@ export const DashboardPage: React.FC = () => {
         <div className="lg:col-span-6 bg-white border border-slate-200/80 rounded-xl p-4 shadow-xs space-y-3">
           <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Dealership Facilities & Yard Network
+              Dealership Facilities
             </h2>
             <span className="text-xs font-mono font-bold text-emerald-600">4 Active Hubs</span>
           </div>

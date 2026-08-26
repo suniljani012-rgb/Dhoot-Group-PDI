@@ -84,11 +84,11 @@ export const QaQueuePage: React.FC = () => {
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base font-black text-slate-900 leading-tight">
-            Quality Assurance & Certification Review Queue
+          <h1 className="text-sm font-bold text-slate-900 leading-tight">
+            QA Reviews
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Verify completed inspections, approve delivery readiness, and issue digital vehicle certificates
+          <p className="text-xs text-slate-500 mt-0.5">
+            Review completed inspections and issue official PDI certificates
           </p>
         </div>
 
