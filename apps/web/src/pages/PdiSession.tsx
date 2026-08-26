@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Ban, ShieldCheck, CheckCircle2, 
-  Camera, Video, Upload, Trash2, AlertTriangle, Play,
-  ChevronRight, Car, Eye, Layers, RefreshCw, 
-  FileText, StopCircle, FolderOpen, Clock, AlertCircle,
-  HelpCircle, ChevronDown, CheckSquare, Sparkles
+  Camera, Video, Upload, Trash2, StopCircle, FolderOpen, AlertCircle
 } from 'lucide-react';
+import { Panel, Badge, Bar } from '../components/ui/primitives';
 
 interface ChecklistItem {
   id: string;
@@ -15,6 +13,7 @@ interface ChecklistItem {
   instruction: string;
   allowsVideo?: boolean;
   videoHint?: string;
+  photosRequired?: number;
 }
 
 interface ChecklistCategory {
@@ -447,42 +446,42 @@ export const PdiSessionPage: React.FC = () => {
 
   if (isSubmitted) {
     return (
-      <div className="max-w-xl mx-auto my-12 bg-white border border-slate-200 rounded-3xl p-10 text-center shadow-md space-y-6">
-        <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto border border-emerald-200">
-          <CheckCircle2 className="w-8 h-8 stroke-[2.2]" />
+      <div className="max-w-lg mx-auto my-12 bg-surface border border-line rounded-panel p-8 text-center space-y-5">
+        <div className="w-12 h-12 bg-ok/10 text-ok rounded-full flex items-center justify-center mx-auto border border-ok/20">
+          <CheckCircle2 className="w-6 h-6 stroke-[2.2]" />
         </div>
-        <div className="space-y-1">
-          <h2 className="text-xl font-bold text-[#0F172A]">PDI Inspection Submitted!</h2>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-            All 54 checkpoints recorded with photos and inspection findings. Forwarded to <strong>QA Manager Review Queue</strong>.
+        <div>
+          <h2 className="text-lg font-semibold text-ink">PDI Inspection Submitted</h2>
+          <p className="text-xs text-ink-3 max-w-sm mx-auto mt-1 leading-relaxed">
+            All checkpoints recorded with inspection findings. Record has been forwarded to the <strong>QA Review Queue</strong>.
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+        <div className="grid grid-cols-3 gap-2 p-3 bg-canvas rounded border border-line text-center">
           <div>
-            <span className="text-[11px] font-semibold text-slate-400">Total Checked</span>
-            <div className="text-base font-bold text-[#0F172A]">{answeredCount}</div>
+            <span className="eyebrow block">Checked</span>
+            <div className="text-sm font-semibold text-ink tnum mt-0.5">{answeredCount}</div>
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-emerald-600">Passed</span>
-            <div className="text-base font-bold text-emerald-600">{passedCount}</div>
+            <span className="eyebrow block text-ok">Passed</span>
+            <div className="text-sm font-semibold text-ok tnum mt-0.5">{passedCount}</div>
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-rose-600">Defects Flagged</span>
-            <div className="text-base font-bold text-rose-600">{failedCount}</div>
+            <span className="eyebrow block text-danger">Defects</span>
+            <div className="text-sm font-semibold text-danger tnum mt-0.5">{failedCount}</div>
           </div>
         </div>
 
-        <div className="flex gap-3 justify-center pt-2">
+        <div className="flex gap-2.5 justify-center pt-2">
           <Link
             to="/pdi"
-            className="px-6 py-3 bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold rounded-xl shadow transition-all"
+            className="h-8 px-4 bg-accent hover:bg-accent-600 text-white text-xs font-semibold rounded flex items-center justify-center transition-colors cursor-pointer"
           >
             Return to PDI Queue
           </Link>
           <Link
             to="/qa"
-            className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-[#0F172A] text-xs font-bold rounded-xl shadow-xs transition-all"
+            className="h-8 px-4 bg-surface hover:bg-canvas border border-line text-ink text-xs font-semibold rounded flex items-center justify-center transition-colors cursor-pointer"
           >
             View QA Queue
           </Link>
@@ -492,62 +491,57 @@ export const PdiSessionPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-24 select-none">
+    <div className="max-w-[1400px] mx-auto space-y-4 pb-20 select-none">
       
       {/* 1. TOP VEHICLE SUMMARY HEADER */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <Link 
-            to="/pdi" 
-            className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-2xl transition-colors shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
+      <Panel className="p-4 sm:p-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Link 
+              to="/pdi" 
+              className="h-8 w-8 rounded bg-canvas border border-line hover:border-line-strong flex items-center justify-center text-ink-3 hover:text-ink transition-colors shrink-0 mt-0.5"
+              title="Back to PDI Queue"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
 
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
-                Tata Motors PDI Sheet
-              </span>
-              <span className="text-xs font-mono font-semibold text-slate-500">VIN: MAT612345S9988776</span>
-            </div>
-            <h1 className="text-lg font-extrabold text-[#0F172A] mt-1">
-              Tata Safari Accomplished Plus 6S (Dark Edition)
-            </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Stockyard: Pune Yard (Bay 4) • Assigned Inspector: Vikram Malhotra (DG002)
-            </p>
-          </div>
-        </div>
-
-        {/* Progress & Submit */}
-        <div className="flex items-center gap-6 shrink-0">
-          <div className="text-right">
-            <span className="text-xs font-semibold text-slate-400 block">Inspection Progress</span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-base font-extrabold text-[#0F172A] font-mono">{progressPercent}%</span>
-              <span className="text-xs text-slate-400 font-medium">({answeredCount}/{totalCount} Items)</span>
-            </div>
-            <div className="w-32 bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
-              <div 
-                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge tone="accent">Tata PDI Sheet</Badge>
+                <span className="text-xs font-mono text-ink-3 font-medium">VIN: MAT612345S9988776</span>
+              </div>
+              <h1 className="text-base sm:text-lg font-semibold tracking-[-0.011em] text-ink">
+                Tata Safari Accomplished Plus 6S (Dark Edition)
+              </h1>
+              <p className="text-xs text-ink-3">
+                Stockyard: Pune Yard (Bay 4) • Inspector: Vikram Malhotra (DG002)
+              </p>
             </div>
           </div>
 
-          <button
-            onClick={() => setIsSubmitted(true)}
-            className="px-6 py-3 bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold rounded-2xl shadow-sm hover:shadow active:scale-98 transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Submit for QA</span>
-          </button>
-        </div>
-      </div>
+          {/* Progress & Submit Action */}
+          <div className="flex items-center gap-4 shrink-0 flex-wrap sm:flex-nowrap justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-line">
+            <div className="text-left lg:text-right min-w-[140px]">
+              <div className="flex items-baseline gap-2 justify-between lg:justify-end">
+                <span className="text-sm font-semibold text-ink tnum">{progressPercent}%</span>
+                <span className="text-xs text-ink-3 tnum">({answeredCount}/{totalCount} Items)</span>
+              </div>
+              <Bar pct={progressPercent} tone={progressPercent === 100 ? 'ok' : 'accent'} className="mt-1.5" />
+            </div>
 
-      {/* 2. CLEAN STEPPER TABS */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-2 shadow-xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+            <button
+              onClick={() => setIsSubmitted(true)}
+              className="h-8 px-3.5 bg-accent hover:bg-accent-600 text-white text-xs font-semibold rounded shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-white/90" />
+              <span>Submit for QA</span>
+            </button>
+          </div>
+        </div>
+      </Panel>
+
+      {/* 2. RESPONSIVE STEPPER TABS */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {checklistCategories.map((cat, idx) => {
           const isSelected = currentStep === idx;
           const catAnswered = cat.items.filter((i) => responses[i.id]?.status).length;
@@ -557,24 +551,24 @@ export const PdiSessionPage: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setCurrentStep(idx)}
-              className={`p-3 rounded-2xl text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-3 rounded-panel border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 isSelected
-                  ? 'bg-[#0F172A] text-white shadow-sm'
-                  : 'hover:bg-slate-50 text-slate-700 border border-transparent hover:border-slate-100'
+                  ? 'bg-accent text-white border-accent shadow-xs'
+                  : 'bg-surface hover:bg-canvas border-line text-ink'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className={`text-[10px] uppercase font-semibold tracking-wider ${isSelected ? 'text-white/70' : 'text-ink-3'}`}>
                   Step {cat.stepNumber}
                 </span>
                 {isComplete && (
-                  <CheckCircle2 className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                  <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-emerald-300' : 'text-ok'}`} />
                 )}
               </div>
 
-              <div className="mt-1">
-                <div className="text-xs font-bold truncate">{cat.shortName}</div>
-                <div className={`text-[10px] font-mono mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
+              <div>
+                <div className={`text-xs font-medium truncate ${isSelected ? 'text-white' : 'text-ink'}`}>{cat.shortName}</div>
+                <div className={`text-[10px] tnum mt-0.5 ${isSelected ? 'text-white/70' : 'text-ink-3'}`}>
                   {catAnswered}/{cat.items.length} Checked
                 </div>
               </div>
@@ -584,36 +578,36 @@ export const PdiSessionPage: React.FC = () => {
       </div>
 
       {/* 3. ACTIVE STEP CHECKLIST SHEET */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
-        
-        {/* Step Header & Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
-              Step {checklistCategories[currentStep].stepNumber} of 6
+      <Panel
+        title={
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-ink-3 uppercase font-semibold tracking-wider">
+              Step {checklistCategories[currentStep].stepNumber}:
             </span>
-            <h2 className="text-base font-extrabold text-[#0F172A] mt-0.5">
+            <span className="text-sm font-semibold text-ink">
               {checklistCategories[currentStep].name}
-            </h2>
+            </span>
           </div>
-
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+        }
+        action={
+          <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
             {(['ALL', 'PENDING', 'FAILED'] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setFilterMode(mode)}
-                className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                  filterMode === mode ? 'bg-white text-[#0F172A] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+                  filterMode === mode
+                    ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
+                    : 'text-ink-3 hover:text-ink-2'
                 }`}
               >
-                {mode}
+                {mode === 'ALL' ? 'All' : mode === 'PENDING' ? 'Pending' : 'Defects'}
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Inspection Rows */}
-        <div className="space-y-4">
+        }
+      >
+        <div className="divide-y divide-line">
           {activeItems.map((item, idx) => {
             const resp = responses[item.id];
             const currentStatus = resp?.status;
@@ -625,102 +619,102 @@ export const PdiSessionPage: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className={`p-5 rounded-2xl border transition-all ${
+                className={`p-4 transition-colors ${
                   isFail 
-                    ? 'border-rose-300 bg-rose-50/20' 
+                    ? 'bg-danger/5' 
                     : isPass 
-                      ? 'border-slate-200 hover:border-slate-300 bg-white' 
-                      : 'border-slate-200 bg-slate-50/40'
+                    ? 'bg-surface' 
+                    : 'bg-surface'
                 }`}
               >
-                {/* Row Top: Number, Title, Guidance, and PASS/FAIL Buttons */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-400 font-mono">
+                {/* Row: Title, Guidance, and PASS/FAIL Segmented Actions */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                  <div className="space-y-1 flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-ink-3 font-mono tnum">
                         {idx + 1}.
                       </span>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md border border-slate-200">
+                      <span className="text-[11px] font-mono font-medium px-1.5 py-0.2 bg-canvas text-ink-2 rounded-chip border border-line">
                         {item.code}
                       </span>
                       {item.allowsVideo && (
-                        <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="text-[11px] font-medium text-warn bg-warn/10 border border-warn/20 px-1.5 py-0.2 rounded-chip flex items-center gap-1">
                           <Video className="w-3 h-3" />
                           Video Optional
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-sm font-bold text-[#0F172A]">{item.title}</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed max-w-xl">{item.instruction}</p>
+                    <h3 className="text-xs sm:text-sm font-medium text-ink">{item.title}</h3>
+                    <p className="text-xs text-ink-3 leading-relaxed">{item.instruction}</p>
                   </div>
 
-                  {/* Big Touch-Friendly Inspection Buttons */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  {/* Clean Segmented Inspection Buttons (No Overlap) */}
+                  <div className="flex items-center gap-1.5 shrink-0 self-start mt-1 md:mt-0">
                     <button
                       type="button"
                       onClick={() => updateItemStatus(item.id, 'PASS')}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`h-7 px-3 rounded-chip text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                         isPass
-                          ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600'
-                          : 'bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700'
+                          ? 'bg-ok text-white shadow-xs'
+                          : 'bg-canvas hover:bg-ok/10 hover:text-ok text-ink-2 border border-line'
                       }`}
                     >
-                      <Check className="w-4 h-4 stroke-[3]" />
-                      PASS
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>PASS</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => updateItemStatus(item.id, 'FAIL')}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`h-7 px-3 rounded-chip text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                         isFail
-                          ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600'
-                          : 'bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700'
+                          ? 'bg-danger text-white shadow-xs'
+                          : 'bg-canvas hover:bg-danger/10 hover:text-danger text-ink-2 border border-line'
                       }`}
                     >
-                      <X className="w-4 h-4 stroke-[3]" />
-                      FAIL
+                      <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>FAIL</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => updateItemStatus(item.id, 'NA')}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                      className={`h-7 px-2.5 rounded-chip text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                         isNA
-                          ? 'bg-slate-700 text-white shadow-sm'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700'
+                          ? 'bg-ink text-white shadow-xs'
+                          : 'bg-canvas hover:bg-line text-ink-3 border border-line'
                       }`}
                     >
-                      <Ban className="w-3.5 h-3.5" />
-                      N/A
+                      <Ban className="w-3 h-3" />
+                      <span>N/A</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Clean Attachments & Evidence Section */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Evidence & Media Section */}
+                <div className="mt-3 pt-2.5 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 flex-wrap">
                   
                   {/* Photo & Video Action Chips */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-semibold text-slate-400 mr-1">Attach Proof:</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs text-ink-3 mr-1">Proof:</span>
 
                     {/* Camera Snapshot */}
                     {photos.length < 2 && (
                       <button
                         type="button"
                         onClick={() => openMediaModal(item.id, 'PHOTO')}
-                        className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="h-6 px-2 bg-surface hover:bg-canvas border border-line text-ink-2 rounded text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        <Camera className="w-3.5 h-3.5 text-slate-600" />
-                        <span>Take Photo</span>
+                        <Camera className="w-3 h-3 text-ink-3" />
+                        <span>Camera</span>
                       </button>
                     )}
 
                     {/* Gallery Photo Upload */}
                     {photos.length < 2 && (
-                      <label className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer">
-                        <FolderOpen className="w-3.5 h-3.5 text-slate-600" />
+                      <label className="h-6 px-2 bg-surface hover:bg-canvas border border-line text-ink-2 rounded text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer">
+                        <FolderOpen className="w-3 h-3 text-ink-3" />
                         <span>Gallery</span>
                         <input
                           type="file"
@@ -736,17 +730,17 @@ export const PdiSessionPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openMediaModal(item.id, 'VIDEO')}
-                        className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-800 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="h-6 px-2 bg-warn/10 hover:bg-warn/20 border border-warn/30 text-warn rounded text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        <Video className="w-3.5 h-3.5 text-amber-600" />
+                        <Video className="w-3 h-3" />
                         <span>Record Video</span>
                       </button>
                     )}
 
                     {/* Gallery Video */}
                     {item.allowsVideo && !resp?.video && (
-                      <label className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-800 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer">
-                        <Upload className="w-3.5 h-3.5 text-amber-600" />
+                      <label className="h-6 px-2 bg-warn/10 hover:bg-warn/20 border border-warn/30 text-warn rounded text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer">
+                        <Upload className="w-3 h-3" />
                         <span>Upload Video</span>
                         <input
                           type="file"
@@ -760,31 +754,31 @@ export const PdiSessionPage: React.FC = () => {
 
                   {/* Attached Media Thumbnails */}
                   {(photos.length > 0 || resp?.video) && (
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       {photos.map((url, pIdx) => (
-                        <div key={pIdx} className="relative rounded-xl overflow-hidden w-14 h-10 border border-slate-200 group bg-black/5 shrink-0">
+                        <div key={pIdx} className="relative rounded overflow-hidden w-12 h-8 border border-line group bg-canvas shrink-0">
                           <img src={url} alt={`Proof ${pIdx + 1}`} className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => removePhoto(item.id, pIdx)}
                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 text-white flex items-center justify-center transition-opacity cursor-pointer"
-                            title="Delete"
+                            title="Remove Photo"
                           >
-                            <Trash2 className="w-3.5 h-3.5 text-rose-300" />
+                            <Trash2 className="w-3 h-3 text-rose-300" />
                           </button>
                         </div>
                       ))}
 
                       {resp?.video && (
-                        <div className="relative rounded-xl overflow-hidden w-14 h-10 border border-amber-300 group bg-black shrink-0 flex items-center justify-center">
-                          <Video className="w-4 h-4 text-amber-400" />
+                        <div className="relative rounded overflow-hidden w-12 h-8 border border-warn/40 group bg-ink shrink-0 flex items-center justify-center">
+                          <Video className="w-3.5 h-3.5 text-warn" />
                           <button
                             type="button"
                             onClick={() => removeVideo(item.id)}
                             className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 text-white flex items-center justify-center transition-opacity cursor-pointer"
-                            title="Delete Video"
+                            title="Remove Video"
                           >
-                            <Trash2 className="w-3.5 h-3.5 text-rose-300" />
+                            <Trash2 className="w-3 h-3 text-rose-300" />
                           </button>
                         </div>
                       )}
@@ -794,16 +788,16 @@ export const PdiSessionPage: React.FC = () => {
 
                 {/* Defect Box (Visible on FAIL) */}
                 {isFail && (
-                  <div className="mt-3 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-rose-800 flex items-center gap-1.5">
+                  <div className="mt-2.5 p-3 bg-danger/5 border border-danger/20 rounded space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-danger flex items-center gap-1.5">
                         <AlertCircle className="w-3.5 h-3.5" />
-                        Defect Log & Severity Tagging
+                        Defect Observation & Severity Tag
                       </span>
                       <select
                         value={resp?.severity || 'MINOR'}
                         onChange={(e) => updateDefectDetails(item.id, resp?.defectNote || '', e.target.value as any)}
-                        className="text-xs font-bold bg-white border border-rose-300 text-rose-900 rounded-lg px-2.5 py-1 focus:outline-none"
+                        className="text-xs font-medium bg-surface border border-danger/30 text-danger rounded px-2 py-0.5 focus:outline-none"
                       >
                         <option value="MINOR">Minor Defect (Buffing / Easy Fix)</option>
                         <option value="MAJOR">Major Defect (Part Replacement)</option>
@@ -816,7 +810,7 @@ export const PdiSessionPage: React.FC = () => {
                       placeholder="Describe the defect observation clearly for the workshop team..."
                       value={resp?.defectNote || ''}
                       onChange={(e) => updateDefectDetails(item.id, e.target.value, resp?.severity)}
-                      className="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs text-[#0F172A] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                      className="w-full h-8 px-2.5 bg-surface border border-danger/20 rounded text-xs text-ink placeholder:text-ink-3 focus:outline-none focus:border-danger"
                     />
                   </div>
                 )}
@@ -827,63 +821,63 @@ export const PdiSessionPage: React.FC = () => {
         </div>
 
         {/* Step Navigation Controls */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+        <div className="p-4 border-t border-line flex items-center justify-between gap-3 flex-wrap">
           <button
             disabled={currentStep === 0}
             onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             ← Previous Step
           </button>
 
-          <span className="text-xs font-semibold text-slate-400">
+          <span className="text-xs text-ink-3 font-medium tnum">
             Step {currentStep + 1} of {checklistCategories.length}
           </span>
 
           {currentStep < checklistCategories.length - 1 ? (
             <button
               onClick={() => setCurrentStep((s) => Math.min(checklistCategories.length - 1, s + 1))}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0F172A] hover:bg-[#1E293B] text-white shadow-xs cursor-pointer"
+              className="h-8 px-3.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
               Next Step →
             </button>
           ) : (
             <button
               onClick={() => setIsSubmitted(true)}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm cursor-pointer"
+              className="h-8 px-4 rounded bg-ok hover:bg-ok/90 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
               Complete & Submit for QA
             </button>
           )}
         </div>
 
-      </div>
+      </Panel>
 
       {/* ========================================================================= */}
       {/* IN-APP CAMERA & VIDEO RECORDING MODAL                                     */}
       {/* ========================================================================= */}
       {mediaModal.isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] text-white w-full max-w-lg rounded-3xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface text-ink w-full max-w-md rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-3.5 border-b border-line flex items-center justify-between bg-canvas">
               <div className="flex items-center gap-2">
                 {mediaModal.mode === 'PHOTO' ? (
-                  <Camera className="w-5 h-5 text-emerald-400" />
+                  <Camera className="w-4 h-4 text-accent" />
                 ) : (
-                  <Video className="w-5 h-5 text-amber-400" />
+                  <Video className="w-4 h-4 text-warn" />
                 )}
-                <span className="text-sm font-bold">
+                <span className="text-xs font-semibold text-ink">
                   {mediaModal.mode === 'PHOTO' ? 'Capture Inspection Photo' : 'Record Video Proof (Max 30s)'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={closeMediaModal}
-                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded hover:bg-surface text-ink-3 hover:text-ink transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -898,22 +892,22 @@ export const PdiSessionPage: React.FC = () => {
               />
 
               {isRecording && (
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-rose-600/90 text-white px-3 py-1 rounded-full text-xs font-bold font-mono animate-pulse">
-                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-danger text-white px-2.5 py-0.5 rounded-full text-xs font-medium font-mono animate-pulse">
+                  <div className="w-2 h-2 bg-white rounded-full" />
                   <span>REC 00:{recordSeconds < 10 ? `0${recordSeconds}` : recordSeconds} / 00:30</span>
                 </div>
               )}
             </div>
 
             {/* Actions */}
-            <div className="p-5 border-t border-slate-800 flex items-center justify-center gap-4">
+            <div className="p-3.5 border-t border-line flex items-center justify-center gap-3 bg-canvas">
               {mediaModal.mode === 'PHOTO' ? (
                 <button
                   type="button"
                   onClick={capturePhoto}
-                  className="px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0F172A] rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  className="h-9 px-5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Camera className="w-5 h-5" />
+                  <Camera className="w-4 h-4" />
                   <span>Capture Snapshot</span>
                 </button>
               ) : (
@@ -922,18 +916,18 @@ export const PdiSessionPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={startRecording}
-                      className="px-8 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                      className="h-9 px-5 bg-danger hover:bg-danger/90 text-white rounded text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <div className="w-3.5 h-3.5 bg-white rounded-full" />
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
                       <span>Start Recording</span>
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={stopRecording}
-                      className="px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0F172A] rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                      className="h-9 px-5 bg-surface border border-line hover:border-line-strong text-ink rounded text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <StopCircle className="w-5 h-5 text-rose-600" />
+                      <StopCircle className="w-4 h-4 text-danger" />
                       <span>Stop & Attach</span>
                     </button>
                   )}
