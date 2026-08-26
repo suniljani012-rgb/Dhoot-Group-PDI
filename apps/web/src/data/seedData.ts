@@ -301,12 +301,15 @@ export const syncWithSupabase = async () => {
       }
     } catch (e) {}
 
-    // 2. Fetch Live Vehicles from Database
+    // 2. Fetch Live Vehicles from Database / Worker API
     try {
-      const { data: dbVehicles } = await supabase.from('vehicles').select('*');
-      if (dbVehicles && Array.isArray(dbVehicles)) {
-        localStorage.setItem('dhoot_stock_inventory', JSON.stringify(dbVehicles));
-        window.dispatchEvent(new Event('stock-updated'));
+      const res = await fetch(`${API_BASE}/api/v1/stock`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+          localStorage.setItem('dhoot_stock_inventory', JSON.stringify(json.data));
+          window.dispatchEvent(new Event('stock-updated'));
+        }
       }
     } catch (e) {}
 

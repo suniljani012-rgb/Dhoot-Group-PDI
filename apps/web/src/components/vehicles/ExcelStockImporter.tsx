@@ -104,27 +104,59 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       return;
     }
 
-    // Find the header row (sometimes users have blank rows or a title on top)
+    // 1. Find Header Row
     let headerRowIdx = 0;
-    for (let r = 0; r < Math.min(6, grid.length); r++) {
-      const rowStr = grid[r].map(c => cleanHeader(String(c))).join(' ');
-      if (rowStr.includes('vin') || rowStr.includes('chassis') || (rowStr.includes('model') && rowStr.includes('colour'))) {
+    let maxMatches = 0;
+    const stockKeywords = ['vin', 'chassis', 'model', 'variant', 'colour', 'color', 'fuel', 'location', 'yard', 'status', 'purchase', 'customer', 'dealer', 'plant'];
+
+    for (let r = 0; r < Math.min(10, grid.length); r++) {
+      if (!Array.isArray(grid[r])) continue;
+      const rowStr = grid[r].map(c => cleanHeader(String(c || ''))).join(' ');
+      let matches = 0;
+      stockKeywords.forEach(kw => {
+        if (rowStr.includes(kw)) matches++;
+      });
+      if (matches > maxMatches) {
+        maxMatches = matches;
         headerRowIdx = r;
-        break;
       }
     }
 
-    const rawHeaders = grid[headerRowIdx].map(h => String(h || '').trim());
-    const findColIndex = (names: string[]): number => {
-      return rawHeaders.findIndex(h => {
-        const clean = cleanHeader(h);
-        return names.some(n => clean === cleanHeader(n));
-      });
+    const rawHeaders = (grid[headerRowIdx] || []).map(h => String(h || '').trim());
+    const cleanedHeaders = rawHeaders.map(h => cleanHeader(h));
+
+    const findColIndex = (aliases: string[]): number => {
+      const cleanAliases = aliases.map(a => cleanHeader(a));
+
+      // 1. Exact match
+      for (let i = 0; i < cleanedHeaders.length; i++) {
+        if (cleanAliases.includes(cleanedHeaders[i])) return i;
+      }
+
+      // 2. StartsWith / EndsWith
+      for (let i = 0; i < cleanedHeaders.length; i++) {
+        for (const alias of cleanAliases) {
+          if (alias.length >= 4 && (cleanedHeaders[i].startsWith(alias) || cleanedHeaders[i].endsWith(alias))) {
+            return i;
+          }
+        }
+      }
+
+      // 3. Includes
+      for (let i = 0; i < cleanedHeaders.length; i++) {
+        for (const alias of cleanAliases) {
+          if (alias.length >= 4 && cleanedHeaders[i].includes(alias)) {
+            return i;
+          }
+        }
+      }
+
+      return -1;
     };
 
-    const idxPurchaseDate = findColIndex(['Purchase Date', 'PurchaseDate', 'Purchase_Date', 'Date', 'Invoice Date', 'Inv Date']);
-    const idxModel = findColIndex(['Model', 'Vehicle Model', 'Car Model']);
-    const idxVariant = findColIndex(['Variant', 'Trim', 'Model Variant', 'Item Description', 'Description']);
+    const idxPurchaseDate = findColIndex(['Purchase Date', 'PurchaseDate', 'Purchase_Date', 'Date', 'Invoice Date', 'Inv Date', 'Inward Date']);
+    const idxModel = findColIndex(['Model', 'Vehicle Model', 'Car Model', 'Vehicle', 'Product', 'Item']);
+    const idxVariant = findColIndex(['Variant', 'Trim', 'Model Variant', 'Item Description', 'Description', 'Ver']);
     const idxColour = findColIndex(['Colour', 'Color', 'Exterior Color', 'Paint', 'Color Description', 'Colour Description']);
     const idxFuel = findColIndex(['Fuel', 'Fuel Type', 'FuelType']);
     const idxFscCode = findColIndex(['FSC Code', 'FscCode', 'FSC_Code', 'FSC', 'Model Code']);
@@ -132,17 +164,17 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
     const idxPlantCode = findColIndex(['Plant Code', 'PlantCode', 'Plant', 'Factory']);
     const idxYear = findColIndex(['Year', 'Manufacturing Year', 'Mfg Year', 'Model Year']);
     const idxStatus = findColIndex(['Status', 'Stock Status', 'Current Status']);
-    const idxVin = findColIndex(['Vin No', 'VinNo', 'VIN Number', 'VIN', 'Chassis Number', 'Chassis No', 'Chassis', 'Serial No', 'Vehicle Identification Number']);
+    const idxVin = findColIndex(['Vin No', 'VinNo', 'VIN Number', 'VIN', 'Chassis Number', 'Chassis No', 'Chassis', 'VIN / Chassis', 'Serial No', 'Vehicle Identification Number']);
     const idxQuantity = findColIndex(['Quantity', 'Qty', 'Units', 'Count']);
-    const idxLocation = findColIndex(['Location', 'Stockyard Location', 'Yard Location', 'Yard', 'Bay', 'Plant/Yard']);
-    const idxCustomerName = findColIndex(['Customer Name', 'CustomerName', 'Customer', 'Buyer', 'Allotted To', 'Party Name']);
-    const idxSalesConsultant = findColIndex(['Sales Consultant', 'SalesConsultant', 'SC', 'DSE', 'Advisor', 'Sales Executive']);
+    const idxLocation = findColIndex(['Location', 'Stockyard Location', 'Yard Location', 'Yard', 'Bay', 'Plant/Yard', 'Current Location']);
+    const idxCustomerName = findColIndex(['Customer Name', 'CustomerName', 'Customer', 'Buyer', 'Allotted To', 'Party Name', 'Name']);
+    const idxSalesConsultant = findColIndex(['Sales Consultant', 'SalesConsultant', 'SC', 'DSE', 'Advisor', 'Sales Executive', 'Executive']);
     const idxAccessoriesAmount = findColIndex(['Accessories Amount', 'AccessoriesAmount', 'Accessories', 'Acc Amt', 'Acc Amount']);
     const idxVehicleStatus = findColIndex(['Vehicle Status', 'VehicleStatus', 'Inspection Status', 'PDI Status']);
     const idxDeliveryDate = findColIndex(['Delivery Date', 'DeliveryDate', 'Promise Delivery Date', 'Promised Date']);
     const idxAllocationDate = findColIndex(['Allocation Date', 'AllocationDate', 'Alloc Date', 'Allot Date']);
-    const idxAllocatedDays = findColIndex(['Allocated Days', 'AllocatedDays', 'Alloc Days', 'Ageing', 'Aging']);
-    const idxReceivedAmount = findColIndex(['Received Amount', 'ReceivedAmount', 'Receipt Amt', 'Advance Amount', 'Booking Amount']);
+    const idxAllocatedDays = findColIndex(['Allocated Days', 'AllocatedDays', 'Alloc Days', 'Ageing', 'Aging', 'Days']);
+    const idxReceivedAmount = findColIndex(['Received Amount', 'ReceivedAmount', 'Receipt Amt', 'Advance Amount', 'Booking Amount', 'Amount']);
 
     const existingVins = getExistingVins();
     const fileSeenVins = new Set<string>();
@@ -151,7 +183,7 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
 
     for (let i = headerRowIdx + 1; i < grid.length; i++) {
       const cols = grid[i];
-      if (!cols || cols.length === 0 || cols.every(c => c === undefined || c === null || String(c).trim() === '')) {
+      if (!cols || !Array.isArray(cols) || cols.length === 0 || cols.every(c => c === undefined || c === null || String(c).trim() === '')) {
         continue; // Skip truly blank rows
       }
 
@@ -162,13 +194,24 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       };
 
       // Extract VIN: remove spaces, asterisks, or quotes
-      let vinRaw = getVal(idxVin, 10).toUpperCase().replace(/[^A-Z0-9]/g, '');
+      let vinRaw = idxVin >= 0 ? getVal(idxVin).toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       
-      // Fallback: If VIN wasn't found at designated column, scan columns for a 17 or 10+ character alphanumeric string
+      // Universal Scanner: If VIN wasn't found at designated column, scan columns for a 17 or 6+ character alphanumeric string
       if (vinRaw.length < 5) {
         for (const colVal of cols) {
           const clean = String(colVal || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-          if (clean.length >= 10 && (clean.startsWith('MA') || clean.startsWith('MAL') || clean.startsWith('MAT') || clean.length === 17)) {
+          if (clean.length >= 8 && (clean.startsWith('MA') || clean.startsWith('MAL') || clean.startsWith('MAT') || clean.length === 17)) {
+            vinRaw = clean;
+            break;
+          }
+        }
+      }
+
+      // If still not found, check any column with length >= 6
+      if (vinRaw.length < 5) {
+        for (const colVal of cols) {
+          const clean = String(colVal || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if (clean.length >= 6 && /[0-9]/.test(clean) && /[A-Z]/.test(clean)) {
             vinRaw = clean;
             break;
           }
@@ -180,37 +223,37 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       if (isValidVin) fileSeenVins.add(vinRaw);
       const isAlreadyInDb = isValidVin && existingVins.has(vinRaw);
 
-      const rawPurchaseDate = getVal(idxPurchaseDate, 0);
+      const rawPurchaseDate = getVal(idxPurchaseDate);
       const formattedPurchaseDate = rawPurchaseDate ? formatDate(rawPurchaseDate) : formatDate(new Date());
 
-      const rawDeliveryDate = getVal(idxDeliveryDate, 17);
-      const rawAllocationDate = getVal(idxAllocationDate, 18);
+      const rawDeliveryDate = getVal(idxDeliveryDate);
+      const rawAllocationDate = getVal(idxAllocationDate);
 
       rows.push({
         _rowNum: i + 1,
         _isValid: isValidVin,
         _isDuplicateInFile: isDuplicateInFile,
         _isAlreadyInDb: isAlreadyInDb,
-        vin: vinRaw,
-        model: getVal(idxModel, 1) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari'),
-        variant: getVal(idxVariant, 2) || '',
-        color: getVal(idxColour, 3) || 'Standard Color',
-        fuel_type: getVal(idxFuel, 4) || 'PETROL',
-        fsc_code: getVal(idxFscCode, 5) || '',
-        dealer_code: getVal(idxDealerCode, 6) || 'DLR-MH01',
-        plant_code: getVal(idxPlantCode, 7) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'PLT-CHE' : 'PLT-PUN'),
-        manufacturing_year: parseInt(getVal(idxYear, 8)) || 2026,
-        status: getVal(idxStatus, 9) || 'YARD_RECEIVING_PENDING',
-        quantity: parseInt(getVal(idxQuantity, 11)) || 1,
-        location: getVal(idxLocation, 12) || 'Central Stockyard',
-        customer_name: getVal(idxCustomerName, 13) || '',
-        sales_consultant: getVal(idxSalesConsultant, 14) || '',
-        accessories_amount: parseFloat(getVal(idxAccessoriesAmount, 15).replace(/[^0-9.]/g, '')) || 0,
-        vehicle_status: getVal(idxVehicleStatus, 16) || getVal(idxStatus, 9) || 'YARD_RECEIVING_PENDING',
+        vin: vinRaw || `VIN-TEMP-${i}`,
+        model: getVal(idxModel) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari'),
+        variant: getVal(idxVariant) || 'Standard Variant',
+        color: getVal(idxColour) || 'Standard Colour',
+        fuel_type: getVal(idxFuel) || 'PETROL',
+        fsc_code: getVal(idxFscCode) || 'FSC-001',
+        dealer_code: getVal(idxDealerCode) || 'DLR-MH01',
+        plant_code: getVal(idxPlantCode) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'PLT-CHE' : 'PLT-PUN'),
+        manufacturing_year: parseInt(getVal(idxYear)) || 2026,
+        status: getVal(idxStatus) || 'RECEIVED',
+        quantity: parseInt(getVal(idxQuantity)) || 1,
+        location: getVal(idxLocation) || 'Basni Yard',
+        customer_name: getVal(idxCustomerName) || '',
+        sales_consultant: getVal(idxSalesConsultant) || '',
+        accessories_amount: parseFloat(getVal(idxAccessoriesAmount).replace(/[^0-9.]/g, '')) || 0,
+        vehicle_status: getVal(idxVehicleStatus) || getVal(idxStatus) || 'RECEIVED',
         delivery_date: rawDeliveryDate ? formatDate(rawDeliveryDate) : '',
         allocation_date: rawAllocationDate ? formatDate(rawAllocationDate) : '',
-        allocated_days: parseInt(getVal(idxAllocatedDays, 19)) || 0,
-        received_amount: parseFloat(getVal(idxReceivedAmount, 20).replace(/[^0-9.]/g, '')) || 0,
+        allocated_days: parseInt(getVal(idxAllocatedDays)) || 0,
+        received_amount: parseFloat(getVal(idxReceivedAmount).replace(/[^0-9.]/g, '')) || 0,
         purchase_date: formattedPurchaseDate,
       });
     }
@@ -385,9 +428,7 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
 
       // 1. Sync to Backend Edge API (Cloudflare Worker API)
       try {
-        const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI' 
-          ? '11111111-1111-1111-1111-111111111112' 
-          : '11111111-1111-1111-1111-111111111111';
+        const targetOrg = '11111111-1111-1111-1111-111111111111';
 
         const payload = deduplicatedIncoming.map(r => ({
           vin: r.vin,
@@ -524,6 +565,7 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
                   type="file"
                   accept=".csv,.xlsx,.xls,.tsv,.txt"
                   className="hidden"
+                  onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                   onChange={handleFileUpload}
                 />
               </label>
