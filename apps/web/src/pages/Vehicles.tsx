@@ -48,7 +48,7 @@ export const VehiclesPage: React.FC = () => {
   const [locationFilter, setLocationFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+
   const [selectedStock, setSelectedStock] = useState<StockVehicle | null>(null);
 
   const [vehicles, setVehicles] = useState<StockVehicle[]>([]);
@@ -79,12 +79,7 @@ export const VehiclesPage: React.FC = () => {
     }
   };
 
-  // Clear stock completely
-  const handleClearAllStock = () => {
-    clearStockInventory();
-    setVehicles([]);
-    setIsClearConfirmOpen(false);
-  };
+
 
   // Export 21-Column Stock CSV
   const handleExportStockCSV = () => {
@@ -204,14 +199,7 @@ export const VehiclesPage: React.FC = () => {
                   <span>Export CSV</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setIsClearConfirmOpen(true)}
-                  className="h-8 px-3 rounded bg-surface border border-danger/30 hover:bg-danger/10 text-xs font-semibold text-danger transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Clear Stock</span>
-                </button>
+                
               </>
             )}
 
@@ -487,43 +475,6 @@ export const VehiclesPage: React.FC = () => {
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={fetchStock}
       />
-
-      {/* Clear Stock Confirmation Modal */}
-      {isClearConfirmOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface text-ink w-full max-w-md rounded-panel overflow-hidden border border-line shadow-pop p-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-danger/10 text-danger flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-ink">Clear All Stock Inventory?</h3>
-                <p className="text-xs text-ink-3 mt-0.5">
-                  This will remove all {vehicles.length} current stock records from local database so you can load fresh daily data.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsClearConfirmOpen(false)}
-                className="h-8 px-3.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleClearAllStock}
-                className="h-8 px-4 rounded bg-danger hover:bg-danger/90 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Yes, Clear Stock</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Stock Details Modal */}
       {selectedStock && (
