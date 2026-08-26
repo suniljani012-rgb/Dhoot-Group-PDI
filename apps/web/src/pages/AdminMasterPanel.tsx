@@ -988,22 +988,151 @@ export const AdminMasterPanel: React.FC = () => {
       {activeTab === 'USERS' && <AdminUsersPage />}
 
       {activeTab === 'PDI_RULES' && (
-        <Panel title="PDI Checkpoints Master">
-          <div className="p-4 text-xs text-ink-2 space-y-2">
-            <p>Inspection checkpoints for exterior, electricals, interior, engine bay, underbody, and road tests.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-              {pdiRules.map(r => (
-                <div key={r.id} className="p-3 bg-canvas border border-line rounded space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-ink">{r.title}</span>
-                    <Badge tone={r.severity === 'CRITICAL' ? 'danger' : 'warn'}>{r.severity}</Badge>
-                  </div>
-                  <p className="text-[11px] text-ink-3">{r.description}</p>
-                </div>
-              ))}
+        <div className="space-y-3">
+          <div className="p-3 bg-canvas border border-line rounded flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search Checkpoint Title, Stage (e.g. Engine Bay), Code, or Severity..."
+                  value={pdiSearch}
+                  onChange={(e) => setPdiSearch(e.target.value)}
+                  className="w-full h-8 pl-9 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+                />
+              </div>
+              {pdiSearch && (
+                <button
+                  onClick={() => setPdiSearch('')}
+                  className="h-8 px-2.5 bg-surface border border-line hover:bg-canvas text-xs font-medium text-ink-3 rounded transition-colors"
+                >
+                  Clear
+                </button>
+              )}
             </div>
+
+            <button
+              type="button"
+              onClick={handleOpenAddPdi}
+              className="h-8 px-3.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add PDI Checkpoint</span>
+            </button>
           </div>
-        </Panel>
+
+          <Panel
+            title={
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-accent" />
+                <span>PDI Checkpoints Master</span>
+                <Badge tone="accent">{pdiRules.length} Checkpoints</Badge>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Checkpoint Title & Instructions</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Stage</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Code</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Default / Standard Remark</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Severity</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Evidence Req.</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Special Tool</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Status</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line text-ink-2 text-xs">
+                  {pdiRules
+                    .filter(r => {
+                      const q = pdiSearch.toLowerCase().trim();
+                      if (!q) return true;
+                      return (
+                        r.title.toLowerCase().includes(q) ||
+                        r.stage.toLowerCase().includes(q) ||
+                        (r.code && r.code.toLowerCase().includes(q)) ||
+                        r.severity.toLowerCase().includes(q) ||
+                        r.description.toLowerCase().includes(q) ||
+                        (r.standardRemark && r.standardRemark.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((r, idx) => (
+                      <tr key={r.id || idx} className="hover:bg-canvas transition-colors">
+                        <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">{idx + 1}</td>
+                        <td className="py-2.5 px-3">
+                          <strong className="block text-ink">{r.title}</strong>
+                          <span className="text-[11px] text-ink-3 line-clamp-1">{r.description}</span>
+                        </td>
+                        <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">{r.stage}</td>
+                        <td className="py-2.5 px-3 font-mono text-ink-3 whitespace-nowrap">{r.code || '—'}</td>
+                        <td className="py-2.5 px-3 text-ink-2">
+                          <span className="inline-block max-w-xs truncate text-[11px] font-mono bg-canvas px-1.5 py-0.5 rounded border border-line" title={r.standardRemark}>
+                            {r.standardRemark || 'Inspected and verified OK'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <Badge tone={r.severity === 'CRITICAL' ? 'danger' : r.severity === 'MAJOR' ? 'warn' : 'neutral'}>
+                            {r.severity}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-ink-3 whitespace-nowrap">
+                          {r.photosRequired} Photos {r.videoRequired ? '+ Video' : ''}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">{r.toolRequired || 'Visual'}</td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePdiStatus(r.id)}
+                            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border cursor-pointer transition-all ${
+                              r.status === 'ACTIVE'
+                                ? 'bg-ok/10 text-ok border-ok/30 hover:bg-ok/20'
+                                : 'bg-danger/10 text-danger border-danger/30 hover:bg-danger/20'
+                            }`}
+                          >
+                            {r.status === 'ACTIVE' ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-ok" />
+                                <span>ACTIVE</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3 text-danger" />
+                                <span>INACTIVE</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditPdi(r)}
+                              className="w-7 h-7 rounded hover:bg-canvas border border-line hover:border-line-strong text-ink flex items-center justify-center transition-colors cursor-pointer"
+                              title="Edit Checkpoint"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-ink-2" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePdi(r.id)}
+                              className="w-7 h-7 rounded hover:bg-danger-soft border border-line hover:border-danger/40 text-danger flex items-center justify-center transition-colors cursor-pointer"
+                              title="Delete Checkpoint"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </div>
       )}
 
       {activeTab === 'MODELS' && (
