@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Car, CheckCircle2, Clock, Truck, Bookmark, 
-  UserCheck, Wrench, ShieldCheck, ArrowRight,
-  Building, Layers, BarChart3, Activity,
-  PackageCheck, ShoppingCart, MapPin
-} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFleetCounts } from '../hooks/useFleetCounts';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand, getBookingsForBrand } from '../data/seedData';
+import { Panel, Stat, Badge, Bar } from '../components/ui/primitives';
+import { MapPin } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const { currentBrand } = useAuth();
@@ -63,74 +58,14 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // 8 Executive Metric Cards
-  const kpis = [
-    { 
-      label: 'Total Bookings', 
-      value: counts.totalBookings, 
-      link: '/bookings', 
-      icon: Bookmark, 
-      moreText: 'View'
-    },
-    { 
-      label: 'VIN Allocated', 
-      value: counts.allocatedVehicles, 
-      link: '/bookings', 
-      icon: UserCheck, 
-      moreText: 'View'
-    },
-    { 
-      label: 'PBNA Orders', 
-      value: counts.totalPbnaVehicle, 
-      link: '/bookings', 
-      icon: Clock, 
-      moreText: 'View'
-    },
-    { 
-      label: 'Yard Stock', 
-      value: counts.totalPhysicalStock, 
-      link: '/vehicles', 
-      icon: Building, 
-      moreText: 'View'
-    },
-    { 
-      label: 'Free Stock', 
-      value: counts.totalFreeVehicle, 
-      link: '/vehicles', 
-      icon: PackageCheck, 
-      moreText: 'View'
-    },
-    { 
-      label: 'In-Transit', 
-      value: counts.receivingPending, 
-      link: '/receiving', 
-      icon: Truck, 
-      moreText: 'View'
-    },
-    { 
-      label: 'Order Needed', 
-      value: counts.orderRequired, 
-      link: '/bookings', 
-      icon: ShoppingCart, 
-      moreText: 'View'
-    },
-    { 
-      label: 'PDI Certified', 
-      value: counts.pdiDone, 
-      link: '/pdi', 
-      icon: CheckCircle2, 
-      moreText: 'View'
-    }
-  ];
-
   // Yard / Facility-Wise Bookings & Inventory Aggregation
   const yardFacilities = [
     {
       id: 'yard-pune',
       name: 'Wakad Central Stockyard',
       location: 'Pune, Maharashtra',
-      brand: 'Tata',
-      type: '3S Facility',
+      brand: 'Tata' as const,
+      type: '3S Main Facility',
       capacity: 120,
       bookings: bookingsList.filter(b => b.organization_id === '11111111-1111-1111-1111-111111111111' || !b.model?.toLowerCase().includes('hyundai')).length,
       allocated: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111111' || !b.model?.toLowerCase().includes('hyundai')) && !!b.allocated_vin_no).length,
@@ -140,8 +75,8 @@ export const DashboardPage: React.FC = () => {
       id: 'yard-jaipur-tonk',
       name: 'Jaipur Tonk Road Hub',
       location: 'Jaipur, Rajasthan',
-      brand: 'Hyundai',
-      type: '3S Facility',
+      brand: 'Hyundai' as const,
+      type: '3S Main Facility',
       capacity: 150,
       bookings: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant !== 'Karan Joshi').length,
       allocated: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant !== 'Karan Joshi' && !!b.allocated_vin_no).length,
@@ -151,8 +86,8 @@ export const DashboardPage: React.FC = () => {
       id: 'yard-jaipur-raja',
       name: 'Raja Park City Showroom',
       location: 'Jaipur, Rajasthan',
-      brand: 'Hyundai',
-      type: '1S Showroom',
+      brand: 'Hyundai' as const,
+      type: '1S Retail Desk',
       capacity: 30,
       bookings: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant === 'Karan Joshi').length,
       allocated: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant === 'Karan Joshi' && !!b.allocated_vin_no).length,
@@ -163,19 +98,19 @@ export const DashboardPage: React.FC = () => {
   // Model-Wise Booking, Allocation, PBNA & Order Deficit Analysis
   const computeModelMatrix = () => {
     const allModels = [
-      { name: 'Tata Safari', brand: 'Tata' },
-      { name: 'Tata Harrier', brand: 'Tata' },
-      { name: 'Tata Nexon', brand: 'Tata' },
-      { name: 'Tata Curvv.ev', brand: 'Tata' },
-      { name: 'Tata Punch', brand: 'Tata' },
-      { name: 'Tata Tiago', brand: 'Tata' },
-      { name: 'Tata Altroz', brand: 'Tata' },
-      { name: 'Hyundai Creta', brand: 'Hyundai' },
-      { name: 'Hyundai Venue', brand: 'Hyundai' },
-      { name: 'Hyundai Verna', brand: 'Hyundai' },
-      { name: 'Hyundai Ioniq 5', brand: 'Hyundai' },
-      { name: 'Hyundai Exter', brand: 'Hyundai' },
-      { name: 'Hyundai Tucson', brand: 'Hyundai' }
+      { name: 'Tata Safari', brand: 'Tata' as const },
+      { name: 'Tata Harrier', brand: 'Tata' as const },
+      { name: 'Tata Nexon', brand: 'Tata' as const },
+      { name: 'Tata Curvv.ev', brand: 'Tata' as const },
+      { name: 'Tata Punch', brand: 'Tata' as const },
+      { name: 'Tata Tiago', brand: 'Tata' as const },
+      { name: 'Tata Altroz', brand: 'Tata' as const },
+      { name: 'Hyundai Creta', brand: 'Hyundai' as const },
+      { name: 'Hyundai Venue', brand: 'Hyundai' as const },
+      { name: 'Hyundai Verna', brand: 'Hyundai' as const },
+      { name: 'Hyundai Ioniq 5', brand: 'Hyundai' as const },
+      { name: 'Hyundai Exter', brand: 'Hyundai' as const },
+      { name: 'Hyundai Tucson', brand: 'Hyundai' as const }
     ];
 
     // Filter by active brand context
@@ -219,8 +154,8 @@ export const DashboardPage: React.FC = () => {
       {/* 1. Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-[-0.011em] text-ink">
-            Dashboard
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+            Operations Overview
           </h1>
           <p className="text-xs text-ink-3 mt-0.5">
             Real-time pipeline, facility stock distribution, and model allocation ledger
@@ -228,44 +163,66 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Top Metric Cards */}
+      {/* 2. Top Stats Grid using shared Stat primitive */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
-        {kpis.map((kpi, idx) => {
-          const Icon = kpi.icon;
-          return (
-            <Link
-              key={idx}
-              to={kpi.link}
-              className="bg-surface border border-line rounded p-3 flex flex-col justify-between hover:border-line-strong transition-colors group"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-xl font-semibold text-ink tnum leading-none">
-                    {kpi.value}
-                  </div>
-                  <div className="text-[11px] font-medium text-ink-3 mt-1.5 uppercase tracking-wide">
-                    {kpi.label}
-                  </div>
-                </div>
-                <Icon className="w-4 h-4 text-ink-3 group-hover:text-ink transition-colors shrink-0" />
-              </div>
-
-              <div className="mt-3 pt-1.5 border-t border-line flex items-center justify-between text-[10px] text-ink-3 group-hover:text-ink transition-colors">
-                <span>{kpi.moreText}</span>
-                <ArrowRight className="w-3 h-3" />
-              </div>
-            </Link>
-          );
-        })}
+        <Stat 
+          label="Total bookings" 
+          value={counts.totalBookings} 
+          note="Active customer orders" 
+          to="/bookings" 
+        />
+        <Stat 
+          label="VIN allocated" 
+          value={counts.allocatedVehicles} 
+          note="Assigned to chassis" 
+          to="/bookings" 
+        />
+        <Stat 
+          label="PBNA bookings" 
+          value={counts.totalPbnaVehicle} 
+          note="Awaiting allocation" 
+          tone="warn" 
+          to="/bookings" 
+        />
+        <Stat 
+          label="Physical stock" 
+          value={counts.totalPhysicalStock} 
+          note="On-site in bays" 
+          to="/vehicles" 
+        />
+        <Stat 
+          label="Free stock" 
+          value={counts.totalFreeVehicle} 
+          note="Available unallocated" 
+          to="/vehicles" 
+        />
+        <Stat 
+          label="In-transit" 
+          value={counts.receivingPending} 
+          note="En-route carrier trailer" 
+          to="/receiving" 
+        />
+        <Stat 
+          label="Order needed" 
+          value={counts.orderRequired} 
+          note="Plant indent deficit" 
+          tone={counts.orderRequired > 0 ? 'danger' : 'default'} 
+          to="/bookings" 
+        />
+        <Stat 
+          label="PDI certified" 
+          value={counts.pdiDone} 
+          note="QA inspection passed" 
+          to="/pdi" 
+        />
       </div>
 
-      {/* 3. Section: Stockyard & Facility-Wise Booking & Stock DataCards */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="eyebrow">Stockyard & Facility Booking Matrix</div>
-          <span className="text-xs text-ink-3">Live Network</span>
-        </div>
-
+      {/* 3. Section: Stockyard & Facility-Wise Booking Matrix */}
+      <Panel 
+        title="Stockyard & Facility Network" 
+        action={<span className="text-xs text-ink-3">Live Network ({yardFacilities.length} facilities)</span>}
+        bodyClassName="p-4"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {yardFacilities.map((yard) => {
             const pbna = yard.bookings - yard.allocated;
@@ -275,204 +232,174 @@ export const DashboardPage: React.FC = () => {
             return (
               <div 
                 key={yard.id}
-                className="bg-surface border border-line rounded p-4 flex flex-col justify-between space-y-4 hover:border-line-strong transition-colors"
+                className="bg-canvas border border-line rounded p-3.5 flex flex-col justify-between space-y-3"
               >
                 <div>
-                  {/* Top Yard Header */}
-                  <div className="flex items-start justify-between gap-2 border-b border-line pb-3">
+                  <div className="flex items-start justify-between gap-2 border-b border-line pb-2.5">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-chip font-medium bg-canvas border border-line text-ink-2 uppercase">
-                          {yard.brand}
-                        </span>
-                        <h3 className="font-semibold text-ink text-sm">{yard.name}</h3>
+                        <Badge tone="accent">{yard.brand}</Badge>
+                        <h3 className="font-medium text-ink text-sm">{yard.name}</h3>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-ink-3 mt-1">
                         <MapPin className="w-3 h-3 text-ink-3" />
                         <span>{yard.location} • {yard.type}</span>
                       </div>
                     </div>
-
-                    <span className="text-xs text-ink-3 tnum">
-                      Cap: {yard.capacity}
-                    </span>
+                    <span className="text-xs text-ink-3 tnum">Cap: {yard.capacity}</span>
                   </div>
 
-                  {/* 4 Metric Sub-Grid */}
-                  <div className="grid grid-cols-4 gap-2 text-center mt-3.5">
-                    <div className="bg-canvas p-2 rounded border border-line">
-                      <span className="text-[10px] font-medium text-ink-3 uppercase block truncate">Bookings</span>
-                      <span className="text-base font-semibold text-ink tnum mt-0.5 block">{yard.bookings}</span>
+                  <div className="grid grid-cols-4 gap-1.5 text-center mt-3">
+                    <div className="bg-surface p-2 rounded border border-line">
+                      <span className="eyebrow block truncate">Bookings</span>
+                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{yard.bookings}</span>
                     </div>
-                    <div className="bg-canvas p-2 rounded border border-line">
-                      <span className="text-[10px] font-medium text-ink-3 uppercase block truncate">Allocated</span>
-                      <span className="text-base font-semibold text-ink tnum mt-0.5 block">{yard.allocated}</span>
+                    <div className="bg-surface p-2 rounded border border-line">
+                      <span className="eyebrow block truncate">Allocated</span>
+                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{yard.allocated}</span>
                     </div>
-                    <div className="bg-canvas p-2 rounded border border-line">
-                      <span className="text-[10px] font-medium text-ink-3 uppercase block truncate">PBNA</span>
-                      <span className="text-base font-semibold text-ink tnum mt-0.5 block">{pbna}</span>
+                    <div className="bg-surface p-2 rounded border border-line">
+                      <span className="eyebrow block truncate">PBNA</span>
+                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{pbna}</span>
                     </div>
-                    <div className="bg-canvas p-2 rounded border border-line">
-                      <span className="text-[10px] font-medium text-ink-3 uppercase block truncate">Free Stock</span>
-                      <span className="text-base font-semibold text-ink tnum mt-0.5 block">{freeStock}</span>
+                    <div className="bg-surface p-2 rounded border border-line">
+                      <span className="eyebrow block truncate">Free</span>
+                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{freeStock}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Bottom Allocation Rate Bar */}
                 <div className="space-y-1.5 pt-2 border-t border-line">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-ink-3 font-medium">VIN Allocation Progress</span>
                     <span className="font-medium text-ink tnum">{allocationPct}%</span>
                   </div>
-                  <div className="w-full bg-canvas border border-line rounded-full h-1.5 overflow-hidden">
-                    <div 
-                      style={{ width: `${Math.min(allocationPct, 100)}%` }} 
-                      className="h-1.5 rounded-full bg-ink" 
-                    />
-                  </div>
+                  <Bar pct={allocationPct} />
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Panel>
 
-      {/* 4. Section: Model-Wise Booking, Allocation, PBNA & Order Deficit DataCards */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="eyebrow">Model-Wise Booking & Allocation Ledger</div>
-          <span className="text-xs text-ink-3 tnum">{modelMatrix.length} Models</span>
-        </div>
-
+      {/* 4. Section: Model-Wise Demand & Allocation Ledger */}
+      <Panel 
+        title="Model Demand & Stock Allocation Ledger" 
+        action={<span className="text-xs text-ink-3 tnum">{modelMatrix.length} models tracked</span>}
+        bodyClassName="p-4"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {modelMatrix.map((item, idx) => (
             <div 
               key={idx}
-              className="bg-surface border border-line rounded p-3.5 flex flex-col justify-between space-y-3 hover:border-line-strong transition-colors"
+              className="bg-canvas border border-line rounded p-3 flex flex-col justify-between space-y-2.5"
             >
               <div>
-                {/* Model Header */}
                 <div className="flex items-center justify-between gap-1 border-b border-line pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-chip font-medium bg-canvas border border-line text-ink-2 uppercase">
-                      {item.brand}
-                    </span>
-                    <span className="font-semibold text-ink text-xs truncate">{item.name}</span>
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Badge tone="accent">{item.brand}</Badge>
+                    <span className="font-medium text-ink text-xs truncate">{item.name}</span>
                   </div>
 
                   {item.orderRequired > 0 ? (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-chip bg-danger/10 text-danger border border-danger/20">
-                      Indent: {item.orderRequired}
-                    </span>
+                    <Badge tone="danger">Indent: {item.orderRequired}</Badge>
                   ) : (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-chip bg-ok/10 text-ok border border-ok/20">
-                      Stock OK
-                    </span>
+                    <Badge tone="ok">Stock OK</Badge>
                   )}
                 </div>
 
-                {/* 4 Metric Box */}
-                <div className="grid grid-cols-4 gap-1.5 text-center mt-2.5 text-xs">
-                  <div className="bg-canvas p-1.5 rounded border border-line">
-                    <span className="text-[9px] text-ink-3 font-medium uppercase block">Orders</span>
-                    <span className="font-semibold text-ink tnum mt-0.5 block">{item.totalBook}</span>
+                <div className="grid grid-cols-4 gap-1 text-center mt-2">
+                  <div className="bg-surface p-1.5 rounded border border-line">
+                    <span className="eyebrow block">Orders</span>
+                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.totalBook}</span>
                   </div>
-                  <div className="bg-canvas p-1.5 rounded border border-line">
-                    <span className="text-[9px] text-ink-3 font-medium uppercase block">Alloted</span>
-                    <span className="font-semibold text-ink tnum mt-0.5 block">{item.allocated}</span>
+                  <div className="bg-surface p-1.5 rounded border border-line">
+                    <span className="eyebrow block">Alloted</span>
+                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.allocated}</span>
                   </div>
-                  <div className="bg-canvas p-1.5 rounded border border-line">
-                    <span className="text-[9px] text-ink-3 font-medium uppercase block">PBNA</span>
-                    <span className="font-semibold text-ink tnum mt-0.5 block">{item.pbna}</span>
+                  <div className="bg-surface p-1.5 rounded border border-line">
+                    <span className="eyebrow block">PBNA</span>
+                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.pbna}</span>
                   </div>
-                  <div className="bg-canvas p-1.5 rounded border border-line">
-                    <span className="text-[9px] text-ink-3 font-medium uppercase block">Free</span>
-                    <span className="font-semibold text-ink tnum mt-0.5 block">{item.freeYardStock}</span>
+                  <div className="bg-surface p-1.5 rounded border border-line">
+                    <span className="eyebrow block">Free</span>
+                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.freeYardStock}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Progress Allocation Bar */}
               <div className="space-y-1 pt-1.5 border-t border-line">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-ink-3 font-medium">Allocation Fulfilled</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-ink-3">Allocation Rate</span>
                   <span className="font-medium text-ink tnum">{item.allocRate}%</span>
                 </div>
-                <div className="w-full bg-canvas border border-line rounded-full h-1 overflow-hidden">
-                  <div 
-                    style={{ width: `${Math.min(item.allocRate, 100)}%` }} 
-                    className="h-1 rounded-full bg-ink" 
-                  />
-                </div>
+                <Bar pct={item.allocRate} />
               </div>
-
             </div>
           ))}
         </div>
-      </div>
+      </Panel>
 
-      {/* 5. Section: Order Fulfillment Pipeline (Process Funnel) */}
-      <div className="bg-surface border border-line rounded p-4 space-y-3">
-        <div className="flex items-center justify-between border-b border-line pb-2.5">
-          <div className="eyebrow">Booking Fulfillment & Delivery Pipeline</div>
-          <span className="text-xs text-ink-3">Order Progression</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-1">
+      {/* 5. Section: Order Fulfillment Pipeline */}
+      <Panel 
+        title="Booking Fulfillment & Delivery Pipeline" 
+        action={<span className="text-xs text-ink-3">5 Pipeline Milestones</span>}
+        bodyClassName="p-4"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
           
           <div className="bg-canvas border border-line p-3 rounded flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-surface border border-line text-ink font-medium flex items-center justify-center text-xs shrink-0 tnum">
+            <div className="w-6 h-6 rounded bg-surface border border-line text-ink text-xs font-semibold flex items-center justify-center shrink-0 tnum">
               1
             </div>
             <div>
-              <span className="text-[10px] font-medium text-ink-3 uppercase block">Advance Booked</span>
+              <span className="eyebrow block">Advance Booked</span>
               <span className="text-sm font-semibold text-ink tnum block">{counts.totalBookings} Orders</span>
             </div>
           </div>
 
           <div className="bg-canvas border border-line p-3 rounded flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-surface border border-line text-ink font-medium flex items-center justify-center text-xs shrink-0 tnum">
+            <div className="w-6 h-6 rounded bg-surface border border-line text-ink text-xs font-semibold flex items-center justify-center shrink-0 tnum">
               2
             </div>
             <div>
-              <span className="text-[10px] font-medium text-ink-3 uppercase block">VIN Allocated</span>
+              <span className="eyebrow block">VIN Allocated</span>
               <span className="text-sm font-semibold text-ink tnum block">{counts.allocatedVehicles} Vehicles</span>
             </div>
           </div>
 
           <div className="bg-canvas border border-line p-3 rounded flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-surface border border-line text-ink font-medium flex items-center justify-center text-xs shrink-0 tnum">
+            <div className="w-6 h-6 rounded bg-surface border border-line text-ink text-xs font-semibold flex items-center justify-center shrink-0 tnum">
               3
             </div>
             <div>
-              <span className="text-[10px] font-medium text-ink-3 uppercase block">PDI Certified</span>
+              <span className="eyebrow block">PDI Certified</span>
               <span className="text-sm font-semibold text-ink tnum block">{counts.pdiDone} Inspected</span>
             </div>
           </div>
 
           <div className="bg-canvas border border-line p-3 rounded flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-surface border border-line text-ink font-medium flex items-center justify-center text-xs shrink-0 tnum">
+            <div className="w-6 h-6 rounded bg-surface border border-line text-ink text-xs font-semibold flex items-center justify-center shrink-0 tnum">
               4
             </div>
             <div>
-              <span className="text-[10px] font-medium text-ink-3 uppercase block">Invoiced / Gatepass</span>
+              <span className="eyebrow block">Invoiced</span>
               <span className="text-sm font-semibold text-ink tnum block">6 Units</span>
             </div>
           </div>
 
           <div className="bg-canvas border border-line p-3 rounded flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-surface border border-line text-ink font-medium flex items-center justify-center text-xs shrink-0 tnum">
+            <div className="w-6 h-6 rounded bg-surface border border-line text-ink text-xs font-semibold flex items-center justify-center shrink-0 tnum">
               5
             </div>
             <div>
-              <span className="text-[10px] font-medium text-ink-3 uppercase block">Delivered</span>
+              <span className="eyebrow block">Delivered</span>
               <span className="text-sm font-semibold text-ink tnum block">1 Delivered</span>
             </div>
           </div>
 
         </div>
-      </div>
+      </Panel>
 
     </div>
   );

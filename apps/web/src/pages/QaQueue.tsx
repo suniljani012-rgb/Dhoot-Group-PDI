@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ShieldCheck, CheckCircle2, XCircle, FileText, ArrowRight, 
-  Search, Filter, Check, FileSpreadsheet, ChevronRight,
-  FolderOpen
+  FileText, Search, Check, FileSpreadsheet
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand } from '../data/seedData';
+import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
 
 export const QaQueuePage: React.FC = () => {
   const { currentBrand } = useAuth();
@@ -78,85 +77,94 @@ export const QaQueuePage: React.FC = () => {
     return matchesSearch;
   });
 
+  const pendingCount = queue.filter(item => !approvedList.includes(item.id) && item.status !== 'APPROVED').length;
+  const approvedCount = queue.filter(item => approvedList.includes(item.id) || item.status === 'APPROVED').length;
+
   return (
-    <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight">
-            QA Reviews
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+            QA Manager Approvals
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Review completed inspections and issue official PDI certificates
+          <p className="text-xs text-ink-3 mt-0.5">
+            Review completed inspections, sign off quality dockets, and issue digital PDI certificates
           </p>
         </div>
 
         <button
           onClick={() => alert('Exporting QA review ledger to Excel...')}
-          className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+          className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
         >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+          <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
           <span>Export Excel</span>
         </button>
       </div>
 
-      {/* Dense Excel-Style QA Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-        
-        {/* Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
-            {(['ALL', 'PENDING', 'APPROVED'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
-                  statusFilter === tab ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Stat label="Total Submissions" value={queue.length} note="Inspection Reports" />
+        <Stat label="Pending Review" value={pendingCount} note="Sign-off Required" tone={pendingCount > 0 ? 'warn' : 'default'} />
+        <Stat label="Certified & Approved" value={approvedCount} note="Ready for Gatepass" tone="ok" />
+        <Stat label="First-Pass Yield" value="98.2%" note="Zero Defect Ratio" />
+      </div>
 
-          <div className="relative w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search VIN, Model, Inspector..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-7 pr-3 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
-            />
-          </div>
-        </div>
+      {/* Main Table Panel */}
+      <Panel
+        title="QA Sign-Off Queue"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
+              {(['ALL', 'PENDING', 'APPROVED'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab)}
+                  className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+                    statusFilter === tab
+                      ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
+                      : 'text-ink-3 hover:text-ink-2'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
 
-        {/* Excel Data Grid */}
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <div className="relative w-48 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search VIN, model, inspector..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
+              />
+            </div>
+          </div>
+        }
+      >
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">VIN Number</th>
-                <th className="py-2.5 px-3">Brand / Model</th>
+                <th className="py-2.5 px-3">VIN / Chassis</th>
+                <th className="py-2.5 px-3">Brand & Model</th>
                 <th className="py-2.5 px-3">Colour</th>
-                <th className="py-2.5 px-3">Assigned Inspector</th>
+                <th className="py-2.5 px-3">Inspector</th>
                 <th className="py-2.5 px-3">Checklist Score</th>
                 <th className="py-2.5 px-3">Submitted Time</th>
-                <th className="py-2.5 px-3">QA Status</th>
-                <th className="py-2.5 px-3 text-center">Quality Review Action</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3 text-center">QA Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
               {filteredQueue.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-10 text-center text-slate-400">
-                    <div className="space-y-1">
-                      <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
-                      <div className="font-bold text-slate-600">0 QA Submissions in Database</div>
-                      <p className="text-[11px]">Inspections submitted by engineers will appear here for final QA sign-off.</p>
-                    </div>
+                  <td colSpan={9}>
+                    <Empty title="0 QA Submissions Found" hint="Inspections submitted by engineers will appear here for final QA sign-off." />
                   </td>
                 </tr>
               ) : (
@@ -164,48 +172,36 @@ export const QaQueuePage: React.FC = () => {
                   const isApproved = approvedList.includes(item.id) || item.status === 'APPROVED';
                   const isHyundai = item.model.toLowerCase().includes('hyundai') || item.vin.startsWith('MAL');
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                    <tr key={item.id} className="hover:bg-canvas transition-colors">
+                      <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
                         {idx + 1}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <td className="py-2.5 px-3 font-mono font-medium text-ink">
                         {item.vin}
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                            isHyundai 
-                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
-                              : 'bg-blue-50 text-blue-800 border border-blue-200'
-                          }`}>
-                            {isHyundai ? 'Hyundai' : 'Tata'}
-                          </span>
-                          <span className="font-bold text-slate-900">{item.model}</span>
+                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
+                          <span className="font-medium text-ink">{item.model}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 font-medium">{item.variant}</div>
+                        <div className="text-[10px] text-ink-3">{item.variant}</div>
                       </td>
-                      <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-semibold text-slate-700">
-                          {item.color}
-                        </span>
+                      <td className="py-2.5 px-3 text-ink-2">
+                        {item.color}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 font-semibold">
+                      <td className="py-2.5 px-3 text-ink">
                         {item.inspector}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
+                      <td className="py-2.5 px-3 font-medium text-ok tnum">
                         {item.passed} / 42 (100% Pass)
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-400 text-[10px]">
+                      <td className="py-2.5 px-3 text-ink-3 tnum text-[10px]">
                         {item.submittedAt}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                          isApproved
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : 'bg-blue-50 text-blue-800 border-blue-200'
-                        }`}>
+                        <Badge tone={isApproved ? 'ok' : 'warn'}>
                           {isApproved ? 'Approved & Certified' : 'QA Review Pending'}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         {!isApproved ? (
@@ -213,24 +209,24 @@ export const QaQueuePage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleApprove(item.id)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                              className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Check className="w-3 h-3 stroke-[3]" />
                               <span>Approve</span>
                             </button>
                             <button
                               type="button"
-                              className="px-2.5 py-1 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-[10px] font-semibold transition-all cursor-pointer"
+                              className="h-6 px-2 rounded bg-danger/10 text-danger border border-danger/20 text-xs font-medium transition-colors cursor-pointer"
                             >
-                              <span>Reject</span>
+                              Reject
                             </button>
                           </div>
                         ) : (
                           <Link
                             to={`/certificates/${item.certId}`}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
                           >
-                            <FileText className="w-3 h-3 text-emerald-400" />
+                            <FileText className="w-3 h-3 text-ok" />
                             <span>Certificate</span>
                           </Link>
                         )}
@@ -242,14 +238,7 @@ export const QaQueuePage: React.FC = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredQueue.length} QA review records</span>
-          <span className="text-slate-500 font-medium">Quality Assurance Authority</span>
-        </div>
-
-      </div>
+      </Panel>
 
     </div>
   );

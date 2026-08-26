@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getApiUrl } from '../utils/apiConfig';
+import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
 
 export interface ChallanRecord {
   id: string;
@@ -276,127 +277,86 @@ const SEED_CHALLANS: ChallanRecord[] = [
   const totalNetInvoiceValue = records.reduce((sum, r) => sum + (Number(r.net_amount) || 1500000), 0);
 
   return (
-    <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Top Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight">
-            Invoicing & Delivery
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+            Invoicing & Gatepass Delivery
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Generate tax invoices, calculate charges, and issue gate passes for delivery
+          <p className="text-xs text-ink-3 mt-0.5">
+            Generate tax invoices, calculate charges, and issue gate passes for customer delivery
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
             <span>Import Excel Invoices</span>
           </button>
 
           <button
             onClick={() => setShowNewModal(true)}
-            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Generate Pre-Challan / Invoice</span>
+            <Plus className="w-3.5 h-3.5 text-white/80" />
+            <span>New Invoice</span>
           </button>
         </div>
       </div>
 
       {/* Billing & Invoicing KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commercial Invoices</span>
-            <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalBillingCount}</span>
-            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Vouchers Created</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold">
-            <FileSpreadsheet className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ready for Handover</span>
-            <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{invoicedPendingHandover}</span>
-            <span className="text-[10px] font-semibold text-amber-700 mt-1 block">Gatepass Pending</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold">
-            <Clock className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Delivered Customers</span>
-            <span className="text-xl font-black text-emerald-600 leading-none mt-0.5 block">{deliveredGatepassCount}</span>
-            <span className="text-[10px] font-semibold text-emerald-700 mt-1 block">Gatepass Signed</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Invoiced Billing</span>
-            <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block font-mono">
-              ₹{(totalNetInvoiceValue / 100000).toFixed(1)}L
-            </span>
-            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Net Dealership Value</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold">
-            <DollarSign className="w-4 h-4" />
-          </div>
-        </div>
-
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Stat label="Total Invoices" value={totalBillingCount} note="Vouchers Created" />
+        <Stat label="Ready for Handover" value={invoicedPendingHandover} note="Gatepass Pending" tone="warn" />
+        <Stat label="Delivered" value={deliveredGatepassCount} note="Gatepass Signed" tone="ok" />
+        <Stat label="Total Billing Value" value={`₹${(totalNetInvoiceValue / 100000).toFixed(1)}L`} note="Net Dealership Turnover" />
       </div>
 
-      {/* Dense Excel-Style Invoicing Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-        
-        {/* Table Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
-            {(['ALL', 'INVOICED', 'DELIVERED'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
-                  statusFilter === tab ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                {tab === 'ALL' ? 'All Invoices' : tab}
-              </button>
-            ))}
-          </div>
+      {/* Main Table Panel */}
+      <Panel
+        title="Commercial Invoices & Gatepasses"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
+              {(['ALL', 'INVOICED', 'DELIVERED'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab)}
+                  className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+                    statusFilter === tab
+                      ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
+                      : 'text-ink-3 hover:text-ink-2'
+                  }`}
+                >
+                  {tab === 'ALL' ? 'All Invoices' : tab}
+                </button>
+              ))}
+            </div>
 
-          <div className="relative w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search Customer, Challan, Invoice, VIN..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-7 pr-3 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
-            />
+            <div className="relative w-48 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search Customer, Challan, VIN..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
+              />
+            </div>
           </div>
-        </div>
-
-        {/* Excel Data Grid */}
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+        }
+      >
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">Challan / Invoice No</th>
+                <th className="py-2.5 px-3">Challan / Invoice</th>
                 <th className="py-2.5 px-3">VIN / Chassis</th>
                 <th className="py-2.5 px-3">Customer Name</th>
                 <th className="py-2.5 px-3">Vehicle Model</th>
@@ -408,117 +368,89 @@ const SEED_CHALLANS: ChallanRecord[] = [
                 <th className="py-2.5 px-3 text-center">Handover Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-10 text-center text-slate-400">
-                    <div className="space-y-1">
-                      <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
-                      <div className="font-bold text-slate-600">0 Billing & Delivery Records in Database</div>
-                      <p className="text-[11px]">Allocate stock to a customer booking or create a direct invoice to issue gatepass.</p>
-                      <button
-                        onClick={() => setShowNewModal(true)}
-                        className="inline-flex items-center gap-1 text-slate-900 font-bold underline mt-2 text-xs cursor-pointer"
-                      >
-                        <span>Generate First Tax Invoice</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  <td colSpan={11}>
+                    <Empty title="0 Billing & Delivery Records Found" hint="Allocate stock to a customer booking or create a direct invoice to issue gatepass." />
                   </td>
                 </tr>
               ) : (
                 filteredRecords.map((r, idx) => {
                   const isHyundai = r.model.toLowerCase().includes('hyundai') || r.vin_no.startsWith('MAL');
                   return (
-                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                    <tr key={r.id} className="hover:bg-canvas transition-colors">
+                      <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
                         {idx + 1}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <td className="py-2.5 px-3 font-mono font-medium text-ink">
                         <div>{r.challan_no}</div>
-                        <div className="text-[10px] text-slate-400 font-normal">{r.invoice_no}</div>
+                        <div className="text-[10px] text-ink-3 font-normal">{r.invoice_no}</div>
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                      <td className="py-2.5 px-3 font-mono text-ink">
                         {r.vin_no}
                       </td>
                       <td className="py-2.5 px-3">
-                        <div className="font-bold text-slate-900">{r.customer_name}</div>
-                        <div className="text-[10px] text-slate-400">{r.city || 'Dealership'}</div>
+                        <div className="font-medium text-ink">{r.customer_name}</div>
+                        <div className="text-[10px] text-ink-3">{r.city || 'Dealership'}</div>
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                            isHyundai 
-                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
-                              : 'bg-blue-50 text-blue-800 border border-blue-200'
-                          }`}>
-                            {isHyundai ? 'Hyundai' : 'Tata'}
-                          </span>
-                          <span className="font-bold text-slate-900">{r.model}</span>
+                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
+                          <span className="font-medium text-ink">{r.model}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400">{r.variant}</div>
+                        <div className="text-[10px] text-ink-3">{r.variant}</div>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600">
+                      <td className="py-2.5 px-3 text-ink-2">
                         {r.financier_name || 'Self-Funded'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-700 text-right">
+                      <td className="py-2.5 px-3 font-medium text-ink text-right tnum">
                         ₹{(r.ex_showroom || 0).toLocaleString('en-IN')}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 text-right">
+                      <td className="py-2.5 px-3 font-medium text-ok text-right tnum">
                         ₹{(r.net_amount || (Number(r.ex_showroom) + 150000)).toLocaleString('en-IN')}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px]">
+                      <td className="py-2.5 px-3 text-ink-3 tnum text-[11px]">
                         {r.invoice_date || '2026-08-25'}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                          r.status === 'DELIVERED'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : 'bg-blue-50 text-blue-800 border-blue-200'
-                        }`}>
+                        <Badge tone={r.status === 'DELIVERED' ? 'ok' : 'accent'}>
                           {r.status === 'DELIVERED' ? 'Vehicle Delivered' : 'Invoiced / Ready'}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => setInvoicePreviewRecord(r)}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1 cursor-pointer"
                           >
-                            <FileText className="w-3 h-3 text-emerald-400" />
+                            <FileText className="w-3 h-3 text-ok" />
                             <span>Tax Invoice</span>
                           </button>
 
                           {r.status !== 'DELIVERED' ? (
                             <button
                               onClick={() => setGatepassRecord(r)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                              className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
                             >
-                            <Key className="w-3 h-3" />
-                            <span>Gatepass</span>
-                          </button>
-                        ) : (
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Handed Over
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
+                              <Key className="w-3 h-3" />
+                              <span>Gatepass</span>
+                            </button>
+                          ) : (
+                            <span className="text-[11px] font-medium text-ok inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Delivered
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
                 })
               )}
             </tbody>
           </table>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredRecords.length} billing records</span>
-          <span className="text-slate-500 font-medium">Commercial Billing Authority</span>
-        </div>
-
-      </div>
+      </Panel>
 
       {/* ========================================================================= */}
       {/* MODAL 1: OFFICIAL DELIVERY GATEPASS & HANDOVER DIALOG                     */}

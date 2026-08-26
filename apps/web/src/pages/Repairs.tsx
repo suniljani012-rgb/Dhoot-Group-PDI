@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Wrench, AlertTriangle, CheckCircle2, Clock, Check, 
-  Search, Filter, Plus, FileSpreadsheet, ChevronRight,
-  FolderOpen
+  Check, Search, FileSpreadsheet, CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
+import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
 
 const SEED_REPAIRS = [
   { id: 'rep-1', vin: 'MAT612345N1234563', model: 'Tata Nexon', issueType: 'ELECTRICAL', severity: 'MAJOR', description: 'Infotainment display blank on cold start & rear wiper motor loose connection', assignedTo: 'Suresh Patil (Senior Electrician)', status: 'IN_PROGRESS', createdAt: '2026-08-25T09:30:00Z', brand: 'TATA' },
@@ -26,7 +25,7 @@ export const RepairsPage: React.FC = () => {
   const getFilteredRepairs = (data: any[]) => {
     if (currentBrand.code === 'DHOOT-TATA') return data.filter((r: any) => r.brand === 'TATA' || (r.model && r.model.includes('Tata')));
     if (currentBrand.code === 'DHOOT-HYUNDAI') return data.filter((r: any) => r.brand === 'HYUNDAI' || (r.model && r.model.includes('Hyundai')));
-    return data; // ALL returns both Tata and Hyundai
+    return data;
   };
 
   const fetchRepairs = async () => {
@@ -80,166 +79,152 @@ export const RepairsPage: React.FC = () => {
     return matchesSearch;
   });
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case 'CRITICAL': return 'bg-rose-50 text-rose-800 border-rose-200 font-bold';
-      case 'MAJOR': return 'bg-amber-50 text-amber-800 border-amber-200 font-bold';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'OPEN': return 'bg-amber-50 text-amber-800 border-amber-200';
-      case 'IN_PROGRESS': return 'bg-blue-50 text-blue-800 border-blue-200 font-bold';
-      case 'COMPLETED': return 'bg-emerald-50 text-emerald-800 border-emerald-200';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-  };
+  const openCount = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length;
+  const completedCount = tickets.filter(t => t.status === 'COMPLETED').length;
 
   return (
-    <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Top Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight">
-            Workshop Repairs
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+            Workshop Repairs & Rectifications
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Track defect job cards, assign technicians, and resolve issues
+          <p className="text-xs text-ink-3 mt-0.5">
+            Track defect job cards, assign certified technicians, and clear QA re-inspections
           </p>
         </div>
 
         <button
           onClick={() => alert('Exporting workshop repair ledger to CSV...')}
-          className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+          className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
         >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+          <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
           <span>Export Excel</span>
         </button>
       </div>
 
-      {/* Dense Excel-Style Repairs Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-        
-        {/* Filter Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
-            {(['ALL', 'OPEN', 'IN_PROGRESS', 'COMPLETED'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
-                  statusFilter === tab ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                {tab.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Stat label="Total Job Cards" value={tickets.length} note="Logged from Inspections" />
+        <Stat label="Active in Bay" value={openCount} note="Under Rectification" tone={openCount > 0 ? 'warn' : 'default'} />
+        <Stat label="Completed" value={completedCount} note="QA Clearance Ready" tone="ok" />
+        <Stat label="Avg Turnaround" value="1.4h" note="Within Service SLA" />
+      </div>
 
-          <div className="relative w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search VIN, Model, Defect, Tech..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-7 pr-3 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
-            />
-          </div>
-        </div>
+      {/* Main Repair Ledger Panel */}
+      <Panel
+        title="Repair Tickets Ledger"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
+              {(['ALL', 'OPEN', 'IN_PROGRESS', 'COMPLETED'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab)}
+                  className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+                    statusFilter === tab
+                      ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
+                      : 'text-ink-3 hover:text-ink-2'
+                  }`}
+                >
+                  {tab === 'ALL' ? 'All Tickets' : tab.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
 
-        {/* Excel Data Grid */}
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <div className="relative w-48 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search VIN, Model, Defect, Tech..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
+              />
+            </div>
+          </div>
+        }
+      >
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Ticket ID</th>
-                <th className="py-2.5 px-3">VIN Number</th>
-                <th className="py-2.5 px-3">Vehicle Model</th>
+                <th className="py-2.5 px-3">VIN / Chassis</th>
+                <th className="py-2.5 px-3">Brand & Model</th>
                 <th className="py-2.5 px-3">Defect Area</th>
                 <th className="py-2.5 px-3">Severity</th>
                 <th className="py-2.5 px-3">Issue Description</th>
                 <th className="py-2.5 px-3">Assigned Tech</th>
-                <th className="py-2.5 px-3">Workshop Bay</th>
+                <th className="py-2.5 px-3">Bay</th>
                 <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
               {filteredTickets.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-10 text-center text-slate-400">
-                    <div className="space-y-1">
-                      <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
-                      <div className="font-bold text-slate-600">0 Active Repair Tickets in Database</div>
-                      <p className="text-[11px]">All vehicle inspections have passed without defects requiring workshop repair.</p>
-                    </div>
+                  <td colSpan={11}>
+                    <Empty title="0 Active Repair Tickets Found" hint="All vehicle inspections have passed without defects requiring workshop repair." />
                   </td>
                 </tr>
               ) : (
                 filteredTickets.map((t, idx) => {
                   const isHyundai = t.model.toLowerCase().includes('hyundai') || t.vin.startsWith('MAL');
                   return (
-                    <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                    <tr key={t.id} className="hover:bg-canvas transition-colors">
+                      <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
                         {idx + 1}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <td className="py-2.5 px-3 font-mono font-medium text-ink">
                         {t.id}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
+                      <td className="py-2.5 px-3 font-mono text-ink">
                         {t.vin}
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                            isHyundai 
-                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
-                              : 'bg-blue-50 text-blue-800 border border-blue-200'
-                          }`}>
-                            {isHyundai ? 'Hyundai' : 'Tata'}
-                          </span>
-                          <span className="font-bold text-slate-900">{t.model}</span>
+                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
+                          <span className="font-medium text-ink">{t.model}</span>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700">
+                      <td className="py-2.5 px-3 text-ink-2">
                         {t.area || t.finding_area || 'General'}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getSeverityBadge(t.severity)}`}>
+                        <Badge tone={t.severity === 'CRITICAL' ? 'danger' : t.severity === 'MAJOR' ? 'warn' : 'neutral'}>
                           {t.severity}
-                        </span>
+                        </Badge>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={t.description}>
+                      <td className="py-2.5 px-3 text-ink-2 max-w-xs truncate" title={t.description}>
                         {t.description}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700 font-semibold">
+                      <td className="py-2.5 px-3 text-ink">
                         {t.assignedTo || t.assigned_to || 'Technician'}
                       </td>
-                      <td className="py-2.5 px-3 font-bold text-slate-800">
+                      <td className="py-2.5 px-3 text-ink">
                         {t.bay || 'Bay 1'}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusBadge(t.status)}`}>
+                        <Badge tone={t.status === 'COMPLETED' ? 'ok' : 'warn'}>
                           {t.status}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         {t.status !== 'COMPLETED' ? (
                           <button
                             onClick={() => markComplete(t.id)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                            className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
                           >
                             <Check className="w-3 h-3 stroke-[3]" />
                             <span>Repaired</span>
                           </button>
                         ) : (
-                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> QA Ready
+                          <span className="text-[11px] font-medium text-ok inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Cleared
                           </span>
                         )}
                       </td>
@@ -250,14 +235,7 @@ export const RepairsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredTickets.length} repair records</span>
-          <span className="text-slate-500 font-medium">Workshop Bodyshop Division</span>
-        </div>
-
-      </div>
+      </Panel>
 
     </div>
   );

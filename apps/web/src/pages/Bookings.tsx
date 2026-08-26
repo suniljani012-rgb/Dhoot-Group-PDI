@@ -10,6 +10,7 @@ import {
 import { Link } from 'react-router-dom';
 import { getApiUrl } from '../utils/apiConfig';
 import { getBookingsForBrand, getVehiclesForBrand } from '../data/seedData';
+import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
 
 export interface BookingRecord {
   id: string;
@@ -320,15 +321,15 @@ export const BookingsPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Header Toolbar */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight">
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
             Customer Bookings
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-ink-3 mt-0.5">
             Manage advance bookings, track sales consultants, and allocate VIN numbers
           </p>
         </div>
@@ -336,165 +337,104 @@ export const BookingsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
             <span>Import Excel Bookings</span>
           </button>
 
           <button
             onClick={() => setShowNewModal(true)}
-            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-indigo-400" />
-            <span>New Customer Booking</span>
+            <Plus className="w-3.5 h-3.5 text-white/80" />
+            <span>New Booking</span>
           </button>
         </div>
       </div>
 
       {/* Smart Stock vs Bookings Lookup Analytics KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        
-        {/* Card 1: Total Bookings */}
-        <div 
-          onClick={() => setStatusFilter('ALL')}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
-            statusFilter === 'ALL' ? 'bg-slate-50 border-slate-400 ring-2 ring-slate-400' : 'bg-white border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
-            <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalBookingsCount}</span>
-            <span className="text-[10px] font-bold text-emerald-700 font-mono mt-1 block">₹{(totalAdvanceReceived / 100000).toFixed(2)}L Advance</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold">
-            <Bookmark className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 2: Allocated Vehicles */}
-        <div 
-          onClick={() => setStatusFilter('ALLOCATED')}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
-            statusFilter === 'ALLOCATED' ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-400' : 'bg-white border-slate-200 hover:border-indigo-300'
-          }`}
-        >
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">VIN Allocated</span>
-            <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block">{allocatedBookingsCount}</span>
-            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Chassis Locked</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold">
-            <Check className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 3: Pending Allocation */}
-        <div 
-          onClick={() => setStatusFilter('PENDING_ALLOCATION')}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
-            statusFilter === 'PENDING_ALLOCATION' ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400' : 'bg-white border-slate-200 hover:border-amber-300'
-          }`}
-        >
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pending Allocation</span>
-            <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{pendingAllocBookingsCount}</span>
-            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Stock Assign Pending</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold">
-            <Clock className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 4: Available Free Stock */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Available Free Stock</span>
-            <span className="text-xl font-black text-emerald-600 leading-none mt-0.5 block">
-              {stockVehicles.filter(v => v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length}
-            </span>
-            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Unassigned in Yard</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
-            <Car className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 5: Plant Indent / Reorder Required */}
-        <div 
-          onClick={() => setStatusFilter(statusFilter === 'PLANT_ORDER_REQUIRED' ? 'ALL' : 'PLANT_ORDER_REQUIRED')}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-center justify-between ${
-            statusFilter === 'PLANT_ORDER_REQUIRED'
-              ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-400'
-              : 'bg-white border-slate-200 hover:border-rose-300'
-          }`}
-        >
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plant Indent Needed</span>
-            <span className="text-xl font-black text-rose-600 leading-none mt-0.5 block">{plantIndentRequiredCount}</span>
-            <span className="text-[10px] font-semibold text-rose-700 mt-1 block">Click to View Customers</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 font-bold">
-            <AlertCircle className="w-4 h-4" />
-          </div>
-        </div>
-
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <Stat 
+          label="Total Bookings" 
+          value={totalBookingsCount} 
+          note={`₹${(totalAdvanceReceived / 100000).toFixed(2)}L Advance`} 
+        />
+        <Stat 
+          label="VIN Allocated" 
+          value={allocatedBookingsCount} 
+          note="Chassis Locked" 
+        />
+        <Stat 
+          label="Pending Allocation" 
+          value={pendingAllocBookingsCount} 
+          note="Awaiting Stock" 
+          tone="warn" 
+        />
+        <Stat 
+          label="Available Free Stock" 
+          value={stockVehicles.filter(v => v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length} 
+          note="Unassigned in Yard" 
+        />
+        <Stat 
+          label="Plant Indent Needed" 
+          value={plantIndentRequiredCount} 
+          note="Factory Reorder Needed" 
+          tone={plantIndentRequiredCount > 0 ? 'danger' : 'default'} 
+        />
       </div>
 
-      {/* Dense Excel-Style Bookings Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-        
-        {/* Table Filter Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
-            {(['ALL', 'PENDING_ALLOCATION', 'ALLOCATED', 'PLANT_ORDER_REQUIRED'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer text-[11px] font-bold flex items-center gap-1.5 ${
-                  statusFilter === tab ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <span>{tab === 'ALL' ? 'All Bookings' : tab === 'PLANT_ORDER_REQUIRED' ? '🚨 Plant Indent Needed' : tab.replace('_', ' ')}</span>
-                {tab === 'PLANT_ORDER_REQUIRED' && (
-                  <span className="px-1.5 py-0.2 bg-rose-100 text-rose-800 rounded-full text-[9px] font-extrabold">
-                    {plantIndentRequiredCount}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+      {/* Bookings Table Panel */}
+      <Panel
+        title="Customer Bookings Ledger"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center bg-canvas border border-line rounded p-0.5 text-xs">
+              {(['ALL', 'PENDING_ALLOCATION', 'ALLOCATED', 'PLANT_ORDER_REQUIRED'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab)}
+                  className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+                    statusFilter === tab
+                      ? 'bg-surface text-ink border border-line shadow-xs font-semibold'
+                      : 'text-ink-3 hover:text-ink-2'
+                  }`}
+                >
+                  {tab === 'ALL' ? 'All Bookings' : tab === 'PLANT_ORDER_REQUIRED' ? 'Indent Needed' : tab.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
 
-          <div className="relative w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search Customer, Receipt, Phone, VIN..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-7 pr-3 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
-            />
+            <div className="relative w-48 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search customer, receipt, VIN..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
+              />
+            </div>
           </div>
-        </div>
-
-        {/* Excel Data Grid */}
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+        }
+      >
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">Receipt / Booking #</th>
+                <th className="py-2.5 px-3">Receipt / Booking</th>
                 <th className="py-2.5 px-3">Customer & Contact</th>
                 <th className="py-2.5 px-3">Booked Model & Variant</th>
                 <th className="py-2.5 px-3">Colour</th>
-                <th className="py-2.5 px-3 text-right">Advance Paid</th>
-                <th className="py-2.5 px-3">Promised Delivery</th>
-                <th className="py-2.5 px-3">Allocated Chassis / VIN</th>
-                <th className="py-2.5 px-3">Allocation Status</th>
+                <th className="py-2.5 px-3 text-right">Advance</th>
+                <th className="py-2.5 px-3">Promised Date</th>
+                <th className="py-2.5 px-3">Allocated Chassis</th>
+                <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
               {filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-10 text-center text-slate-400">
@@ -625,14 +565,7 @@ export const BookingsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <span>Showing {filteredBookings.length} booking records</span>
-          <span className="text-slate-500 font-medium">Enterprise Retail Desk</span>
-        </div>
-
-      </div>
+      </Panel>
 
       {/* ========================================================================= */}
       {/* MODAL 1: 1-CLICK CHASSIS / VIN STOCK ALLOCATION                          */}

@@ -1,89 +1,101 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Car, Calendar, ShieldCheck, CheckCircle2, UserCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, UserCheck } from 'lucide-react';
+import { Panel, Badge } from '../components/ui/primitives';
 
 export const VehicleDetailPage: React.FC = () => {
   const { id } = useParams();
   const [assignedStatus, setAssignedStatus] = useState('PDI_PENDING');
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/vehicles" className="p-2 bg-white border border-[#DEE2E8] rounded-lg text-[#718096] hover:text-[#1A1A2E]">
-          <ArrowLeft className="w-5 h-5" />
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
+      <div className="flex items-center gap-3">
+        <Link 
+          to="/vehicles" 
+          className="h-8 w-8 rounded bg-surface border border-line hover:border-line-strong flex items-center justify-center text-ink-3 hover:text-ink transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-[#1A1A2E]">Tata Harrier — Fearless Plus Dark</h2>
-          <p className="text-sm font-mono text-[#718096]">VIN: MAT612345H7654321</p>
+          <div className="flex items-center gap-2">
+            <Badge tone="accent">Tata</Badge>
+            <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+              Tata Harrier — Fearless Plus Dark
+            </h1>
+          </div>
+          <p className="text-xs font-mono text-ink-3 mt-0.5">VIN: MAT612345H7654321</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Specs Card */}
-        <div className="lg:col-span-2 bg-white border border-[#DEE2E8] rounded-xl p-6 shadow-sm space-y-6">
-          <h3 className="text-base font-bold text-[#1A1A2E]">Vehicle Specifications</h3>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="p-3 bg-[#F8F9FA] rounded-lg">
-              <span className="text-xs text-[#718096] block">Model</span>
-              <span className="text-sm font-semibold text-[#1A1A2E]">Tata Harrier</span>
-            </div>
-            <div className="p-3 bg-[#F8F9FA] rounded-lg">
-              <span className="text-xs text-[#718096] block">Variant</span>
-              <span className="text-sm font-semibold text-[#1A1A2E]">Fearless Plus Dark</span>
-            </div>
-            <div className="p-3 bg-[#F8F9FA] rounded-lg">
-              <span className="text-xs text-[#718096] block">Fuel Type</span>
-              <span className="text-sm font-semibold text-[#1A1A2E]">DIESEL</span>
-            </div>
-            <div className="p-3 bg-[#F8F9FA] rounded-lg">
-              <span className="text-xs text-[#718096] block">Transmission</span>
-              <span className="text-sm font-semibold text-[#1A1A2E]">AUTOMATIC</span>
-            </div>
-            <div className="p-3 bg-[#F8F9FA] rounded-lg">
-              <span className="text-xs text-[#718096] block">Color</span>
-              <span className="text-sm font-semibold text-[#1A1A2E]">Oberon Black</span>
-            </div>
-            <div className="p-3 bg-[#F8F9FA] rounded-lg">
-              <span className="text-xs text-[#718096] block">Manufacturing Year</span>
-              <span className="text-sm font-semibold text-[#1A1A2E]">2026</span>
-            </div>
-          </div>
+        <div className="lg:col-span-2 space-y-4">
+          <Panel title="Vehicle Specifications">
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Model</span>
+                  <span className="font-medium text-ink">Tata Harrier</span>
+                </div>
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Variant</span>
+                  <span className="font-medium text-ink">Fearless Plus Dark</span>
+                </div>
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Fuel Type</span>
+                  <span className="font-medium text-ink">DIESEL</span>
+                </div>
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Transmission</span>
+                  <span className="font-medium text-ink">AUTOMATIC</span>
+                </div>
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Color</span>
+                  <span className="font-medium text-ink">Oberon Black</span>
+                </div>
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Manufacturing Year</span>
+                  <span className="font-medium text-ink tnum">2026</span>
+                </div>
+              </div>
 
-          <div className="border-t border-[#DEE2E8] pt-6">
-            <h3 className="text-base font-bold text-[#1A1A2E] mb-4">Inspection Lifecycle</h3>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setAssignedStatus('PDI_IN_PROGRESS')}
-                className="px-4 py-2 bg-[#1A3A6B] text-white rounded-lg text-sm font-medium hover:bg-[#2C5298]"
-              >
-                Assign PDI Engineer
-              </button>
-              <span className="text-xs text-[#718096]">Current: <strong className="text-[#1A1A2E]">{assignedStatus}</strong></span>
+              <div className="border-t border-line pt-4 flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-ink-3">Current Status:</span>
+                  <div className="mt-0.5">
+                    <Badge tone="warn">{assignedStatus}</Badge>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setAssignedStatus('PDI_IN_PROGRESS')}
+                  className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors"
+                >
+                  Assign PDI Engineer
+                </button>
+              </div>
             </div>
-          </div>
+          </Panel>
         </div>
 
         {/* Status Timeline */}
-        <div className="bg-white border border-[#DEE2E8] rounded-xl p-6 shadow-sm space-y-4">
-          <h3 className="text-base font-bold text-[#1A1A2E]">Status Timeline</h3>
-          <div className="space-y-4 text-sm">
-            <div className="flex gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#1A7C4A] shrink-0" />
+        <Panel title="Status Timeline">
+          <div className="p-4 space-y-3 text-xs">
+            <div className="flex gap-2.5 items-start">
+              <CheckCircle2 className="w-4 h-4 text-ok shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-[#1A1A2E]">Vehicle Received</p>
-                <span className="text-xs text-[#718096]">24 Aug 2026, 10:15 AM</span>
+                <p className="font-medium text-ink">Vehicle Received</p>
+                <span className="text-[11px] text-ink-3 tnum">24 Aug 2026, 10:15 AM</span>
               </div>
             </div>
-            <div className="flex gap-3">
-              <UserCheck className="w-5 h-5 text-[#1565A8] shrink-0" />
+            <div className="flex gap-2.5 items-start">
+              <UserCheck className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-[#1A1A2E]">PDI Queued</p>
-                <span className="text-xs text-[#718096]">25 Aug 2026, 09:30 AM</span>
+                <p className="font-medium text-ink">PDI Queued</p>
+                <span className="text-[11px] text-ink-3 tnum">25 Aug 2026, 09:30 AM</span>
               </div>
             </div>
           </div>
-        </div>
+        </Panel>
       </div>
     </div>
   );

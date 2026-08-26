@@ -9,6 +9,7 @@ import {
   Landmark, ShieldAlert, Phone, Mail, UserCheck
 } from 'lucide-react';
 import { AdminUsersPage } from './AdminUsers';
+import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
 
 export interface PdiRuleItem {
   id: string;
@@ -425,66 +426,66 @@ export const AdminMasterPanel: React.FC = () => {
   });
 
   return (
-    <div className="space-y-5 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Top Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight">
-            Master Data
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+            Master Data & System Config
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Configure vehicle models, inspection checklists, branches, and financier partners
+          <p className="text-xs text-ink-3 mt-0.5">
+            Configure vehicle models, inspection checkpoints, facility branches, and financier partners
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => alert('Exporting complete dealership configuration masters to CSV...')}
-            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
             <span>Export Masters</span>
           </button>
         </div>
       </div>
 
       {/* Tabs Navigation Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto bg-white border border-slate-200 rounded-2xl p-1.5 shadow-xs text-xs font-bold">
+      <div className="flex items-center gap-1 overflow-x-auto bg-surface border border-line rounded p-1 text-xs">
         <button
           onClick={() => setActiveTab('PDI_RULES')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'PDI_RULES' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'PDI_RULES' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
-          <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Inspection Rules ({pdiRules.length})</span>
+          <Sliders className="w-3.5 h-3.5" />
+          <span>Checkpoints ({pdiRules.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('USERS')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'USERS' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'USERS' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
-          <span>Users & RBAC Roles</span>
+          <span>Users & Roles</span>
         </button>
 
         <button
           onClick={() => setActiveTab('MODELS')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'MODELS' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'MODELS' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Car className="w-3.5 h-3.5" />
-          <span>Vehicle Catalog ({filteredModels.length})</span>
+          <span>Models ({filteredModels.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('BRANCHES')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'BRANCHES' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'BRANCHES' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -493,22 +494,22 @@ export const AdminMasterPanel: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('FINANCE')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'FINANCE' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'FINANCE' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Landmark className="w-3.5 h-3.5" />
-          <span>Banks & Financiers ({financiers.length})</span>
+          <span>Financiers ({financiers.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('INSURANCE')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'INSURANCE' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'INSURANCE' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
-          <ShieldAlert className="w-3.5 h-3.5 text-blue-400" />
-          <span>Insurance Providers ({insuranceProviders.length})</span>
+          <ShieldAlert className="w-3.5 h-3.5" />
+          <span>Insurance ({insuranceProviders.length})</span>
         </button>
       </div>
 
@@ -516,8 +517,8 @@ export const AdminMasterPanel: React.FC = () => {
       {/* TAB 1: DYNAMIC INSPECTION RULES ENGINE                                    */}
       {/* ========================================================================= */}
       {activeTab === 'PDI_RULES' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="bg-surface border border-line rounded-panel p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Inspection Checkpoints & Evidence Rules</h2>
               <p className="text-[11px] text-slate-400">

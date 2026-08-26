@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Search, Plus, Filter, Car, ChevronRight, FileSpreadsheet, 
-  X, Loader2, Calendar, Building, DollarSign, UserCheck,
-  CheckCircle2, CheckSquare, Truck
+  Search, Filter, FileSpreadsheet, X, Loader2, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand } from '../data/seedData';
+import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
 
 export interface StockVehicle {
   id: string;
@@ -48,10 +47,6 @@ export const VehiclesPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<StockVehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Bulk Import state
-  const [csvText, setCsvText] = useState('');
-  const [importing, setImporting] = useState(false);
-
   useEffect(() => {
     fetchStock();
   }, [currentBrand.code]);
@@ -78,75 +73,37 @@ export const VehiclesPage: React.FC = () => {
     }
   };
 
-  const handleBulkStockImport = async () => {
-    if (!csvText.trim()) return;
-    setImporting(true);
-    try {
-      const lines = csvText.trim().split('\n');
-      if (lines.length <= 1) return;
-
-      const headers = lines[0].split('\t').map(h => h.trim());
-      const parsedRecords = lines.slice(1).map(line => {
-        const cols = line.split('\t').map(c => c.trim());
-        const record: any = {};
-        headers.forEach((h, idx) => {
-          record[h] = cols[idx] || '';
-        });
-        return record;
-      });
-
-      const targetOrg = currentBrand.code === 'DHOOT-HYUNDAI'
-        ? '11111111-1111-1111-1111-111111111112'
-        : '11111111-1111-1111-1111-111111111111';
-
-      const res = await fetch(getApiUrl('/api/v1/stock/bulk-import'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId: targetOrg,
-          stockItems: parsedRecords
-        })
-      });
-
-      if (res.ok) {
-        setIsImportModalOpen(false);
-        setCsvText('');
-        fetchStock();
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
+  const getStatusBadgeTone = (status: string) => {
     switch (status) {
-      case 'YARD_RECEIVING_PENDING': return 'bg-amber-50 text-amber-800 border-amber-200';
-      case 'RECEIVED':
-      case 'PDI_PENDING': return 'bg-blue-50 text-blue-800 border-blue-200';
-      case 'PDI_IN_PROGRESS': return 'bg-indigo-50 text-indigo-800 border-indigo-200 font-bold';
+      case 'ALLOCATED':
+        return 'accent';
       case 'PDI_APPROVED':
-      case 'DELIVERY_READY': return 'bg-emerald-50 text-emerald-800 border-emerald-200';
-      case 'PDI_FAILED': return 'bg-rose-50 text-rose-800 border-rose-200';
-      case 'ALLOCATED': return 'bg-purple-50 text-purple-800 border-purple-200';
-      case 'DELIVERED': return 'bg-slate-900 text-white border-slate-900';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+      case 'DELIVERY_READY':
+        return 'ok';
+      case 'PDI_IN_PROGRESS':
+      case 'PDI_PENDING':
+        return 'warn';
+      case 'IN_REPAIR':
+      case 'FAILED':
+        return 'danger';
+      default:
+        return 'neutral';
     }
   };
 
-  const filtered = vehicles.filter((v) => {
+  const filtered = vehicles.filter(v => {
+    const s = searchTerm.toLowerCase();
     const matchesSearch = 
-      v.vin.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (v.customer_name && v.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (v.fsc_code && v.fsc_code.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = statusFilter === 'ALL' || v.status === statusFilter;
-    return matchesSearch && matchesStatus;
+      (v.vin || '').toLowerCase().includes(s) ||
+      (v.model || '').toLowerCase().includes(s) ||
+      (v.customer_name || '').toLowerCase().includes(s) ||
+      (v.variant || '').toLowerCase().includes(s) ||
+      (v.fsc_code || '').toLowerCase().includes(s);
+
+    if (statusFilter === 'ALL') return matchesSearch;
+    return matchesSearch && v.status === statusFilter;
   });
 
-  // Dynamic Stock KPI Metrics
   const totalStockCount = vehicles.length;
   const unallocatedStockCount = vehicles.filter(v => v.status !== 'ALLOCATED' && v.status !== 'DELIVERED').length;
   const allocatedStockCount = vehicles.filter(v => v.status === 'ALLOCATED').length;
@@ -154,157 +111,103 @@ export const VehiclesPage: React.FC = () => {
   const inwardPendingCount = vehicles.filter(v => v.status === 'YARD_RECEIVING_PENDING' || v.status === 'IN_TRANSIT').length;
 
   return (
-    <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-sm font-bold text-slate-900 leading-tight">
-            Vehicle Inventory
+          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
+            Stock Inventory
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Stockyard inventory, customer allocations, and vehicle status
+          <p className="text-xs text-ink-3 mt-0.5">
+            Stockyard inventory, customer allocations, and vehicle status ledger
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
             <span>Import Excel Stock</span>
           </button>
         </div>
       </div>
 
-      {/* Stock KPI Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        
-        {/* Card 1: Total Stock */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Vehicles</span>
-            <span className="text-xl font-black text-slate-900 leading-none mt-0.5 block">{totalStockCount}</span>
-            <span className="text-[10px] font-semibold text-slate-500 mt-1 block">Units in System</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold">
-            <Car className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 2: Free Unallocated Stock */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Available Free Stock</span>
-            <span className="text-xl font-black text-emerald-600 leading-none mt-0.5 block">{unallocatedStockCount}</span>
-            <span className="text-[10px] font-semibold text-emerald-700 mt-1 block">Unassigned & Free</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 3: Allocated to Bookings */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Customer Allocated</span>
-            <span className="text-xl font-black text-indigo-600 leading-none mt-0.5 block">{allocatedStockCount}</span>
-            <span className="text-[10px] font-semibold text-indigo-700 mt-1 block">Locked to Bookings</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold">
-            <UserCheck className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 4: Quality Certified */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">PDI Certified</span>
-            <span className="text-xl font-black text-blue-600 leading-none mt-0.5 block">{pdiCertifiedStockCount}</span>
-            <span className="text-[10px] font-semibold text-blue-700 mt-1 block">Delivery Ready</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold">
-            <CheckSquare className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Card 5: Inward Pending */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gate Inward Pending</span>
-            <span className="text-xl font-black text-amber-600 leading-none mt-0.5 block">{inwardPendingCount}</span>
-            <span className="text-[10px] font-semibold text-amber-700 mt-1 block">Trailer In-Transit</span>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold">
-            <Truck className="w-4 h-4" />
-          </div>
-        </div>
-
+      {/* Stock KPI Summary Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <Stat label="Total Vehicles" value={totalStockCount} note="Units in system" />
+        <Stat label="Available Free" value={unallocatedStockCount} note="Unassigned free stock" />
+        <Stat label="Allocated" value={allocatedStockCount} note="Tagged to orders" />
+        <Stat label="PDI Certified" value={pdiCertifiedStockCount} note="Inspection approved" />
+        <Stat label="Gate Inward" value={inwardPendingCount} note="En-route carrier" tone="warn" />
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center shadow-xs">
-        <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by VIN, Model, Customer, FSC..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900"
-          />
-        </div>
+      {/* Main Stock Panel */}
+      <Panel
+        title="Vehicle Inventory"
+        action={
+          <div className="flex items-center gap-2">
+            <div className="relative w-48 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search VIN, model, customer..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-7 pl-7 pr-2.5 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-line-strong"
+              />
+            </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs font-bold border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="RECEIVED">Received</option>
-            <option value="PDI_PENDING">PDI Pending</option>
-            <option value="PDI_IN_PROGRESS">PDI In Progress</option>
-            <option value="PDI_APPROVED">PDI Approved</option>
-            <option value="DELIVERY_READY">Delivery Ready</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Stock Table with Full 21 Columns */}
-      <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto max-h-[600px]">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-ink-3" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-7 text-xs bg-canvas border border-line rounded px-2 text-ink focus:outline-none focus:border-line-strong"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="RECEIVED">Received</option>
+                <option value="PDI_PENDING">PDI Pending</option>
+                <option value="PDI_IN_PROGRESS">PDI In Progress</option>
+                <option value="PDI_APPROVED">PDI Approved</option>
+                <option value="ALLOCATED">Allocated</option>
+                <option value="DELIVERY_READY">Delivery Ready</option>
+              </select>
+            </div>
+          </div>
+        }
+      >
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium text-[11px] uppercase tracking-[0.06em]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">VIN / Chassis Number</th>
+                <th className="py-2.5 px-3">VIN / Chassis</th>
                 <th className="py-2.5 px-3">Brand & Model</th>
                 <th className="py-2.5 px-3">Variant & Color</th>
                 <th className="py-2.5 px-3">Fuel</th>
                 <th className="py-2.5 px-3">Yard Bay</th>
                 <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3">Customer Link</th>
-                <th className="py-2.5 px-3">Inward Date</th>
-                <th className="py-2.5 px-3 text-center">Ageing</th>
+                <th className="py-2.5 px-3">Ageing</th>
                 <th className="py-2.5 px-3 text-right">Rec. Amount</th>
-                <th className="py-2.5 px-3 text-center">Quick Action</th>
+                <th className="py-2.5 px-3 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-500" />
-                    Loading Stock Inventory...
+                  <td colSpan={11} className="py-12 text-center text-ink-3">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-accent" />
+                    Loading inventory...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-slate-400">
-                    No vehicles found matching criteria.
+                  <td colSpan={11}>
+                    <Empty title="0 Vehicles Found" hint="No vehicles match your active search or filter." />
                   </td>
                 </tr>
               ) : (
@@ -313,83 +216,74 @@ export const VehiclesPage: React.FC = () => {
                   return (
                     <tr 
                       key={v.id} 
-                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      className="hover:bg-canvas transition-colors cursor-pointer"
                       onClick={() => setSelectedStock(v)}
                     >
-                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                      <td className="py-2.5 px-3 text-center text-ink-3 tnum">
                         {idx + 1}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <td className="py-2.5 px-3 font-mono font-medium text-ink">
                         {v.vin}
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                            isHyundai 
-                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
-                              : 'bg-blue-50 text-blue-800 border border-blue-200'
-                          }`}>
-                            {isHyundai ? 'Hyundai' : 'Tata'}
-                          </span>
-                          <span className="font-bold text-slate-900">{v.model}</span>
+                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
+                          <span className="font-medium text-ink">{v.model}</span>
                         </div>
                       </td>
                       <td className="py-2.5 px-3">
-                        <div className="font-medium text-slate-800">{v.variant || 'Standard'}</div>
-                        <div className="text-[11px] text-slate-500">{v.color}</div>
+                        <div className="text-ink">{v.variant || 'Standard'}</div>
+                        <div className="text-[11px] text-ink-3">{v.color}</div>
                       </td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-700">
+                      <td className="py-2.5 px-3 text-ink-2">
                         {v.fuel_type || 'PETROL'}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-800 font-medium">
+                      <td className="py-2.5 px-3 text-ink-2">
                         {v.location || 'Central Stockyard'}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusBadge(v.status)}`}>
+                        <Badge tone={getStatusBadgeTone(v.status) as any}>
                           {v.status}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="py-2.5 px-3">
                         {v.customer_name ? (
                           <div>
-                            <div className="font-bold text-slate-900">{v.customer_name}</div>
-                            <div className="text-[10px] text-slate-400">{v.sales_consultant || 'Sales Desk'}</div>
+                            <div className="font-medium text-ink">{v.customer_name}</div>
+                            <div className="text-[10px] text-ink-3">{v.sales_consultant || 'Sales Desk'}</div>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic">Unallocated</span>
+                          <span className="text-ink-3 italic">Unallocated</span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
-                        {v.purchase_date || '-'}
-                      </td>
-                      <td className="py-2.5 px-3 font-bold text-center font-mono">
+                      <td className="py-2.5 px-3 text-ink-2 text-center tnum">
                         {v.allocated_days || 0}d
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 text-right">
+                      <td className="py-2.5 px-3 font-medium text-ink tnum text-right">
                         ₹{(Number(v.received_amount) || 0).toLocaleString('en-IN')}
                       </td>
                       <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                         {v.status === 'YARD_RECEIVING_PENDING' ? (
                           <Link
                             to="/receiving"
-                            className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
                           >
-                            <span>Receive</span>
+                            Receive
                           </Link>
                         ) : v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY' ? (
                           <Link
                             to="/certificates/cert-101"
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                            className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1"
                           >
-                            <span>Certified</span>
+                            Certified
                           </Link>
                         ) : (
                           <Link
                             to="/pdi"
-                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
                           >
                             <span>Inspect</span>
-                            <ChevronRight className="w-3 h-3" />
+                            <ChevronRight className="w-3 h-3 text-ink-3" />
                           </Link>
                         )}
                       </td>
@@ -400,91 +294,79 @@ export const VehiclesPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </Panel>
 
-      {/* UNIVERSAL 21-COLUMN EXCEL STOCK IMPORTER */}
+      {/* Universal Excel Importer */}
       <ExcelStockImporter
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={fetchStock}
       />
 
-      {/* STOCK DETAILS MODAL */}
+      {/* Stock Details Modal */}
       {selectedStock && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="fixed inset-0 bg-ink/30 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-2xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-line flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-slate-900">Stock Details: {selectedStock.vin}</h3>
-                <p className="text-xs text-slate-500">{selectedStock.model} • {selectedStock.variant}</p>
+                <h3 className="font-semibold text-ink text-sm">Stock Details: {selectedStock.vin}</h3>
+                <p className="text-xs text-ink-3">{selectedStock.model} • {selectedStock.variant}</p>
               </div>
               <button 
                 onClick={() => setSelectedStock(null)}
-                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                className="p-1 rounded text-ink-3 hover:text-ink hover:bg-canvas"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">VIN Number</span>
-                  <span className="font-mono font-bold text-slate-900">{selectedStock.vin}</span>
+            <div className="p-4 overflow-y-auto space-y-3 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">VIN Number</span>
+                  <span className="font-mono font-medium text-ink">{selectedStock.vin}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">FSC Code</span>
-                  <span className="font-mono text-slate-900">{selectedStock.fsc_code || '-'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">FSC Code</span>
+                  <span className="font-mono text-ink">{selectedStock.fsc_code || '-'}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Dealer / Plant Code</span>
-                  <span>{selectedStock.dealer_code || '-'}/{selectedStock.plant_code || '-'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Location</span>
+                  <span className="text-ink">{selectedStock.location || 'Central Stockyard'}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Location</span>
-                  <span>{selectedStock.location || 'Central Stockyard'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Customer Name</span>
+                  <span className="font-medium text-ink">{selectedStock.customer_name || 'Unallocated'}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Customer Name</span>
-                  <span className="font-bold text-slate-900">{selectedStock.customer_name || 'Unallocated'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Sales Consultant</span>
+                  <span className="text-ink">{selectedStock.sales_consultant || '-'}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Sales Consultant</span>
-                  <span>{selectedStock.sales_consultant || '-'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Allocated Days</span>
+                  <span className="text-ink tnum">{selectedStock.allocated_days || 0} Days</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Purchase Date</span>
-                  <span>{selectedStock.purchase_date || '-'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Accessories Amt</span>
+                  <span className="font-medium text-ink tnum">₹{(Number(selectedStock.accessories_amount) || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Delivery Date</span>
-                  <span>{selectedStock.delivery_date || 'TBD'}</span>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Received Amount</span>
+                  <span className="font-medium text-ink tnum">₹{(Number(selectedStock.received_amount) || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Allocated Days</span>
-                  <span className="font-bold">{selectedStock.allocated_days || 0} Days</span>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Accessories Amt</span>
-                  <span className="font-bold text-slate-900">₹{(Number(selectedStock.accessories_amount) || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Received Amount</span>
-                  <span className="font-bold text-emerald-700">₹{(Number(selectedStock.received_amount) || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Vehicle Status</span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(selectedStock.status)}`}>
+                <div className="bg-canvas border border-line p-2.5 rounded">
+                  <span className="eyebrow block">Status</span>
+                  <Badge tone={getStatusBadgeTone(selectedStock.status) as any}>
                     {selectedStock.status}
-                  </span>
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+            <div className="p-3 border-t border-line bg-canvas flex items-center justify-end">
               <button
                 onClick={() => setSelectedStock(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs"
+                className="h-8 px-4 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink cursor-pointer"
               >
                 Close
               </button>
@@ -493,7 +375,7 @@ export const VehiclesPage: React.FC = () => {
         </div>
       )}
 
-      {/* NEW VEHICLE MODAL */}
+      {/* New Vehicle Modal */}
       <NewVehicleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

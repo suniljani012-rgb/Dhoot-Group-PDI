@@ -3,19 +3,35 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
   body {
     @apply bg-canvas text-ink antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply bg-surface border border-line rounded-panel overflow-hidden;
+  }
+  .panel-head {
+    @apply px-4 py-3 border-b border-line flex items-center justify-between gap-3;
+  }
+  .panel-title {
+    @apply text-base font-semibold text-ink tracking-tight;
   }
 }
 
 @layer utilities {
   .eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: #858c95;
   }
   .tnum {
     font-variant-numeric: tabular-nums;
