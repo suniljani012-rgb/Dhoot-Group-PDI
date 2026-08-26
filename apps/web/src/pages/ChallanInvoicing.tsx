@@ -402,9 +402,81 @@ export const ChallanInvoicingPage: React.FC = () => {
     setIsImporting(true);
 
     try {
-      const updated = [...parsedRows, ...records];
-      setRecords(updated);
-      saveChallansInventory(updated);
+      // Smart Map-based Merge (Field-level update for existing records, append for new)
+      const combinedMap = new Map<string, ChallanRecord>();
+
+      // 1. Load existing records into Map
+      records.forEach(r => {
+        const key = (r.challan_no || r.invoice_no || r.vin_no || '').toUpperCase().trim();
+        if (key) combinedMap.set(key, r);
+      });
+
+      let updatedCount = 0;
+      let newCount = 0;
+
+      // 2. Merge incoming rows
+      parsedRows.forEach(incoming => {
+        const key = (incoming.challan_no || incoming.invoice_no || incoming.vin_no || '').toUpperCase().trim();
+        const prev = key ? combinedMap.get(key) : undefined;
+
+        if (prev) {
+          // Existing Record -> Merge non-empty updated fields
+          updatedCount++;
+          combinedMap.set(key, {
+            ...prev,
+            booking_date: incoming.booking_date && incoming.booking_date !== '—' ? incoming.booking_date : prev.booking_date,
+            challan_no: incoming.challan_no || prev.challan_no,
+            challan_date: incoming.challan_date && incoming.challan_date !== '—' ? incoming.challan_date : prev.challan_date,
+            delivery_date: incoming.delivery_date && incoming.delivery_date !== '—' ? incoming.delivery_date : prev.delivery_date,
+            challan_type: incoming.challan_type || prev.challan_type,
+            vin_no: incoming.vin_no || prev.vin_no,
+            customer_name: incoming.customer_name && !incoming.customer_name.startsWith('Customer ') ? incoming.customer_name : prev.customer_name,
+            mobile: incoming.mobile && incoming.mobile !== '+91 98290 12345' ? incoming.mobile : prev.mobile,
+            city: incoming.city || prev.city,
+            model: incoming.model || prev.model,
+            variant: incoming.variant || prev.variant,
+            colour: incoming.colour || prev.colour,
+            sale_consultant: incoming.sale_consultant && incoming.sale_consultant !== 'Sales Desk' ? incoming.sale_consultant : prev.sale_consultant,
+            team_leader: incoming.team_leader || prev.team_leader,
+            financier_name: incoming.financier_name && incoming.financier_name !== 'Self Funded' ? incoming.financier_name : prev.financier_name,
+            corporate: incoming.corporate || prev.corporate,
+            exchange: incoming.exchange || prev.exchange,
+            ex_showroom: incoming.ex_showroom > 0 ? incoming.ex_showroom : prev.ex_showroom,
+            discount: incoming.discount > 0 ? incoming.discount : prev.discount,
+            net: incoming.net > 0 ? incoming.net : prev.net,
+            insurance_per: incoming.insurance_per > 0 ? incoming.insurance_per : prev.insurance_per,
+            insurance_amount: incoming.insurance_amount > 0 ? incoming.insurance_amount : prev.insurance_amount,
+            ep: incoming.ep > 0 ? incoming.ep : prev.ep,
+            rti: incoming.rti > 0 ? incoming.rti : prev.rti,
+            cm: incoming.cm > 0 ? incoming.cm : prev.cm,
+            rto_city: incoming.rto_city || prev.rto_city,
+            rto_amount: incoming.rto_amount > 0 ? incoming.rto_amount : prev.rto_amount,
+            hml_acc: incoming.hml_acc > 0 ? incoming.hml_acc : prev.hml_acc,
+            own_acc: incoming.own_acc > 0 ? incoming.own_acc : prev.own_acc,
+            acc_discount_amount: incoming.acc_discount_amount > 0 ? incoming.acc_discount_amount : prev.acc_discount_amount,
+            acc_amount: incoming.acc_amount > 0 ? incoming.acc_amount : prev.acc_amount,
+            trc: incoming.trc > 0 ? incoming.trc : prev.trc,
+            warranty: incoming.warranty > 0 ? incoming.warranty : prev.warranty,
+            handling_charges: incoming.handling_charges > 0 ? incoming.handling_charges : prev.handling_charges,
+            other: incoming.other > 0 ? incoming.other : prev.other,
+            fast_tag: incoming.fast_tag > 0 ? incoming.fast_tag : prev.fast_tag,
+            tcs: incoming.tcs > 0 ? incoming.tcs : prev.tcs,
+            net_amount: incoming.net_amount > 0 ? incoming.net_amount : prev.net_amount,
+            invoice_date: incoming.invoice_date && incoming.invoice_date !== '—' ? incoming.invoice_date : prev.invoice_date,
+            invoice_no: incoming.invoice_no || prev.invoice_no,
+            status: incoming.status || prev.status
+          });
+        } else {
+          // New Record -> Insert
+          newCount++;
+          const newKey = key || `CHL-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+          combinedMap.set(newKey, incoming);
+        }
+      });
+
+      const finalRecords = Array.from(combinedMap.values());
+      setRecords(finalRecords);
+      saveChallansInventory(finalRecords);
 
       setIsImportModalOpen(false);
 
@@ -412,10 +484,10 @@ export const ChallanInvoicingPage: React.FC = () => {
         fetch(getApiUrl('/api/v1/challans/bulk-import'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ records: parsedRows })
+          body: JSON.stringify({ records: finalRecords })
         }).catch(() => {});
 
-        supabase.from('challan_invoices').upsert(parsedRows, { onConflict: 'challan_no' }).then();
+        supabase.from('challan_invoices').upsert(finalRecords, { onConflict: 'challan_no' }).then();
       } catch (e) {}
 
       setParsedRows([]);

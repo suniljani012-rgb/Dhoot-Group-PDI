@@ -414,14 +414,48 @@ export const BookingsPage: React.FC = () => {
     setIsImporting(true);
 
     try {
-      const updated = [...parsedRows, ...bookings];
-      setBookings(updated);
-      saveBookingsInventory(updated);
+      // Smart Map-based Merge (Field-level update for existing bookings by receipt_no)
+      const combinedMap = new Map<string, any>();
+
+      bookings.forEach(b => {
+        const key = (b.receipt_no || b.allocated_vin_no || '').toUpperCase().trim();
+        if (key) combinedMap.set(key, b);
+      });
+
+      parsedRows.forEach(incoming => {
+        const key = (incoming.receipt_no || incoming.allocated_vin_no || '').toUpperCase().trim();
+        const prev = key ? combinedMap.get(key) : undefined;
+
+        if (prev) {
+          // Merge updated fields
+          combinedMap.set(key, {
+            ...prev,
+            customer_name: incoming.customer_name || prev.customer_name,
+            mobile_number: incoming.mobile_number || prev.mobile_number,
+            sales_consultant: incoming.sales_consultant || prev.sales_consultant,
+            team_leader: incoming.team_leader || prev.team_leader,
+            model: incoming.model || prev.model,
+            variant: incoming.variant || prev.variant,
+            colour: incoming.colour || prev.colour,
+            allocated_vin_no: incoming.allocated_vin_no || prev.allocated_vin_no,
+            delivery_date: incoming.delivery_date || prev.delivery_date,
+            receipt_amt: incoming.receipt_amt > 0 ? incoming.receipt_amt : prev.receipt_amt,
+            status: incoming.allocated_vin_no ? 'ALLOCATED' : (incoming.status || prev.status)
+          });
+        } else {
+          const newKey = key || `BK-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+          combinedMap.set(newKey, incoming);
+        }
+      });
+
+      const finalBookings = Array.from(combinedMap.values());
+      setBookings(finalBookings);
+      saveBookingsInventory(finalBookings);
 
       setIsImportModalOpen(false);
 
       try {
-        const rowsToSync = parsedRows.map(r => {
+        const rowsToSync = finalBookings.map(r => {
           const isHyn = isHyundaiItem(r);
           return {
             receipt_no: r.receipt_no,
