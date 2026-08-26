@@ -233,7 +233,6 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
       const isHyundai = isHyundaiItem({ model: modelVal }) || currentBrand.code === 'DHOOT-HYUNDAI';
       const defaultYard = isHyundai ? 'Shantinath Yard' : 'Basni Yard';
       const userLoc = getVal(idxLocation);
-      const resolvedLoc = userLoc && !['Basni Yard', 'Shantinath Yard', 'Stockyard', 'Yard'].includes(userLoc) ? userLoc : defaultYard;
 
       rows.push({
         _rowNum: i + 1,
@@ -251,7 +250,7 @@ export const ExcelStockImporter: React.FC<ExcelStockImporterProps> = ({
         manufacturing_year: parseInt(getVal(idxYear)) || 2026,
         status: getVal(idxStatus) || 'RECEIVED',
         quantity: parseInt(getVal(idxQuantity)) || 1,
-        location: resolvedLoc,
+        location: userLoc || defaultYard,
         customer_name: getVal(idxCustomerName) || '',
         sales_consultant: getVal(idxSalesConsultant) || '',
         accessories_amount: parseFloat(getVal(idxAccessoriesAmount).replace(/[^0-9.]/g, '')) || 0,
