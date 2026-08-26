@@ -17,6 +17,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const { currentBrand, user, isSuperAdmin } = useAuth();
   const counts = useFleetCounts();
 
+  const getUserInitials = (name?: string, fallback = 'SA') => {
+    if (!name || !name.trim()) return fallback;
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    if (parts[0].length >= 2) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return parts[0].toUpperCase();
+  };
+
   // Dynamic modules with real live database counts
   const allNavItems = [
     { 
@@ -163,8 +175,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       <div className="p-3 border-t border-slate-200 bg-slate-50/70">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-800 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-300 font-mono">
-              {user?.userCode ? user.userCode.substring(0, 2) : 'DG'}
+            <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-800 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-300 font-mono tracking-wider">
+              {getUserInitials(user?.userName || user?.employeeId, 'SA')}
             </div>
             <div className="overflow-hidden">
               <div className="text-xs font-bold text-slate-900 truncate">{user?.userName || user?.employeeId || 'System Administrator'}</div>

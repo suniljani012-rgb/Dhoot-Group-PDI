@@ -12,6 +12,18 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
   const { user, currentBrand, setBrand, logout } = useAuth();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
+  const getUserInitials = (name?: string, fallback = 'SA') => {
+    if (!name || !name.trim()) return fallback;
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    if (parts[0].length >= 2) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return parts[0].toUpperCase();
+  };
+
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs select-none">
       
@@ -123,8 +135,8 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
 
         {/* User Badge */}
         <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-bold flex items-center justify-center text-xs shadow-xs">
-            {user?.userCode || 'DG001'}
+          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-bold flex items-center justify-center text-xs shadow-xs tracking-wider font-mono">
+            {getUserInitials(user?.userName || user?.employeeId, 'SA')}
           </div>
 
           <div className="hidden sm:block text-left">
