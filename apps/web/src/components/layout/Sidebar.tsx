@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Car, ClipboardCheck, ShieldCheck,
@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const allowed = (roles: string[]) => isSuperAdmin || roles.includes('ALL') || roles.includes(role);
 
   return (
-    <aside className="w-56 bg-surface flex flex-col h-full">
+    <aside className="w-56 bg-surface flex flex-col h-full border-r border-line">
       <nav className="flex-1 px-2 py-3 overflow-y-auto">
         {groups.map((group) => {
           const items = group.items.filter((i) => allowed(i.roles));
@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-accent' : 'text-ink-3'}`} />
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.count !== undefined && item.count > 0 && (
-                      <span className={`text-xs tnum ${active ? 'text-accent' : 'text-ink-3'}`}>
+                      <span className={`text-xs tnum ${active ? 'text-accent font-medium' : 'text-ink-3'}`}>
                         {item.count}
                       </span>
                     )}

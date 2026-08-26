@@ -464,52 +464,38 @@ export const BookingsPage: React.FC = () => {
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                            isHyundai 
-                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
-                              : 'bg-blue-50 text-blue-800 border border-blue-200'
-                          }`}>
-                            {isHyundai ? 'Hyundai' : 'Tata'}
-                          </span>
-                          <span className="font-bold text-slate-900">{b.model}</span>
+                          <Badge tone="accent">{isHyundai ? 'Hyundai' : 'Tata'}</Badge>
+                          <span className="font-medium text-ink">{b.model}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400">{b.variant}</div>
+                        <div className="text-[11px] text-ink-3">{b.variant}</div>
                       </td>
-                      <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-700">
-                          {b.colour}
-                        </span>
+                      <td className="py-2.5 px-3 text-ink-2">
+                        {b.colour}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 text-right">
+                      <td className="py-2.5 px-3 font-medium text-ink tnum text-right">
                         ₹{(b.receipt_amt || 25000).toLocaleString('en-IN')}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-600 text-[11px]">
+                      <td className="py-2.5 px-3 text-ink-3 text-xs">
                         {b.promise_delivery_date || 'Within 7 Days'}
                       </td>
                       <td className="py-2.5 px-3">
                         {b.allocated_vin_no ? (
-                          <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-900 border border-purple-200 font-mono font-bold text-[10px]">
+                          <span className="font-mono text-xs text-ink font-medium">
                             {b.allocated_vin_no}
                           </span>
                         ) : (
-                          <span className="text-amber-700 italic text-[11px]">Pending Allocation</span>
+                          <span className="text-warn italic text-xs">Pending</span>
                         )}
                       </td>
                       <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        b.allocated_vin_no
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                          : bookingsWithDeficit.has(b.id)
-                          ? 'bg-rose-50 text-rose-800 border-rose-200'
-                          : 'bg-amber-50 text-amber-800 border-amber-200'
-                      }`}>
-                        {b.allocated_vin_no
-                          ? 'VIN Allocated'
-                          : bookingsWithDeficit.has(b.id)
-                          ? '🚨 Plant Indent Needed'
-                          : 'Stock in Yard • Ready'}
-                      </span>
-                    </td>
+                        {b.allocated_vin_no ? (
+                          <Badge tone="ok">Allocated</Badge>
+                        ) : bookingsWithDeficit.has(b.id) ? (
+                          <Badge tone="danger">Indent Needed</Badge>
+                        ) : (
+                          <Badge tone="warn">In Stock</Badge>
+                        )}
+                      </td>
                     <td className="py-2.5 px-3 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         {!b.allocated_vin_no ? (

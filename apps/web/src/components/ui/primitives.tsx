@@ -1,64 +1,59 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 
+/**
+ * Shared primitives.
+ *
+ * Rule for this file: a page never hand-rolls a card, a badge or a stat again.
+ * If a page needs a variant that doesn't exist here, add it here.
+ */
+
 /* ------------------------------------------------------------- PageHeader */
+
 export const PageHeader: React.FC<{
   title: string;
   subtitle?: string;
-  badge?: React.ReactNode;
   action?: React.ReactNode;
-}> = ({ title, subtitle, badge, action }) => (
-  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-line/60">
-    <div className="border-l-4 border-l-accent pl-3">
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg font-bold tracking-[-0.015em] text-ink">
-          {title}
-        </h1>
-        {badge}
-      </div>
-      {subtitle && <p className="text-xs text-ink-3 mt-0.5 font-medium">{subtitle}</p>}
+}> = ({ title, subtitle, action }) => (
+  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+    <div>
+      <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">{title}</h1>
+      {subtitle && <p className="text-xs text-ink-3 mt-0.5">{subtitle}</p>}
     </div>
-    {action && <div className="flex items-center gap-2">{action}</div>}
+    {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}
   </div>
 );
 
 /* ------------------------------------------------------------------ Panel */
+
 export const Panel: React.FC<{
   title?: React.ReactNode;
   action?: React.ReactNode;
-  footer?: React.ReactNode;
-  bodyClassName?: string;
   className?: string;
+  bodyClassName?: string;
   children: React.ReactNode;
-}> = ({ title, action, footer, bodyClassName = '', className = '', children }) => (
-  <div className={`bg-surface border border-line rounded-panel shadow-xs overflow-hidden ${className}`}>
+}> = ({ title, action, className = '', bodyClassName = '', children }) => (
+  <section className={`panel ${className}`}>
     {(title || action) && (
-      <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-slate-100/80 via-canvas to-surface border-b border-line gap-3 border-l-4 border-l-accent">
-        {typeof title === 'string' ? (
-          <h2 className="text-xs font-bold text-ink uppercase tracking-[0.06em] flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-            <span>{title}</span>
-          </h2>
-        ) : (
-          title
-        )}
-        {action && <div>{action}</div>}
-      </div>
+      <header className="panel-head">
+        {typeof title === 'string' ? <h2 className="panel-title">{title}</h2> : title}
+        {action}
+      </header>
     )}
     <div className={bodyClassName}>{children}</div>
-    {footer && <div className="px-4 py-2.5 border-t border-line text-xs bg-canvas/60">{footer}</div>}
-  </div>
+  </section>
 );
 
 /* ------------------------------------------------------------------- Stat */
+
 export const Stat: React.FC<{
   label: string;
-  value: React.ReactNode;
+  value: number | string;
   note?: string;
-  tone?: 'default' | 'warn' | 'danger' | 'ok' | 'accent' | 'neutral';
+  tone?: 'default' | 'warn' | 'danger' | 'ok' | 'accent';
   to?: string;
 }> = ({ label, value, note, tone = 'default', to }) => {
-  const valueColor =
+  const valueTone =
     tone === 'danger'
       ? 'text-danger'
       : tone === 'warn'
@@ -69,70 +64,67 @@ export const Stat: React.FC<{
       ? 'text-accent'
       : 'text-ink';
 
-  const Content = (
-    <div className="bg-surface border border-line rounded p-3 shadow-xs hover:border-accent/40 transition-all h-full flex flex-col justify-between group">
-      <div className="flex items-baseline justify-between">
-        <span className="eyebrow group-hover:text-accent transition-colors">{label}</span>
-        {to && <span className="text-xs text-ink-3 group-hover:text-accent transition-colors">→</span>}
-      </div>
-      <div className="mt-1.5 flex items-baseline gap-1.5">
-        <span className={`text-2xl font-bold tracking-[-0.02em] tnum ${valueColor}`}>
-          {value}
-        </span>
-      </div>
-      {note && <span className="text-[11px] text-ink-3 mt-1 block truncate">{note}</span>}
-    </div>
+  const body = (
+    <>
+      <span className="eyebrow">{label}</span>
+      <span className={`block text-num font-semibold tnum mt-2 ${valueTone}`}>{value}</span>
+      {note && <span className="block text-xs text-ink-3 mt-1">{note}</span>}
+    </>
   );
 
+  const base = 'panel px-4 py-3.5 block';
+
   return to ? (
-    <Link to={to} className="block group">
-      {Content}
+    <Link to={to} className={`${base} transition-colors hover:border-line-strong hover:bg-[#FCFCFD]`}>
+      {body}
     </Link>
   ) : (
-    Content
+    <div className={base}>{body}</div>
   );
 };
 
 /* ------------------------------------------------------------------ Badge */
+
 export type BadgeTone = 'neutral' | 'accent' | 'ok' | 'warn' | 'danger';
+
+const badgeTones: Record<BadgeTone, string> = {
+  neutral: 'bg-canvas text-ink-2 border-line',
+  accent: 'bg-accent-soft text-accent border-accent-line',
+  ok: 'bg-[#EDF7F3] text-ok border-[#C6E4DA]',
+  warn: 'bg-[#FCF4E9] text-warn border-[#EBD8BC]',
+  danger: 'bg-[#FBEEF0] text-danger border-[#EFCBD2]',
+};
 
 export const Badge: React.FC<{
   tone?: BadgeTone;
   children: React.ReactNode;
   className?: string;
-}> = ({ tone = 'neutral', children, className = '' }) => {
-  const tones: Record<BadgeTone, string> = {
-    neutral: 'bg-canvas text-ink-2 border-line',
-    accent: 'bg-accent-soft text-accent border-accent/20 font-semibold',
-    ok: 'bg-ok/10 text-ok border-ok/20 font-semibold',
-    warn: 'bg-warn/10 text-warn border-warn/20 font-semibold',
-    danger: 'bg-danger/10 text-danger border-danger/20 font-semibold',
-  };
-  return (
-    <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded-chip text-[11px] font-medium border ${tones[tone]} ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
+}> = ({ tone = 'neutral', children, className = '' }) => (
+  <span
+    className={`inline-flex items-center h-5 px-1.5 rounded-chip border text-xs font-medium tnum ${badgeTones[tone]} ${className}`}
+  >
+    {children}
+  </span>
+);
 
 /* -------------------------------------------------------------------- Bar */
+
+/** Thin progress rule. Monochrome by design — colour here would mean nothing. */
 export const Bar: React.FC<{
   pct: number;
-  tone?: 'accent' | 'ok' | 'warn' | 'danger';
+  tone?: 'accent' | 'warn' | 'ok' | 'danger';
   className?: string;
 }> = ({ pct, tone = 'accent', className = '' }) => {
-  const tones = {
+  const barColors = {
     accent: 'bg-accent',
-    ok: 'bg-ok',
     warn: 'bg-warn',
+    ok: 'bg-ok',
     danger: 'bg-danger',
   };
   return (
-    <div className={`h-1.5 w-full bg-line rounded-full overflow-hidden ${className}`}>
+    <div className={`h-1 w-full bg-line rounded-full overflow-hidden ${className}`}>
       <div
-        className={`h-full ${tones[tone]} transition-all duration-300`}
+        className={`h-full rounded-full ${barColors[tone] || 'bg-accent'}`}
         style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
       />
     </div>
@@ -140,14 +132,15 @@ export const Bar: React.FC<{
 };
 
 /* ------------------------------------------------------------------ Empty */
+
 export const Empty: React.FC<{
   title: string;
   hint?: string;
   action?: React.ReactNode;
 }> = ({ title, hint, action }) => (
-  <div className="p-8 text-center">
-    <p className="text-xs font-medium text-ink-2">{title}</p>
-    {hint && <p className="text-[11px] text-ink-3 mt-1 max-w-sm mx-auto">{hint}</p>}
+  <div className="px-4 py-10 text-center">
+    <p className="text-sm font-medium text-ink">{title}</p>
+    {hint && <p className="text-xs text-ink-3 mt-1">{hint}</p>}
     {action && <div className="mt-3">{action}</div>}
   </div>
 );

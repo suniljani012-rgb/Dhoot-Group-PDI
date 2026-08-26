@@ -1,0 +1,320 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dhoot Group — design preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      canvas:'#FAFAFA', surface:'#FFFFFF', line:'#E8EAED', 'line-strong':'#D7DBE0',
+      ink:'#0E1116', 'ink-2':'#4A5159', 'ink-3':'#858C95',
+      accent:{ DEFAULT:'#1A3A6B', soft:'#EEF2F8', line:'#C9D6E8', 600:'#254B85', 400:'#5B7CAE', 300:'#8AA3C6', 200:'#B6C5DA' },
+      ok:'#0B7355', warn:'#A65A00', danger:'#B3253C'
+    },
+    fontFamily: { sans:['"IBM Plex Sans"','system-ui','sans-serif'], mono:['"IBM Plex Mono"','monospace'] },
+    fontSize: {
+      label:['0.6875rem',{lineHeight:'1rem',letterSpacing:'0.06em'}],
+      xs:['0.75rem',{lineHeight:'1.125rem'}], sm:['0.8125rem',{lineHeight:'1.25rem'}],
+      base:['0.875rem',{lineHeight:'1.375rem'}], lg:['1.0625rem',{lineHeight:'1.5rem',letterSpacing:'-0.011em'}],
+      num:['1.625rem',{lineHeight:'1.875rem',letterSpacing:'-0.02em'}]
+    },
+    borderRadius: { chip:'4px', DEFAULT:'6px', panel:'10px' }
+  }}
+}
+</script>
+<style>
+  body { font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:.8125rem; background:#FAFAFA; color:#0E1116; -webkit-font-smoothing:antialiased; }
+  .tnum, table { font-variant-numeric: tabular-nums; }
+  .ident { font-family:'IBM Plex Mono',monospace; letter-spacing:-.01em; }
+  .panel { background:#fff; border:1px solid #E8EAED; border-radius:10px; }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:0 1rem; height:2.75rem; border-bottom:1px solid #E8EAED; }
+  .eyebrow { font-size:.6875rem; line-height:1rem; letter-spacing:.06em; font-weight:500; text-transform:uppercase; color:#858C95; }
+  .cell { padding:.5rem .75rem; font-size:.8125rem; color:#4A5159; border-bottom:1px solid #E8EAED; }
+  .cell-head { padding:.5rem .75rem; font-size:.6875rem; letter-spacing:.06em; font-weight:500; text-transform:uppercase; color:#858C95; border-bottom:1px solid #E8EAED; text-align:left; background:#FAFAFA; }
+  :focus-visible { outline:2px solid #1A3A6B; outline-offset:2px; border-radius:3px; }
+  ::-webkit-scrollbar { width:10px; height:10px }
+  ::-webkit-scrollbar-thumb { background:#DADDE1; border:3px solid #FAFAFA; border-radius:8px }
+</style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+<!-- Header -->
+<header class="h-14 bg-surface border-b border-line px-4 flex items-center gap-4 shrink-0">
+  <div class="flex items-center gap-2.5 shrink-0">
+    <div class="h-6 w-6 rounded-chip bg-accent text-white text-xs font-semibold flex items-center justify-center">D</div>
+    <span class="text-base font-semibold tracking-[-0.011em]">Dhoot Group</span>
+  </div>
+
+  <div class="hidden sm:flex items-center h-7 p-0.5 bg-canvas border border-line rounded ml-1">
+    <button class="h-6 px-2.5 rounded-chip text-xs font-medium bg-surface text-ink border border-line">All</button>
+    <button class="h-6 px-2.5 rounded-chip text-xs font-medium text-ink-3 hover:text-ink-2">Tata</button>
+    <button class="h-6 px-2.5 rounded-chip text-xs font-medium text-ink-3 hover:text-ink-2">Hyundai</button>
+  </div>
+
+  <div class="flex-1"></div>
+
+  <button class="hidden md:flex items-center gap-2 h-7 pl-2 pr-8 border border-line rounded text-xs text-ink-3 hover:border-line-strong">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    Search VIN or booking
+  </button>
+
+  <button class="p-1.5 rounded text-ink-2 hover:bg-canvas relative">
+    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-danger rounded-full ring-2 ring-white"></span>
+  </button>
+
+  <div class="flex items-center gap-2 pl-3 border-l border-line">
+    <div class="w-7 h-7 rounded bg-accent text-white text-xs font-medium flex items-center justify-center">SA</div>
+    <div class="hidden sm:block leading-tight">
+      <div class="text-xs font-medium">Sunil Jani</div>
+      <div class="text-xs text-ink-3">System admin</div>
+    </div>
+  </div>
+
+  <button class="p-1.5 rounded text-ink-3 hover:text-danger hover:bg-canvas">
+    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+  </button>
+</header>
+
+<div class="flex-1 flex overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="hidden lg:flex w-56 shrink-0 bg-surface border-r border-line flex-col">
+    <nav class="flex-1 px-2 py-3 overflow-y-auto text-sm">
+
+      <div class="mb-5">
+        <div class="eyebrow px-2.5 mb-1.5">Operations</div>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded bg-accent-soft text-accent font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <span class="flex-1">Overview</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-4l-3-4h-5v8h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          <span class="flex-1">Inward</span><span class="text-xs text-ink-3 tnum">4</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M19 17h2v-5l-2-5H5L3 12v5h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+          <span class="flex-1">Stock</span><span class="text-xs text-ink-3 tnum">62</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+          <span class="flex-1">Inspections</span><span class="text-xs text-ink-3 tnum">9</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+          <span class="flex-1">Quality</span><span class="text-xs text-ink-3 tnum">3</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span class="flex-1">Workshop</span><span class="text-xs text-ink-3 tnum">2</span>
+        </a>
+      </div>
+
+      <div class="mb-5">
+        <div class="eyebrow px-2.5 mb-1.5">Sales</div>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span class="flex-1">Bookings</span><span class="text-xs text-ink-3 tnum">21</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+          <span class="flex-1">Invoicing</span>
+        </a>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="m9 15 2 2 4-4"/></svg>
+          <span class="flex-1">Certificates</span>
+        </a>
+      </div>
+
+      <div>
+        <div class="eyebrow px-2.5 mb-1.5">Setup</div>
+        <a class="flex items-center gap-2.5 h-8 px-2.5 rounded text-ink-2 hover:bg-canvas">
+          <svg class="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+          <span class="flex-1">Administration</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="px-4 h-9 flex items-center border-t border-line">
+      <span class="w-1.5 h-1.5 rounded-full bg-ok mr-2"></span>
+      <span class="text-xs text-ink-3">Synced</span>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+    <div class="max-w-[1400px] mx-auto space-y-4">
+
+      <div class="flex items-end justify-between">
+        <h1 class="text-lg font-semibold">Overview</h1>
+        <span class="text-xs text-ink-3">All franchises</span>
+      </div>
+
+      <!-- SIGNATURE: order pipeline rail -->
+      <section class="panel">
+        <header class="panel-head">
+          <h2 class="text-sm font-semibold">Order pipeline</h2>
+          <span class="text-xs text-ink-3 tnum">21 orders</span>
+        </header>
+        <div class="px-4 py-4">
+          <div class="flex gap-0.5 h-2 mb-4">
+            <div class="bg-accent rounded-chip" style="width:100%"></div>
+            <div class="bg-accent-600 rounded-chip" style="width:57%"></div>
+            <div class="bg-accent-400 rounded-chip" style="width:38%"></div>
+            <div class="bg-accent-300 rounded-chip" style="width:28%"></div>
+            <div class="bg-accent-200 rounded-chip" style="width:5%"></div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3">
+            <a class="group border-t border-line pt-2 cursor-pointer">
+              <div class="flex items-baseline gap-2"><span class="text-lg font-semibold tnum">21</span></div>
+              <div class="text-xs text-ink-2 group-hover:text-accent mt-0.5">Booked</div>
+            </a>
+            <a class="group border-t border-line pt-2 cursor-pointer">
+              <div class="flex items-baseline gap-2"><span class="text-lg font-semibold tnum">12</span><span class="text-xs text-ink-3 tnum">−9</span></div>
+              <div class="text-xs text-ink-2 group-hover:text-accent mt-0.5">VIN allocated</div>
+            </a>
+            <a class="group border-t border-line pt-2 cursor-pointer">
+              <div class="flex items-baseline gap-2"><span class="text-lg font-semibold tnum">8</span><span class="text-xs text-ink-3 tnum">−4</span></div>
+              <div class="text-xs text-ink-2 group-hover:text-accent mt-0.5">PDI cleared</div>
+            </a>
+            <a class="group border-t border-line pt-2 cursor-pointer">
+              <div class="flex items-baseline gap-2"><span class="text-lg font-semibold tnum">6</span><span class="text-xs text-ink-3 tnum">−2</span></div>
+              <div class="text-xs text-ink-2 group-hover:text-accent mt-0.5">Invoiced</div>
+            </a>
+            <a class="group border-t border-line pt-2 cursor-pointer">
+              <div class="flex items-baseline gap-2"><span class="text-lg font-semibold tnum">1</span><span class="text-xs text-ink-3 tnum">−5</span></div>
+              <div class="text-xs text-ink-2 group-hover:text-accent mt-0.5">Delivered</div>
+            </a>
+          </div>
+
+          <p class="text-xs text-ink-2 mt-4 pt-3 border-t border-line">
+            Biggest gap: <span class="tnum font-medium text-ink">9</span> orders sit at
+            <span class="font-medium text-ink">Booked</span> and have not reached
+            <span class="font-medium text-ink">VIN allocated</span>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Four numbers -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <a class="panel px-4 py-3.5 block hover:border-line-strong">
+          <span class="eyebrow">In yard</span>
+          <span class="block text-num font-semibold tnum mt-2">54</span>
+          <span class="block text-xs text-ink-3 mt-1">Physically on site</span>
+        </a>
+        <a class="panel px-4 py-3.5 block hover:border-line-strong">
+          <span class="eyebrow">Free stock</span>
+          <span class="block text-num font-semibold tnum mt-2">31</span>
+          <span class="block text-xs text-ink-3 mt-1">No customer attached</span>
+        </a>
+        <a class="panel px-4 py-3.5 block hover:border-line-strong">
+          <span class="eyebrow">Awaiting VIN</span>
+          <span class="block text-num font-semibold tnum mt-2 text-warn">9</span>
+          <span class="block text-xs text-ink-3 mt-1">Booked, not allocated</span>
+        </a>
+        <a class="panel px-4 py-3.5 block hover:border-line-strong">
+          <span class="eyebrow">Indent needed</span>
+          <span class="block text-num font-semibold tnum mt-2 text-danger">4</span>
+          <span class="block text-xs text-ink-3 mt-1">No stock to cover demand</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        <!-- Model demand table -->
+        <section class="panel xl:col-span-2">
+          <header class="panel-head">
+            <h2 class="text-sm font-semibold">Model demand</h2>
+            <a class="text-xs text-accent hover:underline">Bookings →</a>
+          </header>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr>
+                  <th class="cell-head">Model</th>
+                  <th class="cell-head text-right">Booked</th>
+                  <th class="cell-head text-right">Allocated</th>
+                  <th class="cell-head text-right">Awaiting</th>
+                  <th class="cell-head text-right">Free</th>
+                  <th class="cell-head text-right">Indent</th>
+                  <th class="cell-head w-28">Fill</th>
+                </tr>
+              </thead>
+              <tbody id="model-rows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Yards -->
+        <section class="panel">
+          <header class="panel-head"><h2 class="text-sm font-semibold">Yards</h2></header>
+          <div id="yard-rows" class="divide-y divide-line"></div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const models = [
+  { name:'Hyundai Creta', booked:6, allocated:2, free:0 },
+  { name:'Tata Nexon',    booked:5, allocated:3, free:1 },
+  { name:'Tata Punch',    booked:3, allocated:2, free:0 },
+  { name:'Hyundai Venue', booked:3, allocated:2, free:4 },
+  { name:'Tata Harrier',  booked:2, allocated:2, free:3 },
+  { name:'Tata Safari',   booked:1, allocated:1, free:5 },
+  { name:'Hyundai Exter', booked:1, allocated:0, free:2 },
+];
+
+document.getElementById('model-rows').innerHTML = models.map(m => {
+  const pbna = Math.max(0, m.booked - m.allocated);
+  const indent = Math.max(0, pbna - m.free);
+  const fill = m.booked ? Math.round(m.allocated / m.booked * 100) : 0;
+  return `<tr class="hover:bg-canvas">
+    <td class="cell font-medium text-ink">${m.name}</td>
+    <td class="cell text-right tnum">${m.booked}</td>
+    <td class="cell text-right tnum">${m.allocated}</td>
+    <td class="cell text-right tnum">${pbna || '—'}</td>
+    <td class="cell text-right tnum">${m.free || '—'}</td>
+    <td class="cell text-right">${indent > 0
+      ? `<span class="inline-flex items-center h-5 px-1.5 rounded-chip border text-xs font-medium tnum bg-[#FBEEF0] text-danger border-[#EFCBD2]">${indent}</span>`
+      : '<span class="text-ink-3">—</span>'}</td>
+    <td class="cell">
+      <div class="flex items-center gap-2">
+        <div class="h-1 w-full bg-line rounded-full overflow-hidden"><div class="h-full bg-accent rounded-full" style="width:${fill}%"></div></div>
+        <span class="text-xs text-ink-3 tnum w-8 text-right">${fill}%</span>
+      </div>
+    </td></tr>`;
+}).join('');
+
+const yards = [
+  { name:'Wakad Central Stockyard', bookings:11, allocated:7, stock:28 },
+  { name:'Jaipur Tonk Road Hub',    bookings:7,  allocated:4, stock:22 },
+  { name:'Raja Park City Showroom', bookings:3,  allocated:1, stock:4  },
+];
+
+document.getElementById('yard-rows').innerHTML = yards.map(y => {
+  const pct = y.bookings ? Math.round(y.allocated / y.bookings * 100) : 0;
+  return `<div class="px-4 py-3">
+    <div class="flex items-baseline justify-between gap-3">
+      <span class="text-sm font-medium text-ink truncate">${y.name}</span>
+      <span class="text-xs text-ink-3 tnum shrink-0">${y.stock} in yard</span>
+    </div>
+    <div class="flex items-center gap-2 mt-2">
+      <div class="h-1 w-full bg-line rounded-full overflow-hidden"><div class="h-full bg-accent rounded-full" style="width:${pct}%"></div></div>
+      <span class="text-xs text-ink-3 tnum w-8 text-right">${pct}%</span>
+    </div>
+    <div class="text-xs text-ink-3 mt-1.5 tnum">${y.allocated} of ${y.bookings} orders allocated</div>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
