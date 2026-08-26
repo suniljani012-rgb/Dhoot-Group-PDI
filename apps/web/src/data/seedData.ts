@@ -245,7 +245,7 @@ export const clearBookingsInventory = () => {
 // ============================================================================
 // CHALLANS METHODS
 // ============================================================================
-export const getChallansForBrand = (brandCode: string) => {
+export const getChallansForBrand = (brandCode?: string) => {
   let list: any[] = [];
   try {
     const saved = localStorage.getItem('dhoot_challans_inventory');
@@ -259,13 +259,18 @@ export const getChallansForBrand = (brandCode: string) => {
     console.warn('Error reading challans from storage:', e);
   }
 
+  if (!brandCode || brandCode === 'DHOOT-ALL' || brandCode === 'ALL') {
+    return list;
+  }
   if (brandCode === 'DHOOT-TATA' || brandCode.toLowerCase().includes('tata')) {
-    return list.filter(isTataItem);
+    const tataList = list.filter(isTataItem);
+    return tataList.length > 0 ? tataList : list;
   }
   if (brandCode === 'DHOOT-HYUNDAI' || brandCode.toLowerCase().includes('hyundai')) {
-    return list.filter(isHyundaiItem);
+    const hyunList = list.filter(isHyundaiItem);
+    return hyunList.length > 0 ? hyunList : list;
   }
-  return list; // DHOOT-ALL
+  return list;
 };
 
 export const saveChallansInventory = (challans: any[]) => {

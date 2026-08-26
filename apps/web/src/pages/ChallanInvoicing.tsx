@@ -205,14 +205,35 @@ export const ChallanInvoicingPage: React.FC = () => {
     const headerRowIdx = bestHeaderRowIdx;
     const rawHeaders = grid[headerRowIdx].map(h => String(h || '').trim());
 
+    const cleanedHeaders = rawHeaders.map(h => cleanHeader(h));
+
     const findCol = (aliases: string[]): number => {
-      return rawHeaders.findIndex(h => {
-        const clean = cleanHeader(h);
-        return aliases.some(alias => {
-          const cleanAlias = cleanHeader(alias);
-          return clean === cleanAlias || (clean.length >= 4 && clean.includes(cleanAlias)) || (cleanAlias.length >= 4 && cleanAlias.includes(clean));
-        });
-      });
+      const cleanAliases = aliases.map(a => cleanHeader(a));
+
+      // 1. Exact match pass
+      for (let i = 0; i < cleanedHeaders.length; i++) {
+        if (cleanAliases.includes(cleanedHeaders[i])) return i;
+      }
+
+      // 2. StartsWith / EndsWith pass (with length >= 4)
+      for (let i = 0; i < cleanedHeaders.length; i++) {
+        for (const alias of cleanAliases) {
+          if (alias.length >= 4 && (cleanedHeaders[i].startsWith(alias) || cleanedHeaders[i].endsWith(alias))) {
+            return i;
+          }
+        }
+      }
+
+      // 3. Includes pass (strict minimum length >= 5)
+      for (let i = 0; i < cleanedHeaders.length; i++) {
+        for (const alias of cleanAliases) {
+          if (alias.length >= 5 && cleanedHeaders[i].includes(alias)) {
+            return i;
+          }
+        }
+      }
+
+      return -1;
     };
 
     // Robust 40-Column Header Aliases
