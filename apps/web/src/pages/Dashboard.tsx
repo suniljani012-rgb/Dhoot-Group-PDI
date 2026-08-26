@@ -1177,8 +1177,14 @@ export const DashboardPage: React.FC = () => {
       {/* 5. FREE STOCK VINS POPUP MODAL (EYE ICON CLICK - FULL STOCK DETAILS)     */}
       {/* ========================================================================= */}
       {viewingVinList && (
-        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none animate-in fade-in">
-          <div className="bg-surface text-ink w-full max-w-3xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[85vh]">
+        <div 
+          style={{ zIndex: 99999 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 select-none animate-in fade-in"
+        >
+          <div 
+            style={{ zIndex: 100000 }}
+            className="bg-surface text-ink w-full max-w-3xl rounded-panel overflow-hidden border border-line shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95"
+          >
             
             {/* Modal Header */}
             <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
