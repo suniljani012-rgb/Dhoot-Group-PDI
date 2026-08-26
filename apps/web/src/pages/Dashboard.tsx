@@ -220,65 +220,72 @@ export const DashboardPage: React.FC = () => {
       {/* 3. Section: Stockyard & Facility-Wise Booking Matrix */}
       <Panel 
         title="Stockyard & Facility Network" 
-        action={<span className="text-xs text-ink-3">Live Network ({yardFacilities.length} facilities)</span>}
-        bodyClassName="p-4"
+        action={<span className="text-xs text-ink-3 tnum">Live Network ({yardFacilities.length} facilities)</span>}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {yardFacilities.map((yard) => {
-            const pbna = yard.bookings - yard.allocated;
-            const freeStock = Math.max(0, yard.physicalStock - yard.allocated);
-            const allocationPct = yard.bookings > 0 ? Math.round((yard.allocated / yard.bookings) * 100) : 0;
-
-            return (
-              <div 
-                key={yard.id}
-                className="bg-canvas border border-line rounded p-3.5 flex flex-col justify-between space-y-3"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-2 border-b border-line pb-2.5">
-                    <div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+              <tr>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
+                <th className="py-2.5 px-3">Facility / Yard</th>
+                <th className="py-2.5 px-3">Location & Type</th>
+                <th className="py-2.5 px-3 text-right">Capacity</th>
+                <th className="py-2.5 px-3 text-right">Customer Orders</th>
+                <th className="py-2.5 px-3 text-right">VIN Allocated</th>
+                <th className="py-2.5 px-3 text-right">PBNA (Pending)</th>
+                <th className="py-2.5 px-3 text-right">Physical Stock</th>
+                <th className="py-2.5 px-3 text-right">Free Stock</th>
+                <th className="py-2.5 px-3 w-48">VIN Allocation Rate</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
+              {yardFacilities.map((yard, idx) => {
+                const pbna = yard.bookings - yard.allocated;
+                const freeStock = Math.max(0, yard.physicalStock - yard.allocated);
+                const allocationPct = yard.bookings > 0 ? Math.round((yard.allocated / yard.bookings) * 100) : 0;
+                return (
+                  <tr key={yard.id} className="hover:bg-canvas transition-colors">
+                    <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
+                      {idx + 1}
+                    </td>
+                    <td className="py-2.5 px-3">
                       <div className="flex items-center gap-1.5">
                         <Badge tone="accent">{yard.brand}</Badge>
-                        <h3 className="font-medium text-ink text-sm">{yard.name}</h3>
+                        <span className="font-medium text-ink">{yard.name}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-ink-3 mt-1">
-                        <MapPin className="w-3 h-3 text-ink-3" />
-                        <span>{yard.location} • {yard.type}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-ink-3">
+                      {yard.location} • {yard.type}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                      {yard.capacity} bays
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                      {yard.bookings}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                      {yard.allocated}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-warn tnum">
+                      {pbna}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                      {yard.physicalStock}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-ok tnum">
+                      {freeStock}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <Bar pct={allocationPct} className="flex-1" />
+                        <span className="w-10 text-right text-ink font-medium tnum text-[11px]">{allocationPct}%</span>
                       </div>
-                    </div>
-                    <span className="text-xs text-ink-3 tnum">Cap: {yard.capacity}</span>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-1.5 text-center mt-3">
-                    <div className="bg-surface p-2 rounded border border-line">
-                      <span className="eyebrow block truncate">Bookings</span>
-                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{yard.bookings}</span>
-                    </div>
-                    <div className="bg-surface p-2 rounded border border-line">
-                      <span className="eyebrow block truncate">Allocated</span>
-                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{yard.allocated}</span>
-                    </div>
-                    <div className="bg-surface p-2 rounded border border-line">
-                      <span className="eyebrow block truncate">PBNA</span>
-                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{pbna}</span>
-                    </div>
-                    <div className="bg-surface p-2 rounded border border-line">
-                      <span className="eyebrow block truncate">Free</span>
-                      <span className="text-sm font-semibold text-ink tnum mt-0.5 block">{freeStock}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-2 border-t border-line">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-ink-3 font-medium">VIN Allocation Progress</span>
-                    <span className="font-medium text-ink tnum">{allocationPct}%</span>
-                  </div>
-                  <Bar pct={allocationPct} />
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </Panel>
 
@@ -286,57 +293,74 @@ export const DashboardPage: React.FC = () => {
       <Panel 
         title="Model Demand & Stock Allocation Ledger" 
         action={<span className="text-xs text-ink-3 tnum">{modelMatrix.length} models tracked</span>}
-        bodyClassName="p-4"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {modelMatrix.map((item, idx) => (
-            <div 
-              key={idx}
-              className="bg-canvas border border-line rounded p-3 flex flex-col justify-between space-y-2.5"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 border-b border-line pb-2">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Badge tone="accent">{item.brand}</Badge>
-                    <span className="font-medium text-ink text-xs truncate">{item.name}</span>
-                  </div>
-
-                  {item.orderRequired > 0 ? (
-                    <Badge tone="danger">Indent: {item.orderRequired}</Badge>
-                  ) : (
-                    <Badge tone="ok">Stock OK</Badge>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-4 gap-1 text-center mt-2">
-                  <div className="bg-surface p-1.5 rounded border border-line">
-                    <span className="eyebrow block">Orders</span>
-                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.totalBook}</span>
-                  </div>
-                  <div className="bg-surface p-1.5 rounded border border-line">
-                    <span className="eyebrow block">Alloted</span>
-                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.allocated}</span>
-                  </div>
-                  <div className="bg-surface p-1.5 rounded border border-line">
-                    <span className="eyebrow block">PBNA</span>
-                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.pbna}</span>
-                  </div>
-                  <div className="bg-surface p-1.5 rounded border border-line">
-                    <span className="eyebrow block">Free</span>
-                    <span className="font-semibold text-ink text-xs tnum mt-0.5 block">{item.freeYardStock}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1 pt-1.5 border-t border-line">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-ink-3">Allocation Rate</span>
-                  <span className="font-medium text-ink tnum">{item.allocRate}%</span>
-                </div>
-                <Bar pct={item.allocRate} />
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+              <tr>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
+                <th className="py-2.5 px-3">Brand & Model</th>
+                <th className="py-2.5 px-3 text-right">Customer Orders</th>
+                <th className="py-2.5 px-3 text-right">VIN Allocated</th>
+                <th className="py-2.5 px-3 text-right">PBNA (Pending)</th>
+                <th className="py-2.5 px-3 text-right">Physical Yard Stock</th>
+                <th className="py-2.5 px-3 text-right">Free Stock</th>
+                <th className="py-2.5 px-3 text-right">Indent Required</th>
+                <th className="py-2.5 px-3 w-48">Allocation Rate</th>
+                <th className="py-2.5 px-3 text-center">Stock Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line text-ink-2 text-xs">
+              {modelMatrix.map((item, idx) => (
+                <tr key={idx} className="hover:bg-canvas transition-colors">
+                  <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
+                    {idx + 1}
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="flex items-center gap-1.5">
+                      <Badge tone="accent">{item.brand}</Badge>
+                      <span className="font-medium text-ink">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                    {item.totalBook}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                    {item.allocated}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-warn tnum">
+                    {item.pbna}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                    {item.physicalInYard}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ok tnum">
+                    {item.freeYardStock}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium tnum">
+                    {item.orderRequired > 0 ? (
+                      <span className="text-danger font-semibold">{item.orderRequired} units</span>
+                    ) : (
+                      <span className="text-ink-3">0</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="flex items-center gap-2">
+                      <Bar pct={item.allocRate} className="flex-1" />
+                      <span className="w-10 text-right text-ink font-medium tnum text-[11px]">{item.allocRate}%</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    {item.orderRequired > 0 ? (
+                      <Badge tone="danger">Indent: {item.orderRequired}</Badge>
+                    ) : (
+                      <Badge tone="ok">Stock OK</Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Panel>
 
