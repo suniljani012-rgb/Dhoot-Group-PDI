@@ -7,7 +7,7 @@ import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards } from '.
 import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
 import { 
   Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, 
-  ArrowRight, ChevronDown, ChevronRight, Sliders, ShieldCheck, Layers, Palette
+  ArrowRight, Search, Download, X, Sliders, ShieldCheck, Layers, Palette, Filter
 } from 'lucide-react';
 
 const cleanStr = (s?: string) => {
@@ -26,7 +26,10 @@ export const DashboardPage: React.FC = () => {
   const [fleetList, setFleetList] = useState<any[]>([]);
   const [bookingsList, setBookingsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedModel, setExpandedModel] = useState<string | null>(null);
+
+  // Dedicated Model Variant & Colour Modal state
+  const [selectedModalModel, setSelectedModalModel] = useState<string | null>(null);
+  const [drilldownSearch, setDrilldownSearch] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -203,6 +206,51 @@ export const DashboardPage: React.FC = () => {
     });
   }, [currentBrand?.code, fleetList, bookingsList]);
 
+  // Selected Model Data for Modal
+  const activeModalData = useMemo(() => {
+    if (!selectedModalModel) return null;
+    return modelMatrix.find(m => m.name === selectedModalModel) || null;
+  }, [selectedModalModel, modelMatrix]);
+
+  // Filtered Drilldown rows for active modal
+  const filteredModalDrilldown = useMemo(() => {
+    if (!activeModalData) return [];
+    const q = drilldownSearch.trim().toLowerCase();
+    if (!q) return activeModalData.drilldown;
+    return activeModalData.drilldown.filter(d => 
+      d.variant.toLowerCase().includes(q) || 
+      d.colour.toLowerCase().includes(q)
+    );
+  }, [activeModalData, drilldownSearch]);
+
+  // Export Variant/Colour CSV
+  const handleExportDrilldownCSV = () => {
+    if (!activeModalData) return;
+    const headers = ['Variant', 'Colour', 'Customer Bookings', 'VIN Allocated', 'PBNA (In Stock)', 'Not in Stock (VNA)', 'Free Yard Stock', 'Status'];
+    const rows = [
+      headers.join(','),
+      ...activeModalData.drilldown.map(d => [
+        `"${d.variant}"`,
+        `"${d.colour}"`,
+        d.bookings,
+        d.allocated,
+        d.pbna,
+        d.vna,
+        d.freeStock,
+        `"${d.vna > 0 ? 'Indent Needed' : d.pbna > 0 ? 'Ready to Allot' : d.freeStock > 0 ? 'Available Free' : 'Settled'}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${activeModalData.name}_Variant_Colour_Report.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto select-none pb-20">
       
@@ -271,7 +319,7 @@ export const DashboardPage: React.FC = () => {
           label="PDI Certified" 
           value={counts.pdiDone} 
           note="Ready for Delivery" 
-          tone="accent"
+          tone="accent" 
           to="/pdi" 
         />
       </div>
@@ -346,7 +394,7 @@ export const DashboardPage: React.FC = () => {
         </div>
       </Panel>
 
-      {/* 4. Section: Model-Wise Demand & PBNA/VNA Allocation Ledger with Interactive Click Drilldown */}
+      {/* 4. Section: Model-Wise Demand & PBNA/VNA Allocation Ledger */}
       <Panel 
         title={
           <div className="flex items-center gap-2">
@@ -357,7 +405,7 @@ export const DashboardPage: React.FC = () => {
         }
         action={
           <div className="flex items-center gap-3">
-            <span className="text-[11px] text-ink-3">💡 Click any model to view Variant & Colour breakdown</span>
+            <span className="text-[11px] text-ink-3 font-medium">✨ Click any model name for Variant & Colour Matrix</span>
             <Link to="/bookings" className="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
               <span>View Bookings (PBNA)</span>
               <ArrowRight className="w-3 h-3" />
@@ -369,7 +417,7 @@ export const DashboardPage: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
               <tr>
-                <th className="py-2.5 px-3 w-8 text-center"></th>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Vehicle Model</th>
                 <th className="py-2.5 px-3 text-right">Customer Bookings</th>
                 <th className="py-2.5 px-3 text-right">VIN Allocated</th>
@@ -379,158 +427,294 @@ export const DashboardPage: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Free Stock</th>
                 <th className="py-2.5 px-3 text-right">In-Transit</th>
                 <th className="py-2.5 px-3 w-36">Allocation Rate</th>
+                <th className="py-2.5 px-3 text-center">Breakdown</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line text-ink-2 text-xs">
-              {modelMatrix.map((item, idx) => {
-                const isExpanded = expandedModel === item.name;
-
-                return (
-                  <React.Fragment key={idx}>
-                    <tr 
-                      onClick={() => setExpandedModel(isExpanded ? null : item.name)}
-                      className={`cursor-pointer transition-colors ${isExpanded ? 'bg-accent/5 font-medium' : 'hover:bg-canvas'}`}
-                    >
-                      <td className="py-2.5 px-3 text-center text-ink-3">
-                        {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-accent mx-auto" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 text-ink-3 mx-auto" />
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Car className="w-3.5 h-3.5 text-accent shrink-0" />
-                          <span className="text-accent hover:underline">{item.name}</span>
-                          <span className="text-[10px] text-ink-3 font-normal">({item.drilldown.length} variants/colours)</span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
-                        {item.totalBookings}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-medium text-ok tnum">
-                        {item.allocatedBookings}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-warn tnum">
-                        {item.pbna}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold tnum">
-                        {item.vna > 0 ? (
-                          <span className="text-danger">+{item.vna}</span>
-                        ) : (
-                          <span className="text-ink-3">0</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
-                        {item.physicalInYard}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-ok tnum">
-                        {item.freeYardStock}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-medium text-ink-3 tnum">
-                        {item.inTransit}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center gap-2">
-                          <Bar pct={item.allocRate} className="flex-1" />
-                          <span className="w-10 text-right text-ink font-bold tnum text-[11px]">{item.allocRate}%</span>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* EXPANDED VARIANT & COLOUR DRILLDOWN */}
-                    {isExpanded && (
-                      <tr>
-                        <td colSpan={10} className="p-0 bg-canvas/50">
-                          <div className="p-4 border-y-2 border-accent/20 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Layers className="w-4 h-4 text-accent" />
-                                <strong className="text-sm text-ink">{item.name} Detailed Variant & Colour Matrix</strong>
-                              </div>
-                              <span className="text-xs text-ink-3">
-                                {item.drilldown.length} Configurations in System
-                              </span>
-                            </div>
-
-                            <div className="overflow-x-auto bg-surface border border-line rounded">
-                              <table className="w-full text-left border-collapse text-xs">
-                                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase text-[10px]">
-                                  <tr>
-                                    <th className="py-2 px-3">#</th>
-                                    <th className="py-2 px-3">Variant Specification</th>
-                                    <th className="py-2 px-3">Exterior Colour</th>
-                                    <th className="py-2 px-3 text-right">Customer Orders</th>
-                                    <th className="py-2 px-3 text-right">VIN Allocated</th>
-                                    <th className="py-2 px-3 text-right">PBNA (In Stock)</th>
-                                    <th className="py-2 px-3 text-right">Not in Stock (VNA)</th>
-                                    <th className="py-2 px-3 text-right">Free Yard Stock</th>
-                                    <th className="py-2 px-3">Stock Allocation Status</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-line text-ink-2">
-                                  {item.drilldown.length === 0 ? (
-                                    <tr>
-                                      <td colSpan={9} className="py-4 text-center text-ink-3">
-                                        No bookings or stock registered for this model yet.
-                                      </td>
-                                    </tr>
-                                  ) : (
-                                    item.drilldown.map((row, rIdx) => (
-                                      <tr key={rIdx} className="hover:bg-canvas transition-colors">
-                                        <td className="py-2 px-3 text-ink-3 font-mono text-[11px]">{rIdx + 1}</td>
-                                        <td className="py-2 px-3 font-medium text-ink">{row.variant}</td>
-                                        <td className="py-2 px-3">
-                                          <div className="flex items-center gap-1.5">
-                                            <Palette className="w-3 h-3 text-ink-3" />
-                                            <span>{row.colour}</span>
-                                          </div>
-                                        </td>
-                                        <td className="py-2 px-3 text-right font-medium text-ink tnum">{row.bookings}</td>
-                                        <td className="py-2 px-3 text-right font-medium text-ok tnum">{row.allocated}</td>
-                                        <td className="py-2 px-3 text-right font-bold text-warn tnum">{row.pbna}</td>
-                                        <td className="py-2 px-3 text-right font-bold tnum">
-                                          {row.vna > 0 ? (
-                                            <span className="text-danger">+{row.vna}</span>
-                                          ) : (
-                                            <span className="text-ink-3">0</span>
-                                          )}
-                                        </td>
-                                        <td className="py-2 px-3 text-right font-bold text-ok tnum">{row.freeStock}</td>
-                                        <td className="py-2 px-3 whitespace-nowrap">
-                                          {row.vna > 0 ? (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-danger/10 text-danger border border-danger/30">
-                                              Indent Needed ({row.vna} Units)
-                                            </span>
-                                          ) : row.pbna > 0 ? (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-warn/10 text-warn border border-warn/30">
-                                              Ready for Allotment ({row.pbna} Units)
-                                            </span>
-                                          ) : row.freeStock > 0 ? (
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/30">
-                                              Available Free ({row.freeStock} Units)
-                                            </span>
-                                          ) : (
-                                            <span className="text-ink-3 text-[11px]">All Settled</span>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    ))
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
+              {modelMatrix.map((item, idx) => (
+                <tr 
+                  key={idx} 
+                  onClick={() => {
+                    setSelectedModalModel(item.name);
+                    setDrilldownSearch('');
+                  }}
+                  className="hover:bg-accent/5 cursor-pointer transition-colors group"
+                >
+                  <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">
+                    {idx + 1}
+                  </td>
+                  <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Car className="w-3.5 h-3.5 text-accent shrink-0" />
+                      <span className="text-accent group-hover:underline font-bold">{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                    {item.totalBookings}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ok tnum">
+                    {item.allocatedBookings}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-bold text-warn tnum">
+                    {item.pbna}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-bold tnum">
+                    {item.vna > 0 ? (
+                      <span className="text-danger">+{item.vna}</span>
+                    ) : (
+                      <span className="text-ink-3">0</span>
                     )}
-                  </React.Fragment>
-                );
-              })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
+                    {item.physicalInYard}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-bold text-ok tnum">
+                    {item.freeYardStock}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-medium text-ink-3 tnum">
+                    {item.inTransit}
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="flex items-center gap-2">
+                      <Bar pct={item.allocRate} className="flex-1" />
+                      <span className="w-10 text-right text-ink font-bold tnum text-[11px]">{item.allocRate}%</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedModalModel(item.name);
+                        setDrilldownSearch('');
+                      }}
+                      className="px-2 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1 mx-auto shadow-xs"
+                    >
+                      <Layers className="w-3 h-3" />
+                      <span>View Matrix</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </Panel>
+
+      {/* ========================================================================= */}
+      {/* DEDICATED MODEL VARIANT & COLOUR BREAKDOWN MODAL                          */}
+      {/* ========================================================================= */}
+      {selectedModalModel && activeModalData && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none animate-in fade-in">
+          <div className="bg-surface text-ink w-full max-w-5xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Car className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-ink">{activeModalData.name}</h2>
+                    <Badge tone="accent">Variant & Colour Matrix</Badge>
+                  </div>
+                  <p className="text-xs text-ink-3">
+                    Live customer demand, stock allocation & indent deficit by specification
+                  </p>
+                </div>
+              </div>
+
+              {/* Model Switcher Dropdown & Close */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-surface border border-line rounded px-2 py-1 shadow-xs">
+                  <span className="text-[11px] text-ink-3 font-semibold">Switch Model:</span>
+                  <select
+                    value={selectedModalModel}
+                    onChange={(e) => {
+                      setSelectedModalModel(e.target.value);
+                      setDrilldownSearch('');
+                    }}
+                    className="text-xs font-bold text-ink bg-transparent focus:outline-none cursor-pointer"
+                  >
+                    {modelMatrix.map(m => (
+                      <option key={m.name} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedModalModel(null)}
+                  className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              
+              {/* Summary KPIs Banner */}
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Total Bookings</span>
+                  <span className="text-base font-bold text-ink tnum">{activeModalData.totalBookings}</span>
+                </div>
+                <div className="p-2.5 bg-ok/5 border border-ok/20 rounded">
+                  <span className="eyebrow block text-ok">VIN Allocated</span>
+                  <span className="text-base font-bold text-ok tnum">{activeModalData.allocatedBookings}</span>
+                </div>
+                <div className="p-2.5 bg-warn/5 border border-warn/20 rounded">
+                  <span className="eyebrow block text-warn">PBNA (In Stock)</span>
+                  <span className="text-base font-bold text-warn tnum">{activeModalData.pbna}</span>
+                </div>
+                <div className="p-2.5 bg-danger/5 border border-danger/20 rounded">
+                  <span className="eyebrow block text-danger">Not in Stock (VNA)</span>
+                  <span className="text-base font-bold text-danger tnum">{activeModalData.vna}</span>
+                </div>
+                <div className="p-2.5 bg-canvas border border-line rounded">
+                  <span className="eyebrow block">Physical In Yard</span>
+                  <span className="text-base font-bold text-ink tnum">{activeModalData.physicalInYard}</span>
+                </div>
+                <div className="p-2.5 bg-ok/5 border border-ok/20 rounded">
+                  <span className="eyebrow block text-ok">Free Yard Stock</span>
+                  <span className="text-base font-bold text-ok tnum">{activeModalData.freeYardStock}</span>
+                </div>
+              </div>
+
+              {/* Filter / Search Bar */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Filter by Variant (e.g. Fearless, Creative) or Colour (e.g. White, Grey)..."
+                    value={drilldownSearch}
+                    onChange={(e) => setDrilldownSearch(e.target.value)}
+                    className="w-full h-8 pl-9 pr-3 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+                  />
+                </div>
+                {drilldownSearch && (
+                  <button
+                    onClick={() => setDrilldownSearch('')}
+                    className="h-8 px-2.5 bg-canvas border border-line text-xs font-medium text-ink-3 rounded"
+                  >
+                    Clear
+                  </button>
+                )}
+                <span className="text-xs text-ink-3 font-semibold">
+                  Showing {filteredModalDrilldown.length} of {activeModalData.drilldown.length} Configurations
+                </span>
+              </div>
+
+              {/* Variant & Colour Matrix Table */}
+              <div className="border border-line rounded overflow-hidden">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                    <tr>
+                      <th className="py-2.5 px-3 w-8 text-center">#</th>
+                      <th className="py-2.5 px-3">Variant Specification</th>
+                      <th className="py-2.5 px-3">Exterior Colour</th>
+                      <th className="py-2.5 px-3 text-right">Customer Orders</th>
+                      <th className="py-2.5 px-3 text-right">VIN Allocated</th>
+                      <th className="py-2.5 px-3 text-right">PBNA (In Stock)</th>
+                      <th className="py-2.5 px-3 text-right">Not in Stock (VNA)</th>
+                      <th className="py-2.5 px-3 text-right">Free Yard Stock</th>
+                      <th className="py-2.5 px-3 text-center">Stock Status</th>
+                      <th className="py-2.5 px-3">Available Free VINs</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line text-ink-2">
+                    {filteredModalDrilldown.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="py-8 text-center text-ink-3">
+                          No variant & colour configurations found matching your search.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredModalDrilldown.map((row, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-canvas transition-colors">
+                          <td className="py-2.5 px-3 text-center text-ink-3 font-mono text-[11px]">{rIdx + 1}</td>
+                          <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">{row.variant}</td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <Palette className="w-3.5 h-3.5 text-accent" />
+                              <span className="font-medium text-ink">{row.colour}</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-medium text-ink tnum">{row.bookings}</td>
+                          <td className="py-2.5 px-3 text-right font-medium text-ok tnum">{row.allocated}</td>
+                          <td className="py-2.5 px-3 text-right font-bold text-warn tnum">{row.pbna}</td>
+                          <td className="py-2.5 px-3 text-right font-bold tnum">
+                            {row.vna > 0 ? (
+                              <span className="text-danger">+{row.vna}</span>
+                            ) : (
+                              <span className="text-ink-3">0</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-bold text-ok tnum">{row.freeStock}</td>
+                          <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                            {row.vna > 0 ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-danger/10 text-danger border border-danger/30">
+                                Indent Needed ({row.vna})
+                              </span>
+                            ) : row.pbna > 0 ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-warn/10 text-warn border border-warn/30">
+                                Ready to Allot ({row.pbna})
+                              </span>
+                            ) : row.freeStock > 0 ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/30">
+                                Available Free ({row.freeStock})
+                              </span>
+                            ) : (
+                              <span className="text-ink-3 text-[11px]">All Settled</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap text-ink-3">
+                            {row.matchedVins.length > 0 ? (
+                              <span className="text-accent font-semibold">{row.matchedVins.slice(0, 2).join(', ')}{row.matchedVins.length > 2 ? ` + ${row.matchedVins.length - 2} more` : ''}</span>
+                            ) : (
+                              <span>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 border-t border-line bg-canvas flex items-center justify-between">
+              <span className="text-xs text-ink-3">
+                {activeModalData.name} • {activeModalData.drilldown.length} Total Specification Combos
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportDrilldownCSV}
+                  className="h-8 px-3 rounded bg-surface border border-line text-xs font-semibold text-ink flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-ink-3" />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedModalModel(null)}
+                  className="h-8 px-4 rounded bg-accent text-white text-xs font-semibold shadow-xs cursor-pointer"
+                >
+                  Close Matrix
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
