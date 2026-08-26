@@ -150,9 +150,28 @@ export const DashboardPage: React.FC = () => {
       ).length;
       const inTransit = modelVehicles.filter(v => v.location === 'In Transit' || v.status === 'YARD_RECEIVING_PENDING').length;
       
-      // Calculate PBNA vs VNA for this model
-      const pbna = Math.min(unallocatedBookings.length, freeYardStock);
-      const vna = Math.max(0, unallocatedBookings.length - freeYardStock);
+      // Calculate PBNA vs VNA for this model using smart matcher
+      const matchedVinSet = new Set<string>();
+      let pbna = 0;
+      let vna = 0;
+
+      const freeStockAvailable = modelVehicles.filter(v => 
+        v.status !== 'YARD_RECEIVING_PENDING' && 
+        v.location !== 'In Transit' && 
+        (!v.customer_name || String(v.customer_name).toLowerCase() === 'unallocated') && 
+        v.status !== 'ALLOCATED'
+      );
+
+      unallocatedBookings.forEach(b => {
+        const match = freeStockAvailable.find(v => !matchedVinSet.has(v.vin) && isSmartPbnaMatch(b, v));
+        if (match) {
+          matchedVinSet.add(match.vin);
+          pbna++;
+        } else {
+          vna++;
+        }
+      });
+
       const allocRate = totalBookings > 0 ? Math.round((allocatedBookings / totalBookings) * 100) : (physicalInYard > 0 ? 100 : 0);
 
       // 3. Variant & Colour Matrix Grouping
@@ -199,12 +218,9 @@ export const DashboardPage: React.FC = () => {
         const subAllocated = subBookings.filter(b => !!b.allocated_vin_no).length;
         const subUnallocated = subBookings.filter(b => !b.allocated_vin_no).length;
 
-        const subFreeVehicles = modelVehicles.filter(v => 
-          cleanStr(v.variant) === vClean && 
-          cleanStr(v.color || v.colour) === cClean &&
-          (!v.customer_name || String(v.customer_name).toLowerCase() === 'unallocated') &&
-          v.status !== 'ALLOCATED' &&
-          v.location !== 'In Transit'
+        const subFreeVehicles = freeStockAvailable.filter(v => 
+          (cleanStr(v.variant) === vClean && cleanStr(v.color || v.colour) === cClean) ||
+          subBookings.some(b => isSmartPbnaMatch(b, v))
         );
 
         const subPbna = Math.min(subUnallocated, subFreeVehicles.length);
@@ -237,7 +253,7 @@ export const DashboardPage: React.FC = () => {
       });
 
       // 4. Detailed Customer Bookings with Stock Tag
-      const matchedVinSet = new Set<string>();
+      const bookingVinMatchSet = new Set<string>();
       const detailedBookings = modelBookings.map((b, bIdx) => {
         const isAllocated = !!b.allocated_vin_no && String(b.allocated_vin_no).trim() !== '';
         
@@ -252,7 +268,7 @@ export const DashboardPage: React.FC = () => {
           matchedLocation = foundVeh?.location || 'Basni Yard';
         } else {
           const freeMatch = modelVehicles.find(v => {
-            if (matchedVinSet.has(v.vin)) return false;
+            if (bookingVinMatchSet.has(v.vin)) return false;
             const isFree = (!v.customer_name || String(v.customer_name).toLowerCase() === 'unallocated') &&
                            v.status !== 'ALLOCATED' &&
                            v.location !== 'In Transit';
@@ -262,7 +278,7 @@ export const DashboardPage: React.FC = () => {
           });
 
           if (freeMatch) {
-            matchedVinSet.add(freeMatch.vin);
+            bookingVinMatchSet.add(freeMatch.vin);
             stockStatus = 'PBNA';
             matchedStockVin = freeMatch.vin;
             matchedLocation = freeMatch.location || 'Basni Yard';

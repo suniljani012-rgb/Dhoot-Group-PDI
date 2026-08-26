@@ -1270,6 +1270,213 @@ export const BookingsPage: React.FC = () => {
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* MODAL: COMPREHENSIVE PBNA & VNA ALLOCATION & INDENT REPORT                */}
+      {/* ========================================================================= */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none">
+          <div className="bg-surface text-ink w-full max-w-5xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Factory className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                    <span>PBNA & VNA Stock Matching & Indent Report</span>
+                    <Badge tone="accent">{brandScopedBookings.filter(b => !b.allocated_vin_no).length} Unallocated Orders</Badge>
+                  </h2>
+                  <p className="text-xs text-ink-3 mt-0.5">
+                    Physical Booking Not Allocated (PBNA) vs Vehicle Not Available (VNA Indent Required)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportBookingsCSV}
+                  className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-ink text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-accent" />
+                  <span>Export Report</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Summary Bar */}
+            <div className="p-4 bg-canvas/60 border-b border-line grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {(() => {
+                const unallocatedList = brandScopedBookings.filter(b => !b.allocated_vin_no);
+                const freeStockList = stockVehicles.filter(v => (!v.customer_name || String(v.customer_name).toLowerCase() === 'unallocated') && v.status !== 'ALLOCATED' && v.location !== 'In Transit');
+                
+                const matchedSet = new Set<string>();
+                let pbnaCount = 0;
+                let vnaCount = 0;
+
+                unallocatedList.forEach(b => {
+                  const match = freeStockList.find(v => !matchedSet.has(v.vin) && isSmartPbnaMatch(b, v));
+                  if (match) {
+                    matchedSet.add(match.vin);
+                    pbnaCount++;
+                  } else {
+                    vnaCount++;
+                  }
+                });
+
+                return (
+                  <>
+                    <div className="p-2.5 bg-surface border border-line rounded">
+                      <span className="eyebrow block">Unallocated Orders</span>
+                      <div className="text-lg font-bold text-ink mt-0.5 tnum">{unallocatedList.length}</div>
+                    </div>
+                    <div className="p-2.5 bg-warn/10 border border-warn/30 rounded">
+                      <span className="eyebrow block text-warn">PBNA (In Stock Ready)</span>
+                      <div className="text-lg font-bold text-warn mt-0.5 tnum">{pbnaCount} Units</div>
+                    </div>
+                    <div className="p-2.5 bg-danger/10 border border-danger/30 rounded">
+                      <span className="eyebrow block text-danger">VNA (Indent Needed)</span>
+                      <div className="text-lg font-bold text-danger mt-0.5 tnum">{vnaCount} Units</div>
+                    </div>
+                    <div className="p-2.5 bg-ok/10 border border-ok/30 rounded">
+                      <span className="eyebrow block text-ok">Free Physical Stock</span>
+                      <div className="text-lg font-bold text-ok mt-0.5 tnum">{freeStockList.length} Units</div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Modal Table Content */}
+            <div className="p-4 overflow-y-auto space-y-3 flex-1">
+              <div className="border border-line rounded overflow-hidden">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                    <tr>
+                      <th className="py-2.5 px-3 w-10 text-center">#</th>
+                      <th className="py-2.5 px-3">Receipt / Customer</th>
+                      <th className="py-2.5 px-3">Model & Variant</th>
+                      <th className="py-2.5 px-3">Colour</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Stock Match / Available VINs</th>
+                      <th className="py-2.5 px-3 text-right">Advance</th>
+                      <th className="py-2.5 px-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line text-ink-2">
+                    {(() => {
+                      const unallocatedList = brandScopedBookings.filter(b => !b.allocated_vin_no);
+                      const freeStockList = stockVehicles.filter(v => (!v.customer_name || String(v.customer_name).toLowerCase() === 'unallocated') && v.status !== 'ALLOCATED' && v.location !== 'In Transit');
+                      
+                      const matchedSet = new Set<string>();
+
+                      if (unallocatedList.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={8} className="py-8 text-center text-ink-3">
+                              All bookings currently have VIN allocated! No pending PBNA/VNA orders.
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return unallocatedList.map((b, idx) => {
+                        const matchingVehicles = freeStockList.filter(v => isSmartPbnaMatch(b, v));
+                        const isPbna = matchingVehicles.length > 0;
+
+                        return (
+                          <tr key={idx} className="hover:bg-accent/5 transition-colors">
+                            <td className="py-2.5 px-3 text-center text-ink-3 font-mono tnum">{idx + 1}</td>
+                            <td className="py-2.5 px-3">
+                              <span className="font-mono font-bold text-accent block">{b.receipt_no}</span>
+                              <strong className="text-ink text-xs">{b.customer_name}</strong>
+                              <span className="text-ink-3 text-[11px] block">{b.mobile_number}</span>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <strong className="text-ink block">{b.model}</strong>
+                              <span className="text-ink-3">{b.variant}</span>
+                            </td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">
+                              <span className="font-medium text-ink">{b.colour}</span>
+                            </td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">
+                              {isPbna ? (
+                                <span className="inline-flex items-center gap-1 font-bold text-warn bg-warn/10 px-2 py-0.5 rounded border border-warn/30 text-[11px]">
+                                  <Check className="w-3 h-3" />
+                                  PBNA (In Stock)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 font-bold text-danger bg-danger/10 px-2 py-0.5 rounded border border-danger/30 text-[11px]">
+                                  <AlertCircle className="w-3 h-3" />
+                                  VNA (Indent Needed)
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              {isPbna ? (
+                                <div className="space-y-0.5">
+                                  <span className="text-ok font-semibold text-[11px]">
+                                    {matchingVehicles.length} Match in Yard:
+                                  </span>
+                                  <div className="font-mono text-[10px] text-ink-2">
+                                    {matchingVehicles.slice(0, 2).map(v => v.vin).join(', ')}
+                                    {matchingVehicles.length > 2 ? ` + ${matchingVehicles.length - 2} more` : ''}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-ink-3 text-[11px]">0 Free Stock in Yard (Factory Order Required)</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-ink whitespace-nowrap">
+                              ₹{(Number(b.receipt_amt) || 0).toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowReportModal(false);
+                                  setAllocatingBooking(b);
+                                  if (matchingVehicles.length > 0) {
+                                    setSelectedStockVin(matchingVehicles[0].vin);
+                                  }
+                                }}
+                                className="h-7 px-2.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1 shadow-xs mx-auto cursor-pointer"
+                              >
+                                <Car className="w-3 h-3" />
+                                <span>Allocate VIN</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-line flex items-center justify-end bg-canvas">
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="h-8 px-5 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+              >
+                Close Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
