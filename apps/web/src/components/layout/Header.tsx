@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Menu, X, Bell, Globe } from 'lucide-react';
+import { LogOut, Menu, X, Bell, Search } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
 
 interface HeaderProps {
@@ -8,147 +8,96 @@ interface HeaderProps {
   onToggleMobileMenu: () => void;
 }
 
+const initials = (name?: string, fallback = 'SA') => {
+  if (!name?.trim()) return fallback;
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return parts[0].slice(0, 2).toUpperCase();
+};
+
+const brands = [
+  { code: 'DHOOT-ALL', label: 'All' },
+  { code: 'DHOOT-TATA', label: 'Tata' },
+  { code: 'DHOOT-HYUNDAI', label: 'Hyundai' },
+] as const;
+
 export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobileMenu }) => {
   const { user, currentBrand, setBrand, logout } = useAuth();
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
-  const getUserInitials = (name?: string, fallback = 'SA') => {
-    if (!name || !name.trim()) return fallback;
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    if (parts[0].length >= 2) {
-      return parts[0].slice(0, 2).toUpperCase();
-    }
-    return parts[0].toUpperCase();
-  };
+  const [notifOpen, setNotifOpen] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs select-none">
-      
-      {/* Left: Mobile Toggle & Pure Dhoot Group Branding */}
-      <div className="flex items-center gap-3">
-        {/* Mobile Hamburger Menu Toggle */}
-        <button
-          onClick={onToggleMobileMenu}
-          className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
-          aria-label={isMobileMenuOpen ? 'Close Menu' : 'Open Menu'}
-        >
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+    <header className="h-14 bg-surface border-b border-line px-3 sm:px-4 flex items-center gap-4 shrink-0">
+      <button
+        onClick={onToggleMobileMenu}
+        className="lg:hidden -ml-1 p-2 rounded text-ink-2 hover:bg-canvas"
+        aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+      >
+        {isMobileMenuOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
+      </button>
 
-        {/* Dhoot Group Brand Identity */}
-        <div className="flex items-center gap-2.5">
-          <img 
-            src="/logo.png" 
-            alt="Dhoot Group Logo" 
-            className="h-9 w-9 object-contain rounded-xl shrink-0"
-          />
-          <span className="text-base font-bold text-slate-900 leading-none">
-            Dhoot Group
-          </span>
+      {/* Brand mark. The logo does the work: no tagline, no version badge. */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        <img src="/logo.png" alt="" className="h-6 w-6 object-contain rounded-chip" />
+        <span className="text-base font-semibold tracking-[-0.011em]">Dhoot Group</span>
+      </div>
+
+      {/* Franchise scope: a segmented control, not three differently-coloured buttons. */}
+      <div className="hidden sm:flex items-center h-7 p-0.5 bg-canvas border border-line rounded ml-1">
+        {brands.map((b) => {
+          const active = currentBrand.code === b.code;
+          return (
+            <button
+              key={b.code}
+              onClick={() => setBrand(b.code as any)}
+              className={`h-6 px-2.5 rounded-chip text-xs font-medium transition-colors ${
+                active ? 'bg-surface text-ink border border-line' : 'text-ink-3 hover:text-ink-2'
+              }`}
+            >
+              {b.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex-1" />
+
+      <button
+        className="hidden md:flex items-center gap-2 h-7 pl-2 pr-8 border border-line rounded text-xs text-ink-3 hover:border-line-strong transition-colors"
+        title="Search VIN, booking or customer"
+      >
+        <Search className="w-3.5 h-3.5" />
+        <span>Search VIN or booking</span>
+      </button>
+
+      <div className="relative">
+        <button
+          onClick={() => setNotifOpen(!notifOpen)}
+          className="p-1.5 rounded text-ink-2 hover:bg-canvas relative"
+          aria-label="Alerts"
+        >
+          <Bell className="w-[18px] h-[18px]" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-danger rounded-full ring-2 ring-surface" />
+        </button>
+        <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
+      </div>
+
+      <div className="flex items-center gap-2 pl-3 border-l border-line">
+        <div className="w-7 h-7 rounded bg-accent text-white text-xs font-medium flex items-center justify-center">
+          {initials(user?.userName || user?.employeeId)}
+        </div>
+        <div className="hidden sm:block leading-tight">
+          <div className="text-xs font-medium">{user?.userName || 'Administrator'}</div>
+          <div className="text-xs text-ink-3">{user?.designation || 'System admin'}</div>
         </div>
       </div>
 
-      {/* Center: Executive Brand / Franchise Switcher for Admin */}
-      <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-xs">
-        <button
-          onClick={() => setBrand('DHOOT-ALL')}
-          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            currentBrand.code === 'DHOOT-ALL'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>All Franchises</span>
-        </button>
-
-        <button
-          onClick={() => setBrand('DHOOT-TATA')}
-          className={`px-3.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            currentBrand.code === 'DHOOT-TATA'
-              ? 'bg-blue-900 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <span>Tata Motors</span>
-        </button>
-
-        <button
-          onClick={() => setBrand('DHOOT-HYUNDAI')}
-          className={`px-3.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            currentBrand.code === 'DHOOT-HYUNDAI'
-              ? 'bg-indigo-900 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <span>Hyundai</span>
-        </button>
-      </div>
-
-      {/* Right: Notifications, User Profile & Logout */}
-      <div className="flex items-center gap-2.5 sm:gap-4">
-        
-        {/* Mobile Brand Selector */}
-        <div className="md:hidden">
-          <select
-            value={currentBrand.code}
-            onChange={(e) => setBrand(e.target.value as any)}
-            className="text-xs font-bold p-1.5 bg-slate-100 border border-slate-200 rounded-xl"
-          >
-            <option value="DHOOT-ALL">All Brands</option>
-            <option value="DHOOT-TATA">Tata</option>
-            <option value="DHOOT-HYUNDAI">Hyundai</option>
-          </select>
-        </div>
-
-        {/* Real-Time Operations Notification Bell */}
-        <div className="relative">
-          <button
-            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all relative cursor-pointer"
-            title="Dealership Operations Center"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse ring-2 ring-white" />
-          </button>
-
-          {/* Slide-over Flyout Center */}
-          <NotificationPanel
-            isOpen={isNotificationOpen}
-            onClose={() => setIsNotificationOpen(false)}
-          />
-        </div>
-
-        {/* User Badge */}
-        <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-bold flex items-center justify-center text-xs shadow-xs tracking-wider font-mono">
-            {getUserInitials(user?.userName || user?.employeeId, 'SA')}
-          </div>
-
-          <div className="hidden sm:block text-left">
-            <div className="text-xs font-bold text-slate-900 leading-tight">
-              {user?.userName || 'Administrator'}
-            </div>
-            <div className="text-[10px] font-semibold text-slate-400">
-              {user?.designation || 'System Admin'}
-            </div>
-          </div>
-        </div>
-
-        {/* Logout Button */}
-        <button
-          onClick={logout}
-          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-          title="Sign Out"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
-
-      </div>
-
+      <button
+        onClick={logout}
+        className="p-1.5 rounded text-ink-3 hover:text-danger hover:bg-canvas transition-colors"
+        title="Sign out"
+      >
+        <LogOut className="w-[18px] h-[18px]" />
+      </button>
     </header>
   );
 };

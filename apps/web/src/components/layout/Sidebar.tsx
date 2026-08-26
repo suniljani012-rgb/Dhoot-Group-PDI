@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Bookmark, Car, CheckSquare, Wrench, 
-  ShieldCheck, FileText, FileCheck, ChevronRight, Building2,
-  Truck, Shield, Settings, UserCheck
+import {
+  LayoutDashboard, Truck, Car, ClipboardCheck, ShieldCheck,
+  Bookmark, Wrench, Receipt, FileCheck, Settings2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useFleetCounts } from '../../hooks/useFleetCounts';
@@ -12,166 +11,97 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
+/**
+ * Labels are one word wherever one word is unambiguous.
+ * "Yard Inward & Receiving" told you how the system was built; "Inward" tells
+ * a yard manager what he is about to open.
+ */
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const location = useLocation();
-  const { currentBrand, user, isSuperAdmin } = useAuth();
-  const counts = useFleetCounts();
+  const { user, isSuperAdmin } = useAuth();
+  const c = useFleetCounts();
 
-  const getUserInitials = (name?: string, fallback = 'SA') => {
-    if (!name || !name.trim()) return fallback;
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    if (parts[0].length >= 2) {
-      return parts[0].slice(0, 2).toUpperCase();
-    }
-    return parts[0].toUpperCase();
-  };
-
-  // Dynamic modules with real live database counts
-  const allNavItems = [
-    { 
-      label: 'Operations Dashboard', 
-      path: '/dashboard', 
-      icon: LayoutDashboard,
-      roles: ['ALL'] 
+  const groups: {
+    heading: string;
+    items: { label: string; path: string; icon: any; count?: number; roles: string[] }[];
+  }[] = [
+    {
+      heading: 'Operations',
+      items: [
+        { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, roles: ['ALL'] },
+        { label: 'Inward', path: '/receiving', icon: Truck, count: c.receivingPending, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER'] },
+        { label: 'Stock', path: '/vehicles', icon: Car, count: c.totalStock, roles: ['ALL'] },
+        { label: 'Inspections', path: '/pdi', icon: ClipboardCheck, count: c.pdiPending, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] },
+        { label: 'Quality', path: '/qa', icon: ShieldCheck, count: c.qaPending, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'QA_MANAGER'] },
+        { label: 'Workshop', path: '/repairs', icon: Wrench, count: c.inRepair, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'WORKSHOP_SUPERVISOR', 'PDI_ENGINEER'] },
+      ],
     },
-    { 
-      label: 'Yard Inward & Receiving', 
-      path: '/receiving', 
-      icon: Truck, 
-      count: counts.receivingPending,
-      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER'] 
+    {
+      heading: 'Sales',
+      items: [
+        { label: 'Bookings', path: '/bookings', icon: Bookmark, count: c.totalBookings, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'SALES_CONSULTANT', 'ACCOUNTS_EXECUTIVE'] },
+        { label: 'Invoicing', path: '/invoicing', icon: Receipt, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'ACCOUNTS_EXECUTIVE', 'SALES_CONSULTANT'] },
+        { label: 'Certificates', path: '/certificates/cert-101', icon: FileCheck, roles: ['ALL'] },
+      ],
     },
-    { 
-      label: 'Vehicle Stock Ledger', 
-      path: '/vehicles', 
-      icon: Car, 
-      count: counts.totalStock,
-      badgeColor: 'bg-blue-50 text-blue-800 border-blue-200',
-      roles: ['ALL'] 
-    },
-    { 
-      label: 'Vehicle Inspections', 
-      path: '/pdi', 
-      icon: CheckSquare, 
-      count: counts.pdiPending,
-      badgeColor: 'bg-orange-50 text-orange-800 border-orange-200',
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] 
-    },
-    { 
-      label: 'Quality Approvals', 
-      path: '/qa', 
-      icon: ShieldCheck, 
-      count: counts.qaPending,
-      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'QA_MANAGER'] 
-    },
-    { 
-      label: 'Customer Bookings', 
-      path: '/bookings', 
-      icon: Bookmark, 
-      count: counts.totalBookings,
-      badgeColor: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'SALES_CONSULTANT', 'ACCOUNTS_EXECUTIVE'] 
-    },
-    { 
-      label: 'Workshop & Rectification', 
-      path: '/repairs', 
-      icon: Wrench, 
-      count: counts.inRepair,
-      badgeColor: 'bg-rose-50 text-rose-800 border-rose-200',
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'WORKSHOP_SUPERVISOR', 'PDI_ENGINEER'] 
-    },
-    { 
-      label: 'Challans & Invoicing', 
-      path: '/invoicing', 
-      icon: FileText,
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'ACCOUNTS_EXECUTIVE', 'SALES_CONSULTANT'] 
-    },
-    { 
-      label: 'Vehicle Certificates', 
-      path: '/certificates/cert-101', 
-      icon: FileCheck,
-      roles: ['ALL'] 
-    },
-    { 
-      label: 'Dealership Administration', 
-      path: '/admin', 
-      icon: Building2,
-      roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER'] 
+    {
+      heading: 'Setup',
+      items: [
+        { label: 'Administration', path: '/admin', icon: Settings2, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER'] },
+      ],
     },
   ];
 
-  // Filter items based on user role
-  const userRole = user?.role || 'SYSTEM_ADMIN';
-  const navItems = allNavItems.filter(item => {
-    if (isSuperAdmin || item.roles.includes('ALL')) return true;
-    return item.roles.includes(userRole);
-  });
+  const role = user?.role || 'SYSTEM_ADMIN';
+  const allowed = (roles: string[]) => isSuperAdmin || roles.includes('ALL') || roles.includes(role);
 
   return (
-    <aside className="w-64 bg-white text-slate-700 flex flex-col shrink-0 h-full border-r border-slate-200 shadow-xs select-none">
-      
-      {/* Navigation Links with Live Database Counters */}
-      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
-          
+    <aside className="w-56 bg-surface flex flex-col h-full">
+      <nav className="flex-1 px-2 py-3 overflow-y-auto">
+        {groups.map((group) => {
+          const items = group.items.filter((i) => allowed(i.roles));
+          if (!items.length) return null;
+
           return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={onCloseMobile}
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
-                isActive 
-                  ? 'bg-slate-900 text-white shadow-xs font-bold' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-3 truncate">
-                <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                <span className="truncate">{item.label}</span>
-              </div>
-              
-              <div className="flex items-center gap-1.5 shrink-0">
-                {item.count !== undefined && (
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md font-bold ${
-                    isActive 
-                      ? 'bg-white/20 text-white' 
-                      : `${item.badgeColor || 'bg-slate-100 text-slate-600'} border`
-                  }`}>
-                    {item.count}
-                  </span>
-                )}
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-white/80" />}
-              </div>
-            </Link>
+            <div key={group.heading} className="mb-5 last:mb-0">
+              <div className="eyebrow px-2.5 mb-1.5">{group.heading}</div>
+
+              {items.map((item) => {
+                const Icon = item.icon;
+                const active =
+                  location.pathname === item.path ||
+                  (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={onCloseMobile}
+                    className={`flex items-center gap-2.5 h-8 px-2.5 rounded text-sm transition-colors ${
+                      active
+                        ? 'bg-accent-soft text-accent font-medium'
+                        : 'text-ink-2 hover:bg-canvas hover:text-ink'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-accent' : 'text-ink-3'}`} />
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {item.count !== undefined && item.count > 0 && (
+                      <span className={`text-xs tnum ${active ? 'text-accent' : 'text-ink-3'}`}>
+                        {item.count}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           );
         })}
       </nav>
 
-      {/* Bottom User Station Footer */}
-      <div className="p-3 border-t border-slate-200 bg-slate-50/70">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-800 font-bold flex items-center justify-center text-xs shrink-0 border border-slate-300 font-mono tracking-wider">
-              {getUserInitials(user?.userName || user?.employeeId, 'SA')}
-            </div>
-            <div className="overflow-hidden">
-              <div className="text-xs font-bold text-slate-900 truncate">{user?.userName || user?.employeeId || 'System Administrator'}</div>
-              <div className="text-[10px] text-slate-500 font-medium truncate">
-                {user?.designation || user?.role?.replace('_', ' ') || 'Admin'} ({user?.userCode || 'DG001'})
-              </div>
-            </div>
-          </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Live Database Connection" />
-        </div>
+      <div className="px-4 h-9 flex items-center border-t border-line">
+        <span className="w-1.5 h-1.5 rounded-full bg-ok mr-2 shrink-0" />
+        <span className="text-xs text-ink-3">Synced</span>
       </div>
-
     </aside>
   );
 };
