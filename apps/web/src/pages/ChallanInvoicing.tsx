@@ -65,8 +65,8 @@ export interface ChallanRecord {
 export const ChallanInvoicingPage: React.FC = () => {
   const { currentBrand } = useAuth();
 
-  const [records, setRecords] = useState<ChallanRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<ChallanRecord[]>(() => getChallansForBrand(currentBrand?.code || 'DHOOT-ALL'));
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 

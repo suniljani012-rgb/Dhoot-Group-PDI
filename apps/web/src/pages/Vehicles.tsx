@@ -96,34 +96,36 @@ export const VehiclesPage: React.FC = () => {
 
   const [selectedStock, setSelectedStock] = useState<StockVehicle | null>(null);
 
-  const [vehicles, setVehicles] = useState<StockVehicle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [vehicles, setVehicles] = useState<StockVehicle[]>(() => getVehiclesForBrand(currentBrand.code) as StockVehicle[]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setBrandFilter(currentBrand.code === 'DHOOT-ALL' ? 'ALL' : currentBrand.code);
-    fetchStock();
+    const brand = currentBrand.code === 'DHOOT-ALL' ? 'ALL' : currentBrand.code;
+    setBrandFilter(brand);
     
-    // Listen for stock-updated events from Importer or other tabs
+    // 1. Sync immediately from in-memory cache
+    const currentList = getVehiclesForBrand(currentBrand.code);
+    setVehicles(currentList as StockVehicle[]);
+    setLoading(false);
+
+    // 2. Trigger background cloud sync once
+    syncWithSupabase().catch(() => {});
+    
+    // 3. Listen for updates without infinite re-fetch loop
     const handleStockUpdate = () => {
-      fetchStock();
+      const updated = getVehiclesForBrand(currentBrand.code);
+      setVehicles(updated as StockVehicle[]);
+      setLoading(false);
     };
 
     window.addEventListener('stock-updated', handleStockUpdate);
     return () => window.removeEventListener('stock-updated', handleStockUpdate);
   }, [currentBrand.code]);
 
-  const fetchStock = async () => {
-    setLoading(true);
-    try {
-      await syncWithSupabase();
-      const localStock = getVehiclesForBrand(currentBrand.code);
-      setVehicles(localStock as StockVehicle[]);
-    } catch (e) {
-      console.warn('Local stock fetch note:', e);
-      setVehicles([]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchStock = () => {
+    const list = getVehiclesForBrand(currentBrand.code);
+    setVehicles(list as StockVehicle[]);
+    setLoading(false);
   };
 
   // Instant update of Vehicle Yard from Table Dropdown

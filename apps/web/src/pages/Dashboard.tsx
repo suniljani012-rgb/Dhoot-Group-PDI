@@ -23,9 +23,9 @@ export const DashboardPage: React.FC = () => {
   const { currentBrand } = useAuth();
   const counts = useFleetCounts();
 
-  const [fleetList, setFleetList] = useState<any[]>([]);
-  const [bookingsList, setBookingsList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [fleetList, setFleetList] = useState<any[]>(() => getVehiclesForBrand(currentBrand.code));
+  const [bookingsList, setBookingsList] = useState<any[]>(() => getBookingsForBrand(currentBrand.code));
+  const [loading, setLoading] = useState(false);
 
   // Dedicated Model Modal state
   const [selectedModalModel, setSelectedModalModel] = useState<string | null>(null);
@@ -50,10 +50,19 @@ export const DashboardPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   useEffect(() => {
-    fetchDashboardData();
+    // 1. Sync immediately from in-memory cache
+    setFleetList(getVehiclesForBrand(currentBrand.code));
+    setBookingsList(getBookingsForBrand(currentBrand.code));
+    setLoading(false);
 
+    // 2. Trigger background cloud sync once
+    syncWithSupabase().catch(() => {});
+
+    // 3. Listen for updates without infinite re-fetch loop
     const handleDataUpdate = () => {
-      fetchDashboardData();
+      setFleetList(getVehiclesForBrand(currentBrand.code));
+      setBookingsList(getBookingsForBrand(currentBrand.code));
+      setLoading(false);
     };
 
     window.addEventListener('stock-updated', handleDataUpdate);
@@ -69,21 +78,10 @@ export const DashboardPage: React.FC = () => {
     };
   }, [currentBrand?.code]);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      await syncWithSupabase();
-      const stock = getVehiclesForBrand(currentBrand.code);
-      const bookings = getBookingsForBrand(currentBrand.code);
-      setFleetList(stock);
-      setBookingsList(bookings);
-    } catch (e) {
-      console.warn('Dashboard fetch error:', e);
-      setFleetList([]);
-      setBookingsList([]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchDashboardData = () => {
+    setFleetList(getVehiclesForBrand(currentBrand.code));
+    setBookingsList(getBookingsForBrand(currentBrand.code));
+    setLoading(false);
   };
 
   // 1. Dynamic Stockyard Network Matrix

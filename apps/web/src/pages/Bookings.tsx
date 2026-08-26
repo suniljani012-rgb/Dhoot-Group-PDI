@@ -60,14 +60,14 @@ const isExact3WayMatch = (booking: BookingRecord, stock: any): boolean => {
 export const BookingsPage: React.FC = () => {
   const { currentBrand } = useAuth();
 
-  const [bookings, setBookings] = useState<BookingRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useState<BookingRecord[]>(() => getBookingsForBrand('DHOOT-ALL'));
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [brandFilter, setBrandFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING_ALLOCATION' | 'ALLOCATED'>('ALL');
   
   // Real Database Stock For Live VIN Allocation Dropdown
-  const [stockVehicles, setStockVehicles] = useState<any[]>([]);
+  const [stockVehicles, setStockVehicles] = useState<any[]>(() => getVehiclesForBrand('DHOOT-ALL'));
 
   // Modals Controls
   const [showNewModal, setShowNewModal] = useState(false);
@@ -101,11 +101,26 @@ export const BookingsPage: React.FC = () => {
   });
 
   useEffect(() => {
-    setBrandFilter(currentBrand.code === 'DHOOT-ALL' ? 'ALL' : currentBrand.code);
-    fetchBookingsAndStock();
+    const brand = currentBrand.code === 'DHOOT-ALL' ? 'ALL' : currentBrand.code;
+    setBrandFilter(brand);
 
+    // 1. Sync immediately from in-memory cache
+    const bList = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
+    setBookings(bList);
+    const sList = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');
+    setStockVehicles(sList);
+    setLoading(false);
+
+    // 2. Trigger background cloud sync once
+    syncWithSupabase().catch(() => {});
+
+    // 3. Listen for updates without infinite re-fetch loop
     const handleUpdate = () => {
-      fetchBookingsAndStock();
+      const updatedB = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
+      setBookings(updatedB);
+      const updatedS = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');
+      setStockVehicles(updatedS);
+      setLoading(false);
     };
 
     window.addEventListener('bookings-updated', handleUpdate);
@@ -117,21 +132,12 @@ export const BookingsPage: React.FC = () => {
     };
   }, [currentBrand?.code]);
 
-  const fetchBookingsAndStock = async () => {
-    setLoading(true);
-    try {
-      await syncWithSupabase();
-      const bList = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
-      setBookings(bList);
-      const sList = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');
-      setStockVehicles(sList);
-    } catch (e) {
-      console.warn('Error fetching bookings:', e);
-      setBookings([]);
-      setStockVehicles([]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchBookingsAndStock = () => {
+    const bList = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
+    setBookings(bList);
+    const sList = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');
+    setStockVehicles(sList);
+    setLoading(false);
   };
 
   const handleCreateBooking = (e: React.FormEvent) => {
