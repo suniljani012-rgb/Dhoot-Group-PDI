@@ -389,12 +389,12 @@ export const AdminUsersPage: React.FC = () => {
     <div className="space-y-4">
       
       {/* Sub-Tabs Toolbar */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-1.5 flex items-center justify-between gap-3">
+      <div className="bg-canvas border border-line rounded p-1.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setSubTab('USERS')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              subTab === 'USERS' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            className={`px-3.5 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              subTab === 'USERS' ? 'bg-accent text-white shadow-xs' : 'text-ink-2 hover:text-ink'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -403,8 +403,8 @@ export const AdminUsersPage: React.FC = () => {
 
           <button
             onClick={() => setSubTab('ROLES')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              subTab === 'ROLES' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            className={`px-3.5 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              subTab === 'ROLES' ? 'bg-accent text-white shadow-xs' : 'text-ink-2 hover:text-ink'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -413,8 +413,8 @@ export const AdminUsersPage: React.FC = () => {
 
           <button
             onClick={() => setSubTab('DESIGNATIONS')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              subTab === 'DESIGNATIONS' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            className={`px-3.5 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              subTab === 'DESIGNATIONS' ? 'bg-accent text-white shadow-xs' : 'text-ink-2 hover:text-ink'
             }`}
           >
             <Briefcase className="w-3.5 h-3.5 text-blue-400" />
@@ -426,7 +426,7 @@ export const AdminUsersPage: React.FC = () => {
           {subTab === 'USERS' && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Create User (Auto ID)</span>
@@ -450,7 +450,7 @@ export const AdminUsersPage: React.FC = () => {
                 });
                 setShowRoleModal(true);
               }}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Create Dealership Role</span>
@@ -463,9 +463,9 @@ export const AdminUsersPage: React.FC = () => {
       {/* SUB-TAB 1: STAFF USER ACCOUNTS                                            */}
       {/* ========================================================================= */}
       {subTab === 'USERS' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-line pb-3">
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
@@ -473,7 +473,7 @@ export const AdminUsersPage: React.FC = () => {
                 placeholder="Search User ID, Name, Email, Mobile, Designation..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 transition-all"
+                className="w-full pl-8 pr-3 py-1.5 bg-canvas border border-line rounded text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 transition-all"
               />
             </div>
 
@@ -481,7 +481,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="p-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium"
+                className="p-1.5 text-xs bg-canvas border border-line rounded font-medium"
               >
                 <option value="ALL">All Status</option>
                 <option value="ACTIVE">Active</option>
@@ -491,7 +491,7 @@ export const AdminUsersPage: React.FC = () => {
           </div>
 
           {/* User Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -520,7 +520,7 @@ export const AdminUsersPage: React.FC = () => {
                   </tr>
                 ) : (
                   filtered.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/80">
+                    <tr key={u.id} className="hover:bg-canvas/80">
                       <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
                         {u.user_code || u.employee_id}
                       </td>
@@ -529,7 +529,7 @@ export const AdminUsersPage: React.FC = () => {
                         <div className="text-[10px] text-slate-400 font-mono">{u.mail_id}</div>
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-900 text-white text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded-md bg-accent text-white text-[10px] font-semibold">
                           {u.role?.replace('_', ' ') || 'PDI ENGINEER'}
                         </span>
                       </td>
@@ -572,15 +572,15 @@ export const AdminUsersPage: React.FC = () => {
       {/* SUB-TAB 2: ROLES & WINDOW PERMISSION MATRIX                               */}
       {/* ========================================================================= */}
       {subTab === 'ROLES' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-4">
+          <div className="border-b border-line pb-3">
             <h2 className="text-xs font-bold text-slate-900">Role-Based Access Control (RBAC) & Window Visibility Matrix</h2>
             <p className="text-[11px] text-slate-400">
               Configure which operational windows and capabilities are accessible to each dealership staff role.
             </p>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[10px]">
                 <tr>
@@ -599,7 +599,7 @@ export const AdminUsersPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
                 {roleConfigs.map((r) => (
-                  <tr key={r.role} className="hover:bg-slate-50/80">
+                  <tr key={r.role} className="hover:bg-canvas/80">
                     <td className="py-3 px-3">
                       <div className="font-bold text-slate-900">{r.displayName}</div>
                       <div className="text-[10px] text-slate-400 font-mono">{r.role} • {r.department}</div>
@@ -652,8 +652,8 @@ export const AdminUsersPage: React.FC = () => {
       {/* SUB-TAB 3: MASTER DESIGNATIONS & DEPARTMENTS                              */}
       {/* ========================================================================= */}
       {subTab === 'DESIGNATIONS' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Dealership Designations & Department Natures</h2>
               <p className="text-[11px] text-slate-400">Master job titles assigned during user account creation.</p>
@@ -661,19 +661,19 @@ export const AdminUsersPage: React.FC = () => {
           </div>
 
           {/* Add Designation Form */}
-          <form onSubmit={handleAddDesignation} className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-3">
+          <form onSubmit={handleAddDesignation} className="bg-canvas border border-line p-4 rounded flex flex-col sm:flex-row items-center gap-3">
             <input
               type="text"
               required
               placeholder="Designation Title (e.g. Lead Technical Inspector)"
               value={newDesignationTitle}
               onChange={(e) => setNewDesignationTitle(e.target.value)}
-              className="flex-1 p-2 bg-white border border-slate-200 rounded-xl text-xs font-medium"
+              className="flex-1 p-2 bg-white border border-line rounded text-xs font-medium"
             />
             <select
               value={newDesignationNature}
               onChange={(e) => setNewDesignationNature(e.target.value)}
-              className="p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+              className="p-2 bg-white border border-line rounded text-xs font-bold"
             >
               {natures.map(n => (
                 <option key={n.id} value={n.name}>{n.name}</option>
@@ -681,7 +681,7 @@ export const AdminUsersPage: React.FC = () => {
             </select>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0"
+              className="px-4 py-2 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Designation</span>
@@ -689,7 +689,7 @@ export const AdminUsersPage: React.FC = () => {
           </form>
 
           {/* Designations Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -703,10 +703,10 @@ export const AdminUsersPage: React.FC = () => {
                 {designations.map((d) => {
                   const staffCount = usersList.filter(u => u.designation === d.title).length;
                   return (
-                    <tr key={d.id} className="hover:bg-slate-50/80">
+                    <tr key={d.id} className="hover:bg-canvas/80">
                       <td className="py-2.5 px-3 font-bold text-slate-900">{d.title}</td>
                       <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold border border-line">
                           {d.nature}
                         </span>
                       </td>
@@ -745,14 +745,14 @@ export const AdminUsersPage: React.FC = () => {
       {/* MODAL: EDIT ROLE & WINDOW ACCESSIBILITY                                    */}
       {/* ========================================================================= */}
       {showRoleModal && editingRole && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <h3 className="font-bold">Configure Role Windows & Permissions</h3>
               </div>
-              <button onClick={() => { setShowRoleModal(false); setEditingRole(null); }} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => { setShowRoleModal(false); setEditingRole(null); }} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -766,7 +766,7 @@ export const AdminUsersPage: React.FC = () => {
                     required
                     value={editingRole.role}
                     onChange={(e) => setEditingRole({ ...editingRole, role: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-mono font-bold"
                   />
                 </div>
                 <div>
@@ -776,14 +776,14 @@ export const AdminUsersPage: React.FC = () => {
                     required
                     value={editingRole.displayName}
                     onChange={(e) => setEditingRole({ ...editingRole, displayName: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-bold"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1.5">Window / Module Access Permissions</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-canvas p-3 rounded border border-line">
                   {[
                     { key: 'dashboard', label: 'Dashboard' },
                     { key: 'receiving', label: 'Yard Inward' },
@@ -795,7 +795,7 @@ export const AdminUsersPage: React.FC = () => {
                     { key: 'invoicing', label: 'Tax Invoicing' },
                     { key: 'adminPanel', label: 'Admin Master HQ' }
                   ].map(({ key, label }) => (
-                    <label key={key} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-slate-400">
+                    <label key={key} className="flex items-center gap-2 p-2 bg-white rounded border border-line cursor-pointer hover:border-slate-400">
                       <input
                         type="checkbox"
                         checked={(editingRole.windows as any)[key]}
@@ -811,11 +811,11 @@ export const AdminUsersPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => { setShowRoleModal(false); setEditingRole(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => { setShowRoleModal(false); setEditingRole(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   Save Role Permissions
                 </button>
               </div>
@@ -828,14 +828,14 @@ export const AdminUsersPage: React.FC = () => {
       {/* MODAL: CREATE USER DIALOG                                                 */}
       {/* ========================================================================= */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <div className="flex items-center gap-2">
                 <UserPlus className="w-4 h-4 text-indigo-400" />
                 <h3 className="font-bold">Register Dealership Staff Account</h3>
               </div>
-              <button onClick={() => setShowCreateModal(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowCreateModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -850,7 +850,7 @@ export const AdminUsersPage: React.FC = () => {
                     placeholder="e.g. Rahul Sharma"
                     value={newUser.userName}
                     onChange={(e) => setNewUser({ ...newUser, userName: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-bold"
                   />
                 </div>
                 <div>
@@ -861,7 +861,7 @@ export const AdminUsersPage: React.FC = () => {
                     placeholder="e.g. rahul.sharma@dhootgroup.com"
                     value={newUser.mailId}
                     onChange={(e) => setNewUser({ ...newUser, mailId: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
               </div>
@@ -875,7 +875,7 @@ export const AdminUsersPage: React.FC = () => {
                     placeholder="+91 98000 00000"
                     value={newUser.mobileNumber}
                     onChange={(e) => setNewUser({ ...newUser, mobileNumber: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
                 <div>
@@ -884,7 +884,7 @@ export const AdminUsersPage: React.FC = () => {
                     type="date"
                     value={newUser.dateOfBirth}
                     onChange={(e) => setNewUser({ ...newUser, dateOfBirth: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                    className="w-full p-2 bg-canvas border border-line rounded"
                   />
                 </div>
               </div>
@@ -895,7 +895,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={newUser.brand}
                     onChange={(e) => setNewUser({ ...newUser, brand: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-bold"
                   >
                     <option value="Dhoot Group">Dhoot Group (All Franchises)</option>
                     <option value="Autoprime Tata">Tata Motors</option>
@@ -907,7 +907,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={newUser.nature}
                     onChange={(e) => setNewUser({ ...newUser, nature: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-bold"
                   >
                     <option value="Corporate HQ">Corporate HQ & Management</option>
                     <option value="Stockyard">Stockyard & Inward Logistics</option>
@@ -925,7 +925,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={newUser.designation}
                     onChange={(e) => setNewUser({ ...newUser, designation: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-bold"
                   >
                     {designations.map(d => (
                       <option key={d.id} value={d.title}>{d.title} ({d.nature})</option>
@@ -937,7 +937,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={newUser.role}
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2 bg-canvas border border-line rounded font-bold"
                   >
                     {roleConfigs.map(r => (
                       <option key={r.role} value={r.role}>{r.displayName} ({r.role})</option>
@@ -954,7 +954,7 @@ export const AdminUsersPage: React.FC = () => {
                     placeholder="e.g. BR-PUN-01"
                     value={newUser.branchCode}
                     onChange={(e) => setNewUser({ ...newUser, branchCode: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
                 <div>
@@ -963,16 +963,16 @@ export const AdminUsersPage: React.FC = () => {
                     type="text"
                     value={newUser.password}
                     onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs">
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   Create Staff Account
                 </button>
               </div>
@@ -988,14 +988,14 @@ export const AdminUsersPage: React.FC = () => {
       {/* MODAL: EDIT USER DIALOG (100% COMPLETE DATABASE SCHEMA COLUMNS)            */}
       {/* ========================================================================= */}
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <div className="flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-emerald-400" />
                 <h3 className="font-bold">Edit Staff Account • {selectedUser.user_code}</h3>
               </div>
-              <button onClick={() => { setShowEditModal(false); setSelectedUser(null); }} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => { setShowEditModal(false); setSelectedUser(null); }} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1009,7 +1009,7 @@ export const AdminUsersPage: React.FC = () => {
                     required
                     value={selectedUser.user_name}
                     onChange={(e) => setSelectedUser({ ...selectedUser, user_name: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   />
                 </div>
                 <div>
@@ -1019,7 +1019,7 @@ export const AdminUsersPage: React.FC = () => {
                     required
                     value={selectedUser.user_code}
                     onChange={(e) => setSelectedUser({ ...selectedUser, user_code: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
                   />
                 </div>
 
@@ -1030,7 +1030,7 @@ export const AdminUsersPage: React.FC = () => {
                     required
                     value={selectedUser.mail_id}
                     onChange={(e) => setSelectedUser({ ...selectedUser, mail_id: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
                 <div>
@@ -1040,7 +1040,7 @@ export const AdminUsersPage: React.FC = () => {
                     required
                     value={selectedUser.mobile_number}
                     onChange={(e) => setSelectedUser({ ...selectedUser, mobile_number: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
 
@@ -1050,7 +1050,7 @@ export const AdminUsersPage: React.FC = () => {
                     type="date"
                     value={selectedUser.date_of_birth || '1995-01-01'}
                     onChange={(e) => setSelectedUser({ ...selectedUser, date_of_birth: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    className="w-full p-2.5 bg-canvas border border-line rounded"
                   />
                 </div>
                 <div>
@@ -1058,7 +1058,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={selectedUser.brand || 'Dhoot Group'}
                     onChange={(e) => setSelectedUser({ ...selectedUser, brand: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   >
                     <option value="Dhoot Group">Dhoot Group (All Franchises)</option>
                     <option value="Tata Motors">Tata Motors</option>
@@ -1071,7 +1071,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={selectedUser.nature || 'Stockyard'}
                     onChange={(e) => setSelectedUser({ ...selectedUser, nature: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   >
                     <option value="Management">Executive Leadership</option>
                     <option value="Stockyard">Stockyard & Inward Logistics</option>
@@ -1087,7 +1087,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={selectedUser.designation}
                     onChange={(e) => setSelectedUser({ ...selectedUser, designation: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   >
                     {designations.map(d => (
                       <option key={d.id} value={d.title}>{d.title} ({d.nature})</option>
@@ -1100,7 +1100,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={selectedUser.role}
                     onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   >
                     {roleConfigs.map(r => (
                       <option key={r.role} value={r.role}>{r.displayName} ({r.role})</option>
@@ -1113,7 +1113,7 @@ export const AdminUsersPage: React.FC = () => {
                     type="text"
                     value={selectedUser.branch_code || 'HO-DHOOT'}
                     onChange={(e) => setSelectedUser({ ...selectedUser, branch_code: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
 
@@ -1122,7 +1122,7 @@ export const AdminUsersPage: React.FC = () => {
                   <select
                     value={selectedUser.status}
                     onChange={(e) => setSelectedUser({ ...selectedUser, status: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   >
                     <option value="ACTIVE">ACTIVE (Full Login Access)</option>
                     <option value="INACTIVE">INACTIVE (Access Suspended)</option>
@@ -1135,16 +1135,16 @@ export const AdminUsersPage: React.FC = () => {
                     placeholder="Enter new password if resetting"
                     value={selectedUser.password || ''}
                     onChange={(e) => setSelectedUser({ ...selectedUser, password: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => { setShowEditModal(false); setSelectedUser(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => { setShowEditModal(false); setSelectedUser(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs">
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   Save Changes
                 </button>
               </div>
@@ -1156,11 +1156,11 @@ export const AdminUsersPage: React.FC = () => {
       {/* MODAL: EDIT DESIGNATION MASTER                                             */}
       {/* ========================================================================= */}
       {showDesModal && editingDesignation && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-panel shadow-pop border border-line overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-sm">Edit Master Designation</h3>
-              <button onClick={() => { setShowDesModal(false); setEditingDesignation(null); }} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => { setShowDesModal(false); setEditingDesignation(null); }} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1173,7 +1173,7 @@ export const AdminUsersPage: React.FC = () => {
                   required
                   value={editingDesignation.title}
                   onChange={(e) => setEditingDesignation({ ...editingDesignation, title: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                 />
               </div>
 
@@ -1182,7 +1182,7 @@ export const AdminUsersPage: React.FC = () => {
                 <select
                   value={editingDesignation.nature}
                   onChange={(e) => setEditingDesignation({ ...editingDesignation, nature: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                 >
                   {natures.map(n => (
                     <option key={n.id} value={n.name}>{n.name} ({n.description})</option>
@@ -1190,11 +1190,11 @@ export const AdminUsersPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => { setShowDesModal(false); setEditingDesignation(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => { setShowDesModal(false); setEditingDesignation(null); }} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   Save Designation
                 </button>
               </div>

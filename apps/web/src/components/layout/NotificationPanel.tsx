@@ -129,7 +129,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
     <div className="fixed inset-0 z-50 overflow-hidden select-none">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
@@ -243,7 +243,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                       <Link
                         to={n.link}
                         onClick={onClose}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold transition-all shadow-xs"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent hover:bg-accent-600 text-white text-[10px] font-semibold transition-colors shadow-xs"
                       >
                         <span>{n.actionText}</span>
                         <ChevronRight className="w-3 h-3" />

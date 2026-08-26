@@ -537,7 +537,7 @@ export const AdminMasterPanel: React.FC = () => {
                 });
                 setShowRuleModal(true);
               }}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
               <span>Add Inspection Point</span>
@@ -545,7 +545,7 @@ export const AdminMasterPanel: React.FC = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -561,7 +561,7 @@ export const AdminMasterPanel: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
                 {pdiRules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={rule.id} className="hover:bg-canvas/80 transition-colors">
                     <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{rule.id}</td>
                     <td className="py-2.5 px-3 font-bold text-slate-800">{rule.stage}</td>
                     <td className="py-2.5 px-3 font-bold text-slate-900">{rule.title}</td>
@@ -630,15 +630,15 @@ export const AdminMasterPanel: React.FC = () => {
       {/* TAB 3: VEHICLE CATALOG & PRICE MATRIX                                     */}
       {/* ========================================================================= */}
       {activeTab === 'MODELS' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Vehicle Models & Pricing Matrix</h2>
               <p className="text-[11px] text-slate-400">Official catalog for Tata Motors & Hyundai Motor India</p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded text-xs font-bold">
                 {(['ALL', 'Tata Motors', 'Hyundai'] as const).map(tab => (
                   <button
                     key={tab}
@@ -671,7 +671,7 @@ export const AdminMasterPanel: React.FC = () => {
                   });
                   setShowModelModal(true);
                 }}
-                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Vehicle Model</span>
@@ -679,7 +679,7 @@ export const AdminMasterPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -700,7 +700,7 @@ export const AdminMasterPanel: React.FC = () => {
                     return true;
                   })
                   .map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/80">
+                  <tr key={m.id} className="hover:bg-canvas/80">
                     <td className="py-2.5 px-3 font-bold text-slate-900">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         m.brand?.includes('Tata') ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
@@ -758,15 +758,15 @@ export const AdminMasterPanel: React.FC = () => {
       {/* TAB 4: SHOWROOMS & STOCKYARDS                                             */}
       {/* ========================================================================= */}
       {activeTab === 'BRANCHES' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Showrooms, 3S Workshops & Central Stockyards</h2>
               <p className="text-[11px] text-slate-400">Manage dealer facilities, stockyard capacity, and regional managers</p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded text-xs font-bold">
                 {(['ALL', 'Tata Motors', 'Hyundai'] as const).map(tab => (
                   <button
                     key={tab}
@@ -803,7 +803,7 @@ export const AdminMasterPanel: React.FC = () => {
                   });
                   setShowBranchModal(true);
                 }}
-                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Showroom / Stockyard</span>
@@ -811,7 +811,7 @@ export const AdminMasterPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -833,7 +833,7 @@ export const AdminMasterPanel: React.FC = () => {
                     return true;
                   })
                   .map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/80">
+                  <tr key={b.id} className="hover:bg-canvas/80">
                     <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{b.code}</td>
                     <td className="py-2.5 px-3 font-bold text-slate-900">{b.name}</td>
                     <td className="py-2.5 px-3 font-semibold text-slate-700">{b.brand}</td>
@@ -878,8 +878,8 @@ export const AdminMasterPanel: React.FC = () => {
       {/* TAB 5: BANKS & FINANCIERS                                                 */}
       {/* ========================================================================= */}
       {activeTab === 'FINANCE' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-line pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Approved Banking & Auto Loan Financiers</h2>
               <p className="text-[11px] text-slate-400">Manage DSA tie-ups, loan desk officers, and payout channels</p>
@@ -902,14 +902,14 @@ export const AdminMasterPanel: React.FC = () => {
                 });
                 setShowFinModal(true);
               }}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Bank / Financier</span>
             </button>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -924,7 +924,7 @@ export const AdminMasterPanel: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
                 {financiers.map((f) => (
-                  <tr key={f.id} className="hover:bg-slate-50/80">
+                  <tr key={f.id} className="hover:bg-canvas/80">
                     <td className="py-2.5 px-3 font-bold text-slate-900">{f.name}</td>
                     <td className="py-2.5 px-3 text-slate-600">
                       <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold text-slate-700">
@@ -973,8 +973,8 @@ export const AdminMasterPanel: React.FC = () => {
       {/* TAB 6: INSURANCE PROVIDERS                                                */}
       {/* ========================================================================= */}
       {activeTab === 'INSURANCE' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-line pb-3">
             <div>
               <h2 className="text-xs font-bold text-slate-900">Authorized General Insurance Partners</h2>
               <p className="text-[11px] text-slate-400">Cashless claim tie-ups, surveyor contacts, and dealer OD discount grids</p>
@@ -995,14 +995,14 @@ export const AdminMasterPanel: React.FC = () => {
                 });
                 setShowInsModal(true);
               }}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Insurance Company</span>
             </button>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-line rounded">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
                 <tr>
@@ -1016,7 +1016,7 @@ export const AdminMasterPanel: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
                 {insuranceProviders.map((ins) => (
-                  <tr key={ins.id} className="hover:bg-slate-50/80">
+                  <tr key={ins.id} className="hover:bg-canvas/80">
                     <td className="py-2.5 px-3 font-bold text-slate-900">{ins.name}</td>
                     <td className="py-2.5 px-3 text-slate-700 font-semibold">{ins.claimsHead}</td>
                     <td className="py-2.5 px-3 font-mono text-slate-600">{ins.surveyorContact}</td>
@@ -1060,11 +1060,11 @@ export const AdminMasterPanel: React.FC = () => {
       {/* MODAL 1: ADD / EDIT PDI RULE (FULL SCHEMA COLUMNS)                         */}
       {/* ========================================================================= */}
       {showRuleModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-sm">{editingRule ? `Edit Checkpoint: ${editingRule.id}` : 'Configure New Inspection Point'}</h3>
-              <button onClick={() => setShowRuleModal(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowRuleModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1072,7 +1072,7 @@ export const AdminMasterPanel: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Inspection Stage *</label>
-                  <select value={ruleForm.stage} onChange={(e) => setRuleForm({ ...ruleForm, stage: e.target.value as any })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={ruleForm.stage} onChange={(e) => setRuleForm({ ...ruleForm, stage: e.target.value as any })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="Exterior">Stage 1: Exterior</option>
                     <option value="Electricals">Stage 2: Electricals</option>
                     <option value="Interior">Stage 3: Interior</option>
@@ -1083,7 +1083,7 @@ export const AdminMasterPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Defect Severity If Failed *</label>
-                  <select value={ruleForm.severity} onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value as any })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={ruleForm.severity} onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value as any })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="CRITICAL">CRITICAL (Blocks Delivery)</option>
                     <option value="MAJOR">MAJOR (Requires Workshop Fix)</option>
                     <option value="MINOR">MINOR (Touch-up / Buffing)</option>
@@ -1092,23 +1092,23 @@ export const AdminMasterPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Category Code / Group</label>
-                  <input type="text" placeholder="e.g. Body Panels / Lighting" value={ruleForm.category || ''} onChange={(e) => setRuleForm({ ...ruleForm, category: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold" />
+                  <input type="text" placeholder="e.g. Body Panels / Lighting" value={ruleForm.category || ''} onChange={(e) => setRuleForm({ ...ruleForm, category: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Required Diagnostic Tool</label>
-                  <input type="text" placeholder="e.g. VCI Scanner / Feeler Gauge" value={ruleForm.toolRequired || ''} onChange={(e) => setRuleForm({ ...ruleForm, toolRequired: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input type="text" placeholder="e.g. VCI Scanner / Feeler Gauge" value={ruleForm.toolRequired || ''} onChange={(e) => setRuleForm({ ...ruleForm, toolRequired: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block font-bold text-slate-700 uppercase mb-1">Checkpoint Point Title *</label>
-                  <input type="text" required placeholder="e.g. Body Panel Alignment & Paint Finish" value={ruleForm.title} onChange={(e) => setRuleForm({ ...ruleForm, title: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input type="text" required placeholder="e.g. Body Panel Alignment & Paint Finish" value={ruleForm.title} onChange={(e) => setRuleForm({ ...ruleForm, title: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block font-bold text-slate-700 uppercase mb-1">Detailed Inspection Instruction</label>
-                  <textarea rows={2} value={ruleForm.description} onChange={(e) => setRuleForm({ ...ruleForm, description: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <textarea rows={2} value={ruleForm.description} onChange={(e) => setRuleForm({ ...ruleForm, description: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Required Photos Count</label>
-                  <select value={ruleForm.photosRequired} onChange={(e) => setRuleForm({ ...ruleForm, photosRequired: Number(e.target.value) })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={ruleForm.photosRequired} onChange={(e) => setRuleForm({ ...ruleForm, photosRequired: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value={0}>0 (Optional)</option>
                     <option value={1}>1 Mandatory Photo</option>
                     <option value={2}>2 Mandatory Photos</option>
@@ -1118,15 +1118,15 @@ export const AdminMasterPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Video Recording Rule</label>
-                  <select value={ruleForm.videoRequired ? 'REQUIRED' : 'OPTIONAL'} onChange={(e) => setRuleForm({ ...ruleForm, videoRequired: e.target.value === 'REQUIRED' })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={ruleForm.videoRequired ? 'REQUIRED' : 'OPTIONAL'} onChange={(e) => setRuleForm({ ...ruleForm, videoRequired: e.target.value === 'REQUIRED' })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="OPTIONAL">Optional Video</option>
                     <option value="REQUIRED">Mandatory Video Recording</option>
                   </select>
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowRuleModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => setShowRuleModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   {editingRule ? 'Update Rule' : 'Save Rule'}
                 </button>
               </div>
@@ -1139,11 +1139,11 @@ export const AdminMasterPanel: React.FC = () => {
       {/* MODAL 2: ADD / EDIT SHOWROOM / STOCKYARD (FULL SCHEMA COLUMNS)             */}
       {/* ========================================================================= */}
       {showBranchModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-sm">{editingBranch ? `Edit Facility: ${editingBranch.code}` : 'Add Dealership Showroom / Stockyard'}</h3>
-              <button onClick={() => setShowBranchModal(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowBranchModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1151,15 +1151,15 @@ export const AdminMasterPanel: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Branch / Facility Code *</label>
-                  <input type="text" required placeholder="e.g. BR-PUN-01" value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold" />
+                  <input type="text" required placeholder="e.g. BR-PUN-01" value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Facility Name *</label>
-                  <input type="text" required placeholder="e.g. Dhoot Group - Wakad Hub" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input type="text" required placeholder="e.g. Dhoot Group - Wakad Hub" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Dealership Brand *</label>
-                  <select value={branchForm.brand} onChange={(e) => setBranchForm({ ...branchForm, brand: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={branchForm.brand} onChange={(e) => setBranchForm({ ...branchForm, brand: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="Tata Motors">Tata Motors</option>
                     <option value="Hyundai">Hyundai</option>
                     <option value="Dhoot Group Shared">Dhoot Group Shared Facility</option>
@@ -1167,7 +1167,7 @@ export const AdminMasterPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Facility Type</label>
-                  <select value={branchForm.type} onChange={(e) => setBranchForm({ ...branchForm, type: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+                  <select value={branchForm.type} onChange={(e) => setBranchForm({ ...branchForm, type: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold">
                     <option value="3S (Sales, Service, Spares)">3S (Sales, Service, Spares)</option>
                     <option value="1S Showroom">1S Showroom</option>
                     <option value="Central Stockyard">Central Stockyard</option>
@@ -1176,36 +1176,36 @@ export const AdminMasterPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">City</label>
-                  <input type="text" required value={branchForm.city} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input type="text" required value={branchForm.city} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">State</label>
-                  <input type="text" required value={branchForm.state} onChange={(e) => setBranchForm({ ...branchForm, state: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input type="text" required value={branchForm.state} onChange={(e) => setBranchForm({ ...branchForm, state: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Pincode</label>
-                  <input type="text" placeholder="e.g. 411057" value={branchForm.pincode || ''} onChange={(e) => setBranchForm({ ...branchForm, pincode: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="text" placeholder="e.g. 411057" value={branchForm.pincode || ''} onChange={(e) => setBranchForm({ ...branchForm, pincode: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Yard Vehicle Capacity</label>
-                  <input type="text" placeholder="e.g. 150 Cars" value={branchForm.capacity} onChange={(e) => setBranchForm({ ...branchForm, capacity: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="text" placeholder="e.g. 150 Cars" value={branchForm.capacity} onChange={(e) => setBranchForm({ ...branchForm, capacity: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block font-bold text-slate-700 uppercase mb-1">Full Postal Address</label>
-                  <input type="text" placeholder="Plot No, Street, Industrial Area" value={branchForm.address || ''} onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input type="text" placeholder="Plot No, Street, Industrial Area" value={branchForm.address || ''} onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Facility / Yard Manager</label>
-                  <input type="text" placeholder="e.g. Rajesh Patil" value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input type="text" placeholder="e.g. Rajesh Patil" value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Official Mobile Contact</label>
-                  <input type="tel" value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="tel" value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowBranchModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => setShowBranchModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   {editingBranch ? 'Update Facility' : 'Save Facility'}
                 </button>
               </div>
@@ -1218,23 +1218,23 @@ export const AdminMasterPanel: React.FC = () => {
       {/* MODAL 3: ADD / EDIT BANK / FINANCIER (FULL SCHEMA COLUMNS)                 */}
       {/* ========================================================================= */}
       {showFinModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-sm">{editingFinancier ? `Edit Financier: ${editingFinancier.name}` : 'Add Banking / Financier Partner'}</h3>
-              <button onClick={() => setShowFinModal(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowFinModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSaveFinancier} className="p-6 overflow-y-auto space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1">Financial Institution Name *</label>
-                <input type="text" required placeholder="e.g. Kotak Mahindra Prime Ltd" value={finForm.name} onChange={(e) => setFinForm({ ...finForm, name: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                <input type="text" required placeholder="e.g. Kotak Mahindra Prime Ltd" value={finForm.name} onChange={(e) => setFinForm({ ...finForm, name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Category</label>
-                  <select value={finForm.category} onChange={(e) => setFinForm({ ...finForm, category: e.target.value as any })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={finForm.category} onChange={(e) => setFinForm({ ...finForm, category: e.target.value as any })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="PRIVATE_BANK">Private Bank</option>
                     <option value="NATIONALISED_BANK">Nationalised PSU Bank</option>
                     <option value="OEM_CAPTIVE_NBFC">OEM Captive Finance</option>
@@ -1243,32 +1243,32 @@ export const AdminMasterPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">DSA / Partner Code</label>
-                  <input type="text" placeholder="e.g. FIN-KOT-01" value={finForm.code || ''} onChange={(e) => setFinForm({ ...finForm, code: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="text" placeholder="e.g. FIN-KOT-01" value={finForm.code || ''} onChange={(e) => setFinForm({ ...finForm, code: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Contact Person</label>
-                  <input type="text" placeholder="e.g. Ritesh Deshmukh" value={finForm.contactPerson} onChange={(e) => setFinForm({ ...finForm, contactPerson: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold" />
+                  <input type="text" placeholder="e.g. Ritesh Deshmukh" value={finForm.contactPerson} onChange={(e) => setFinForm({ ...finForm, contactPerson: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Official Phone</label>
-                  <input type="tel" value={finForm.phone} onChange={(e) => setFinForm({ ...finForm, phone: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="tel" value={finForm.phone} onChange={(e) => setFinForm({ ...finForm, phone: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Official Email Desk</label>
-                  <input type="email" placeholder="auto@bank.com" value={finForm.email} onChange={(e) => setFinForm({ ...finForm, email: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="email" placeholder="auto@bank.com" value={finForm.email} onChange={(e) => setFinForm({ ...finForm, email: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Max LTV (%)</label>
-                  <input type="number" value={finForm.maxLtv || 90} onChange={(e) => setFinForm({ ...finForm, maxLtv: Number(e.target.value) })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="number" value={finForm.maxLtv || 90} onChange={(e) => setFinForm({ ...finForm, maxLtv: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowFinModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => setShowFinModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   {editingFinancier ? 'Update Financier' : 'Save Financier'}
                 </button>
               </div>
@@ -1281,11 +1281,11 @@ export const AdminMasterPanel: React.FC = () => {
       {/* MODAL 4: ADD / EDIT INSURANCE COMPANY (FULL SCHEMA COLUMNS)                */}
       {/* ========================================================================= */}
       {showInsModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-sm">{editingInsurance ? `Edit Insurance: ${editingInsurance.name}` : 'Add General Insurance Provider'}</h3>
-              <button onClick={() => setShowInsModal(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowInsModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1293,31 +1293,31 @@ export const AdminMasterPanel: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Insurance Company *</label>
-                  <input type="text" required placeholder="e.g. Royal Sundaram" value={insForm.name} onChange={(e) => setInsForm({ ...insForm, name: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input type="text" required placeholder="e.g. Royal Sundaram" value={insForm.name} onChange={(e) => setInsForm({ ...insForm, name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">IRDAI / Partner Code</label>
-                  <input type="text" placeholder="e.g. INS-ROY-01" value={insForm.code || ''} onChange={(e) => setInsForm({ ...insForm, code: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="text" placeholder="e.g. INS-ROY-01" value={insForm.code || ''} onChange={(e) => setInsForm({ ...insForm, code: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Claims Desk Head</label>
-                  <input type="text" placeholder="e.g. Arvind Mehta" value={insForm.claimsHead} onChange={(e) => setInsForm({ ...insForm, claimsHead: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold" />
+                  <input type="text" placeholder="e.g. Arvind Mehta" value={insForm.claimsHead} onChange={(e) => setInsForm({ ...insForm, claimsHead: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Surveyor Contact</label>
-                  <input type="tel" value={insForm.surveyorContact} onChange={(e) => setInsForm({ ...insForm, surveyorContact: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                  <input type="tel" value={insForm.surveyorContact} onChange={(e) => setInsForm({ ...insForm, surveyorContact: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Dealership OD Discount (%)</label>
-                  <input type="number" value={insForm.discountPercentage} onChange={(e) => setInsForm({ ...insForm, discountPercentage: Number(e.target.value) })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-emerald-700" />
+                  <input type="number" value={insForm.discountPercentage} onChange={(e) => setInsForm({ ...insForm, discountPercentage: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold text-emerald-700" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Cashless Claim Status</label>
-                  <select value={insForm.cashlessTieUp ? 'YES' : 'NO'} onChange={(e) => setInsForm({ ...insForm, cashlessTieUp: e.target.value === 'YES' })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={insForm.cashlessTieUp ? 'YES' : 'NO'} onChange={(e) => setInsForm({ ...insForm, cashlessTieUp: e.target.value === 'YES' })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="YES">✓ Approved Cashless Partner</option>
                     <option value="NO">Reimbursement Basis</option>
                   </select>
@@ -1325,11 +1325,11 @@ export const AdminMasterPanel: React.FC = () => {
               </div>
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1">Supported Policy Add-on Covers</label>
-                <input type="text" placeholder="e.g. Zero Dep, RTI, Engine Protect, Key Replacement" value={insForm.policyTypes || ''} onChange={(e) => setInsForm({ ...insForm, policyTypes: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                <input type="text" placeholder="e.g. Zero Dep, RTI, Engine Protect, Key Replacement" value={insForm.policyTypes || ''} onChange={(e) => setInsForm({ ...insForm, policyTypes: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowInsModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => setShowInsModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   {editingInsurance ? 'Update Insurance' : 'Save Insurance Partner'}
                 </button>
               </div>
@@ -1342,11 +1342,11 @@ export const AdminMasterPanel: React.FC = () => {
       {/* MODAL 5: ADD / EDIT VEHICLE MODEL (FULL SCHEMA COLUMNS)                    */}
       {/* ========================================================================= */}
       {showModelModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-sm">{editingModel ? `Edit Model: ${editingModel.model_name}` : 'Add Vehicle Model to Catalog'}</h3>
-              <button onClick={() => setShowModelModal(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowModelModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1354,47 +1354,47 @@ export const AdminMasterPanel: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">OEM Brand *</label>
-                  <select value={modelForm.brand} onChange={(e) => setModelForm({ ...modelForm, brand: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                  <select value={modelForm.brand} onChange={(e) => setModelForm({ ...modelForm, brand: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
                     <option value="Tata Motors">Tata Motors</option>
                     <option value="Hyundai">Hyundai</option>
                   </select>
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Model Name *</label>
-                  <input type="text" required placeholder="e.g. Tata Curvv or Hyundai Alcazar" value={modelForm.model_name} onChange={(e) => setModelForm({ ...modelForm, model_name: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input type="text" required placeholder="e.g. Tata Curvv or Hyundai Alcazar" value={modelForm.model_name} onChange={(e) => setModelForm({ ...modelForm, model_name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Body Type</label>
-                  <input type="text" placeholder="SUV / Sedan / EV" value={modelForm.body_type} onChange={(e) => setModelForm({ ...modelForm, body_type: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold" />
+                  <input type="text" placeholder="SUV / Sedan / EV" value={modelForm.body_type} onChange={(e) => setModelForm({ ...modelForm, body_type: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Base Price (₹)</label>
-                  <input type="number" value={modelForm.base_ex_showroom} onChange={(e) => setModelForm({ ...modelForm, base_ex_showroom: Number(e.target.value) })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold" />
+                  <input type="number" value={modelForm.base_ex_showroom} onChange={(e) => setModelForm({ ...modelForm, base_ex_showroom: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Transmission Options</label>
-                  <input type="text" placeholder="Manual, Automatic, DCT" value={modelForm.transmission || ''} onChange={(e) => setModelForm({ ...modelForm, transmission: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input type="text" placeholder="Manual, Automatic, DCT" value={modelForm.transmission || ''} onChange={(e) => setModelForm({ ...modelForm, transmission: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">Seating Capacity</label>
-                  <input type="text" placeholder="5 Seater / 7 Seater" value={modelForm.seating_capacity || ''} onChange={(e) => setModelForm({ ...modelForm, seating_capacity: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input type="text" placeholder="5 Seater / 7 Seater" value={modelForm.seating_capacity || ''} onChange={(e) => setModelForm({ ...modelForm, seating_capacity: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
                 </div>
               </div>
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1">Fuel Types (Comma separated)</label>
-                <input type="text" placeholder="PETROL, DIESEL, iCNG, EV" value={String(modelForm.fuel_types || '')} onChange={(e) => setModelForm({ ...modelForm, fuel_types: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+                <input type="text" placeholder="PETROL, DIESEL, iCNG, EV" value={String(modelForm.fuel_types || '')} onChange={(e) => setModelForm({ ...modelForm, fuel_types: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
               </div>
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1">Available Variants (Comma separated)</label>
-                <input type="text" placeholder="Pure, Adventure, Fearless, Accomplished" value={String(modelForm.variants || '')} onChange={(e) => setModelForm({ ...modelForm, variants: e.target.value })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono" />
+                <input type="text" placeholder="Pure, Adventure, Fearless, Accomplished" value={String(modelForm.variants || '')} onChange={(e) => setModelForm({ ...modelForm, variants: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowModelModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xs">
+              <div className="pt-4 border-t border-line flex justify-end gap-2">
+                <button type="button" onClick={() => setShowModelModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   {editingModel ? 'Update Model' : 'Save Model'}
                 </button>
               </div>

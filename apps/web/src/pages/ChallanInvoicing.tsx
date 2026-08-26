@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  FileText, Search, Plus, Car, ChevronRight, 
+  FileText, Search, Plus, Car, ChevronRight, Download, Upload, 
   FileSpreadsheet, X, Loader2, DollarSign, CheckCircle2, 
   Receipt, Building, ShieldCheck, Printer, Calendar,
   Key, UserCheck, Truck, ArrowRight, FolderOpen, Clock,
@@ -451,9 +451,9 @@ const SEED_CHALLANS: ChallanRecord[] = [
       {/* MODAL 1: OFFICIAL DELIVERY GATEPASS & HANDOVER DIALOG                     */}
       {/* ========================================================================= */}
       {gatepassRecord && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-emerald-400" />
                 <div>
@@ -461,14 +461,14 @@ const SEED_CHALLANS: ChallanRecord[] = [
                   <p className="text-[10px] text-emerald-200">Security Gate Authorization • Chassis Handover</p>
                 </div>
               </div>
-              <button onClick={() => setGatepassRecord(null)} className="p-1 rounded-xl hover:bg-emerald-800 text-emerald-300">
+              <button onClick={() => setGatepassRecord(null)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-3 font-mono">
-                <div className="flex justify-between border-b border-slate-200 pb-2">
+              <div className="border border-line rounded p-4 bg-canvas space-y-3 font-mono">
+                <div className="flex justify-between border-b border-line pb-2">
                   <div>
                     <span className="font-bold text-slate-900 text-sm">{currentBrand.name} Handover Desk</span>
                     <div className="text-[10px] text-slate-500">Gatepass No: GP-{gatepassRecord.challan_no.replace('CHL-', '')}</div>
@@ -489,19 +489,19 @@ const SEED_CHALLANS: ChallanRecord[] = [
                   <div>Keys Handed: <strong>2 Remote Fobs</strong></div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500">
+                <div className="pt-2 border-t border-line text-[10px] text-slate-500">
                   Customer has inspected the vehicle, received toolkit, owner manual, Fastag and confirms delivery in pristine condition.
                 </div>
               </div>
 
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setGatepassRecord(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+                <button type="button" onClick={() => setGatepassRecord(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => handleConfirmDelivery(gatepassRecord.id)}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Authorize Gate Exit & Mark Delivered</span>
@@ -516,9 +516,9 @@ const SEED_CHALLANS: ChallanRecord[] = [
       {/* MODAL 2: OFFICIAL DEALERSHIP TAX INVOICE PRINT PREVIEW                    */}
       {/* ========================================================================= */}
       {invoicePreviewRecord && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <div className="flex items-center gap-2">
                 <Receipt className="w-4 h-4 text-emerald-400" />
                 <div>
@@ -526,16 +526,16 @@ const SEED_CHALLANS: ChallanRecord[] = [
                   <p className="text-[10px] text-slate-400">GSTIN: 27AABCD1234F1Z5 • State: Maharashtra (27)</p>
                 </div>
               </div>
-              <button onClick={() => setInvoicePreviewRecord(null)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setInvoicePreviewRecord(null)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3 font-mono">
+              <div className="border border-line rounded p-4 bg-canvas/50 space-y-3 font-mono">
                 
                 {/* Header Info */}
-                <div className="flex justify-between border-b border-slate-200 pb-2">
+                <div className="flex justify-between border-b border-line pb-2">
                   <div>
                     <span className="font-bold text-slate-900 text-sm">{currentBrand.name}</span>
                     <div className="text-[10px] text-slate-500">Authorized Dealership Network</div>
@@ -547,7 +547,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                 </div>
 
                 {/* Customer Details */}
-                <div className="grid grid-cols-2 gap-2 text-[11px] border-b border-slate-200 pb-2">
+                <div className="grid grid-cols-2 gap-2 text-[11px] border-b border-line pb-2">
                   <div>Billed To: <strong>{invoicePreviewRecord.customer_name}</strong></div>
                   <div>Chassis VIN: <strong>{invoicePreviewRecord.vin_no}</strong></div>
                   <div>Model: <strong>{invoicePreviewRecord.model} ({invoicePreviewRecord.variant})</strong></div>
@@ -596,7 +596,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
               </div>
 
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setInvoicePreviewRecord(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+                <button type="button" onClick={() => setInvoicePreviewRecord(null)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Close
                 </button>
                 <button
@@ -605,7 +605,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     alert('Sending Tax Invoice PDF to printer...');
                     setInvoicePreviewRecord(null);
                   }}
-                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs flex items-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Tax Invoice</span>
@@ -620,11 +620,11 @@ const SEED_CHALLANS: ChallanRecord[] = [
       {/* MODAL 3: NEW PRE-CHALLAN / INVOICE FORM                                   */}
       {/* ========================================================================= */}
       {showNewModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
               <h3 className="font-bold text-slate-900">Generate Pre-Challan / Tax Invoice</h3>
-              <button onClick={() => setShowNewModal(false)} className="p-1 rounded-xl hover:bg-slate-100 text-slate-400">
+              <button onClick={() => setShowNewModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -639,7 +639,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     required
                     value={newInvoice.challan_no}
                     onChange={(e) => setNewInvoice({ ...newInvoice, challan_no: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
                   />
                 </div>
 
@@ -650,7 +650,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     required
                     value={newInvoice.invoice_no}
                     onChange={(e) => setNewInvoice({ ...newInvoice, invoice_no: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
                   />
                 </div>
 
@@ -662,7 +662,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     placeholder="e.g. Anand Mahindra"
                     value={newInvoice.customer_name}
                     onChange={(e) => setNewInvoice({ ...newInvoice, customer_name: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-semibold"
                   />
                 </div>
 
@@ -673,7 +673,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     placeholder="MAT612345N1234567"
                     value={newInvoice.vin_no}
                     onChange={(e) => setNewInvoice({ ...newInvoice, vin_no: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono uppercase font-bold"
                   />
                 </div>
 
@@ -682,7 +682,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                   <select
                     value={newInvoice.model}
                     onChange={(e) => setNewInvoice({ ...newInvoice, model: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-bold"
                   >
                     {currentBrand.models.map(m => (
                       <option key={m} value={m}>{m}</option>
@@ -697,7 +697,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     placeholder="HDFC Bank / SBI Auto Loan"
                     value={newInvoice.financier_name}
                     onChange={(e) => setNewInvoice({ ...newInvoice, financier_name: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                    className="w-full p-2.5 bg-canvas border border-line rounded"
                   />
                 </div>
 
@@ -708,7 +708,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     required
                     value={newInvoice.ex_showroom}
                     onChange={(e) => setNewInvoice({ ...newInvoice, ex_showroom: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold"
                   />
                 </div>
 
@@ -718,7 +718,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     type="number"
                     value={newInvoice.insurance_amount}
                     onChange={(e) => setNewInvoice({ ...newInvoice, insurance_amount: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
 
@@ -728,7 +728,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     type="number"
                     value={newInvoice.rto_amount}
                     onChange={(e) => setNewInvoice({ ...newInvoice, rto_amount: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono"
                   />
                 </div>
 
@@ -738,17 +738,17 @@ const SEED_CHALLANS: ChallanRecord[] = [
                     type="number"
                     value={newInvoice.discount}
                     onChange={(e) => setNewInvoice({ ...newInvoice, discount: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-rose-700"
+                    className="w-full p-2.5 bg-canvas border border-line rounded font-mono text-rose-700"
                   />
                 </div>
 
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs">
+                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
                   Generate Pre-Challan & Invoice
                 </button>
               </div>
@@ -761,112 +761,173 @@ const SEED_CHALLANS: ChallanRecord[] = [
       {/* MODAL 4: BULK EXCEL INVOICE & CHALLAN IMPORTER                             */}
       {/* ========================================================================= */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                <h3 className="font-bold">Bulk Import Dealership Tax Invoices & Pre-Challans</h3>
-              </div>
-              <button onClick={() => setIsImportModalOpen(false)} className="p-1 rounded-xl hover:bg-slate-800 text-slate-400">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 overflow-y-auto text-xs">
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-                <div>
-                  <div className="font-bold text-slate-800">Download Official Invoicing Template</div>
-                  <div className="text-[10px] text-slate-400">Standard 16-field commercial billing structure</div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 select-none">
+          <div className="bg-surface text-ink w-full max-w-5xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <FileSpreadsheet className="w-4 h-4" />
                 </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-ink">Bulk Import Dealership Tax Invoices & Pre-Challans</h3>
+                  <p className="text-xs text-ink-3 mt-0.5">Commercial 16-Field Invoicing Ledger • Fast Spreadsheet Parser</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleDownloadSampleChallans}
-                  className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-xs cursor-pointer hover:bg-slate-800"
+                  className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                  <Download className="w-3.5 h-3.5 text-accent" />
                   <span>Download Sample CSV</span>
                 </button>
+                <button 
+                  onClick={() => setIsImportModalOpen(false)} 
+                  className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4 overflow-y-auto text-xs flex-1">
+              
+              {/* Recognized Columns */}
+              <div className="p-3 bg-canvas border border-line rounded space-y-1.5 text-xs">
+                <span className="eyebrow block text-accent">Recognized 16 Billing Columns:</span>
+                <p className="text-ink-2 font-mono text-[11px] leading-relaxed break-words">
+                  Challan No • <strong className="text-accent underline font-semibold">Invoice No</strong> • Challan Date • Invoice Date • Customer Name • Mobile No • Model • Variant • Colour • VIN Number • Ex-Showroom • Insurance • RTO Tax • Scheme Discount • Fastag • Financier
+                </p>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Paste Excel / CSV Billing Data:
-                </label>
+              {/* Paste or Upload Area */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-ink">
+                    Paste Spreadsheet Billing Data (from Excel / CSV / Google Sheets):
+                  </label>
+
+                  <label className="h-7 px-2.5 bg-accent-soft hover:bg-accent-line/30 border border-accent-line text-accent text-xs font-semibold rounded transition-colors inline-flex items-center gap-1.5 cursor-pointer">
+                    <Upload className="w-3 h-3" />
+                    <span>Upload CSV / TSV File</span>
+                    <input
+                      type="file"
+                      accept=".csv,.txt,.tsv,.xlsx"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => handleParseChallanText(event.target?.result as string);
+                          reader.readAsText(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+
                 <textarea
-                  rows={6}
-                  placeholder="Paste rows from Excel (Challan No, Invoice No, Challan Date, Invoice Date, Customer Name, Mobile No, Model, Variant, Colour, VIN Number, Ex-Showroom...)"
+                  rows={5}
+                  placeholder="Challan No\tInvoice No\tChallan Date\tInvoice Date\tCustomer Name\tMobile No\tModel\tVariant\tColour\tVIN Number\tEx-Showroom\tInsurance\tRTO Tax\tScheme Discount\tFastag\tFinancier"
                   value={csvText}
                   onChange={(e) => handleParseChallanText(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full p-3 font-mono text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent"
                 />
               </div>
 
+              {/* Parsed Verification Summary & Table */}
               {parsedRows.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-emerald-700 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Parsed {parsedRows.length} Commercial Invoices Ready for Upload:
-                    </span>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    <div className="p-2.5 bg-canvas border border-line rounded">
+                      <span className="eyebrow block">Total Rows</span>
+                      <div className="text-base font-semibold text-ink tnum mt-0.5">{parsedRows.length}</div>
+                    </div>
+                    <div className="p-2.5 bg-ok/10 border border-ok/20 rounded">
+                      <span className="eyebrow block text-ok">Valid Commercial Invoices</span>
+                      <div className="text-base font-semibold text-ok tnum mt-0.5">{parsedRows.length}</div>
+                    </div>
+                    <div className="p-2.5 bg-accent-soft border border-accent-line rounded">
+                      <span className="eyebrow block text-accent">Dealership Entity</span>
+                      <div className="text-base font-semibold text-accent mt-0.5 truncate">{currentBrand.name}</div>
+                    </div>
                   </div>
 
-                  <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
-                    <table className="w-full text-left text-[10px]">
-                      <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold sticky top-0">
-                        <tr>
-                          <th className="p-2">Challan / Invoice</th>
-                          <th className="p-2">Customer</th>
-                          <th className="p-2">Model & VIN</th>
-                          <th className="p-2">Net Deal Amount</th>
-                          <th className="p-2">Financier</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {parsedRows.map((r, i) => (
-                          <tr key={i} className="hover:bg-slate-50">
-                            <td className="p-2 font-mono font-bold text-slate-900">{r.challan_no} / {r.invoice_no}</td>
-                            <td className="p-2 font-bold">{r.customer_name}</td>
-                            <td className="p-2">
-                              <span className="font-semibold block">{r.model}</span>
-                              <span className="font-mono text-[9px] text-slate-500">{r.vin_no}</span>
-                            </td>
-                            <td className="p-2 font-mono font-bold text-indigo-700">₹{r.net_amount?.toLocaleString()}</td>
-                            <td className="p-2 text-slate-600">{r.financier_name}</td>
+                  <div className="border border-line rounded overflow-hidden">
+                    <div className="max-h-52 overflow-y-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px] sticky top-0">
+                          <tr>
+                            <th className="py-2 px-3">Challan / Invoice</th>
+                            <th className="py-2 px-3">Customer</th>
+                            <th className="py-2 px-3">Model & VIN</th>
+                            <th className="py-2 px-3">Financier</th>
+                            <th className="py-2 px-3 text-right">Net Deal Payable</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-line text-ink-2">
+                          {parsedRows.map((r, i) => (
+                            <tr key={i} className="hover:bg-canvas/60">
+                              <td className="py-1.5 px-3 font-mono font-semibold text-ink whitespace-nowrap">{r.challan_no} / {r.invoice_no}</td>
+                              <td className="py-1.5 px-3 font-medium text-ink whitespace-nowrap">{r.customer_name}</td>
+                              <td className="py-1.5 px-3 whitespace-nowrap">
+                                <span className="font-medium text-ink block">{r.model}</span>
+                                <span className="font-mono text-[10px] text-ink-3">{r.vin_no}</span>
+                              </td>
+                              <td className="py-1.5 px-3 text-ink-2 whitespace-nowrap">{r.financier_name || 'Direct / Cash'}</td>
+                              <td className="py-1.5 px-3 font-semibold text-ink tnum text-right whitespace-nowrap">₹{r.net_amount?.toLocaleString('en-IN')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}
 
               {importError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-bold flex items-center gap-2">
+                <div className="p-3 bg-danger/10 border border-danger/20 rounded text-danger text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{importError}</span>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsImportModalOpen(false)}
-                className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={parsedRows.length === 0 || isImporting}
-                onClick={handleConfirmBulkImport}
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-              >
-                {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                <span>Import {parsedRows.length} Invoices to Ledger</span>
-              </button>
+            {/* Footer */}
+            <div className="px-5 py-3.5 border-t border-line bg-canvas flex items-center justify-between">
+              <div className="text-xs text-ink-3 font-medium">
+                {parsedRows.length > 0 ? (
+                  <span>Ready to import <strong>{parsedRows.length}</strong> invoices</span>
+                ) : (
+                  <span>Paste billing spreadsheet data or upload file above</span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="h-8 px-4 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={parsedRows.length === 0 || isImporting}
+                  onClick={handleConfirmBulkImport}
+                  className="h-8 px-5 rounded bg-accent hover:bg-accent-600 disabled:opacity-40 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  <span>Import {parsedRows.length} Invoices to Ledger</span>
+                </button>
+              </div>
             </div>
+
           </div>
         </div>
       )}

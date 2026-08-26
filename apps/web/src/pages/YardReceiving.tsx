@@ -375,7 +375,7 @@ export const YardReceivingPage: React.FC = () => {
               {displayedVehicles.map((v, idx) => {
                 const isHyundai = v.model.toLowerCase().includes('hyundai') || v.vin.startsWith('MAL');
                 return (
-                  <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={v.id} className="hover:bg-canvas/80 transition-colors">
                     <td className="py-2.5 px-3 text-center text-ink-3 tnum">
                       {idx + 1}
                     </td>
@@ -447,22 +447,22 @@ export const YardReceivingPage: React.FC = () => {
       {/* ========================================================================= */}
       {selectedVehicle && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden border border-slate-200 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="bg-white w-full max-w-2xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
             
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
               <div>
                 <span className="text-[10px] font-extrabold uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
                   Gate Inward Protocol
                 </span>
-                <h2 className="text-base font-bold text-[#0F172A] mt-1">
+                <h2 className="text-base font-bold text-ink mt-1">
                   Receive Vehicle into Stockyard
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedVehicle(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -474,22 +474,22 @@ export const YardReceivingPage: React.FC = () => {
               {!isReceivingSuccess ? (
                 <>
                   {/* Vehicle Summary Banner */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                  <div className="p-4 bg-canvas rounded border border-line flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-[#0F172A]">{selectedVehicle.model}</h3>
+                      <h3 className="text-sm font-bold text-ink">{selectedVehicle.model}</h3>
                       <p className="text-xs font-mono text-slate-500">VIN: {selectedVehicle.vin}</p>
                       <p className="text-[11px] text-slate-400 mt-0.5">
                         Trailer: {selectedVehicle.trailerNo} • Plant: {selectedVehicle.plantCode}
                       </p>
                     </div>
-                    <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-xs">
-                      <Truck className="w-5 h-5 text-[#0F172A]" />
+                    <div className="w-10 h-10 rounded bg-white border border-line flex items-center justify-center text-slate-700 shadow-xs">
+                      <Truck className="w-5 h-5 text-ink" />
                     </div>
                   </div>
 
                   {/* 1. MANDATORY TATA PHYSICAL PDI SHEET PHOTO */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-[#0F172A]">
+                    <label className="block text-xs font-bold text-ink">
                       1. Tata Physical PDI Sheet / Inward Gatepass Photo <span className="text-rose-600">*</span>
                     </label>
                     <p className="text-[11px] text-slate-400">
@@ -497,7 +497,7 @@ export const YardReceivingPage: React.FC = () => {
                     </p>
 
                     {paperPdiPhoto ? (
-                      <div className="relative rounded-2xl overflow-hidden aspect-video max-h-48 border border-slate-200 bg-black/5 flex items-center justify-center">
+                      <div className="relative rounded overflow-hidden aspect-video max-h-48 border border-line bg-black/5 flex items-center justify-center">
                         <img src={paperPdiPhoto} alt="Paper PDI Sheet" className="w-full h-full object-cover" />
                         <button
                           type="button"
@@ -512,13 +512,13 @@ export const YardReceivingPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => openCamera('PHOTO')}
-                          className="p-4 border-2 border-dashed border-slate-300 hover:border-[#0F172A] rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-[#0F172A] bg-slate-50/50 hover:bg-white transition-all cursor-pointer"
+                          className="p-4 border-2 border-dashed border-slate-300 hover:border-[#0F172A] rounded flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-ink bg-canvas/50 hover:bg-white transition-all cursor-pointer"
                         >
                           <Camera className="w-5 h-5" />
                           <span className="text-xs font-bold">Take Live Photo</span>
                         </button>
 
-                        <label className="p-4 border-2 border-dashed border-slate-300 hover:border-[#0F172A] rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-[#0F172A] bg-slate-50/50 hover:bg-white transition-all cursor-pointer">
+                        <label className="p-4 border-2 border-dashed border-slate-300 hover:border-[#0F172A] rounded flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-ink bg-canvas/50 hover:bg-white transition-all cursor-pointer">
                           <FolderOpen className="w-5 h-5" />
                           <span className="text-xs font-bold">Gallery Upload</span>
                           <input
@@ -534,7 +534,7 @@ export const YardReceivingPage: React.FC = () => {
 
                   {/* 2. MANDATORY UNLOADING WALKAROUND VIDEO */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-[#0F172A]">
+                    <label className="block text-xs font-bold text-ink">
                       2. Carrier Unloading Walkaround Video (Max 30s) <span className="text-rose-600">*</span>
                     </label>
                     <p className="text-[11px] text-slate-400">
@@ -542,7 +542,7 @@ export const YardReceivingPage: React.FC = () => {
                     </p>
 
                     {unloadingVideo ? (
-                      <div className="relative rounded-2xl overflow-hidden aspect-video max-h-48 border border-amber-300 bg-black flex items-center justify-center">
+                      <div className="relative rounded overflow-hidden aspect-video max-h-48 border border-amber-300 bg-black flex items-center justify-center">
                         <video src={unloadingVideo} controls className="w-full h-full object-cover" />
                         <button
                           type="button"
@@ -557,13 +557,13 @@ export const YardReceivingPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => openCamera('VIDEO')}
-                          className="p-4 border-2 border-dashed border-amber-300 hover:border-amber-600 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-amber-800 bg-amber-50/30 hover:bg-amber-50 transition-all cursor-pointer"
+                          className="p-4 border-2 border-dashed border-amber-300 hover:border-amber-600 rounded flex flex-col items-center justify-center gap-1.5 text-amber-800 bg-amber-50/30 hover:bg-amber-50 transition-all cursor-pointer"
                         >
                           <Video className="w-5 h-5 text-amber-600 animate-pulse" />
                           <span className="text-xs font-bold">Record Live Video</span>
                         </button>
 
-                        <label className="p-4 border-2 border-dashed border-amber-300 hover:border-amber-600 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-amber-800 bg-amber-50/30 hover:bg-amber-50 transition-all cursor-pointer">
+                        <label className="p-4 border-2 border-dashed border-amber-300 hover:border-amber-600 rounded flex flex-col items-center justify-center gap-1.5 text-amber-800 bg-amber-50/30 hover:bg-amber-50 transition-all cursor-pointer">
                           <Upload className="w-5 h-5 text-amber-600" />
                           <span className="text-xs font-bold">Upload Video File</span>
                           <input
@@ -587,7 +587,7 @@ export const YardReceivingPage: React.FC = () => {
                         type="number"
                         value={odometer}
                         onChange={(e) => setOdometer(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0F172A]"
+                        className="w-full px-3.5 py-2.5 bg-canvas border border-line rounded text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-[#0F172A]"
                       />
                     </div>
 
@@ -598,7 +598,7 @@ export const YardReceivingPage: React.FC = () => {
                       <select
                         value={yardBay}
                         onChange={(e) => setYardBay(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0F172A]"
+                        className="w-full px-3.5 py-2.5 bg-canvas border border-line rounded text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-[#0F172A]"
                       >
                         <option value="Bay 1 (Inspection Staging)">Bay 1 (Inspection Staging)</option>
                         <option value="Bay 2 (PDI Staging Area)">Bay 2 (PDI Staging Area)</option>
@@ -612,7 +612,7 @@ export const YardReceivingPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleConfirmReceiving}
-                    className="w-full py-3.5 px-4 rounded-2xl text-xs font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-md active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded text-xs font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-md active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
                     <span>Confirm Yard Receiving & Move to PDI Queue</span>
@@ -621,11 +621,11 @@ export const YardReceivingPage: React.FC = () => {
               ) : (
                 /* Success Confirmation View */
                 <div className="py-6 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-xs">
+                  <div className="w-16 h-16 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-xs">
                     <CheckCircle2 className="w-8 h-8 stroke-[2.2]" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-[#0F172A]">Vehicle Successfully Received in Yard!</h3>
+                    <h3 className="text-base font-bold text-ink">Vehicle Successfully Received in Yard!</h3>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
                       Tata physical PDI sheet and carrier unloading video have been attached. Vehicle status updated to <strong>PDI Pending (In Yard)</strong>.
                     </p>
@@ -634,13 +634,13 @@ export const YardReceivingPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedVehicle(null)}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
+                      className="px-5 py-2.5 rounded text-xs font-bold border border-line text-slate-700 hover:bg-canvas cursor-pointer"
                     >
                       Close
                     </button>
                     <Link
                       to="/pdi/88888888-8888-8888-8888-888888888881"
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0F172A] hover:bg-[#1E293B] text-white shadow-xs cursor-pointer flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded text-xs font-bold bg-accent hover:bg-accent-600 text-white shadow-xs cursor-pointer flex items-center gap-1.5"
                     >
                       <span>Proceed to PDI Sheet</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -672,7 +672,7 @@ export const YardReceivingPage: React.FC = () => {
               <button
                 type="button"
                 onClick={closeCamera}
-                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -700,7 +700,7 @@ export const YardReceivingPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={capturePhoto}
-                  className="px-8 py-3 bg-white hover:bg-slate-100 text-[#0F172A] rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-8 py-3 bg-white hover:bg-slate-100 text-ink rounded font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Camera className="w-4 h-4" />
                   <span>Capture Photo</span>
@@ -711,7 +711,7 @@ export const YardReceivingPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={startRecord}
-                      className="px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <div className="w-3 h-3 bg-white rounded-full" />
                       <span>Start Recording</span>
@@ -720,7 +720,7 @@ export const YardReceivingPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={stopRecord}
-                      className="px-8 py-3 bg-white hover:bg-slate-100 text-[#0F172A] rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-8 py-3 bg-white hover:bg-slate-100 text-ink rounded font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <StopCircle className="w-4 h-4 text-rose-600" />
                       <span>Stop & Save Video</span>
