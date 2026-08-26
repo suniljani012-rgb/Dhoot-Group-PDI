@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, Menu, X, Bell, Search } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
@@ -24,6 +24,7 @@ const brands = [
 export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobileMenu }) => {
   const { user, currentBrand, setBrand, logout } = useAuth();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(4);
 
   return (
     <header className="h-14 bg-surface border-b border-line px-3 sm:px-4 flex items-center gap-4 shrink-0">
@@ -76,9 +77,17 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
           aria-label="Alerts"
         >
           <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-danger rounded-full ring-2 ring-surface" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0.5 right-0.5 min-w-[15px] h-[15px] px-0.5 bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center ring-2 ring-surface shadow-xs">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
-        <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
+        <NotificationPanel 
+          isOpen={notifOpen} 
+          onClose={() => setNotifOpen(false)} 
+          onUnreadChange={setUnreadCount}
+        />
       </div>
 
       <div className="flex items-center gap-2 pl-3 border-l border-line">

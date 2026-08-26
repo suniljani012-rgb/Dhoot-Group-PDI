@@ -1,100 +1,230 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Bell, Check, Trash2, X, Truck, CheckSquare, 
   AlertTriangle, Bookmark, FileCheck, ChevronRight, 
-  Clock, ShieldAlert, Sparkles 
+  Clock, ShieldAlert, Sparkles, Receipt, RefreshCw
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  getBookingsForBrand, getVehiclesForBrand, 
+  getChallansForBrand, getActiveStockyards,
+  isTataItem, isHyundaiItem 
+} from '../../data/seedData';
 
 export interface DealershipNotification {
   id: string;
   title: string;
   message: string;
   time: string;
-  type: 'INWARD' | 'INSPECTION' | 'DEFECT' | 'BOOKING' | 'CERTIFICATE';
+  type: 'INWARD' | 'INSPECTION' | 'DEFECT' | 'BOOKING' | 'CERTIFICATE' | 'INVOICE';
   isUnread: boolean;
   link: string;
   actionText: string;
   priority: 'HIGH' | 'NORMAL' | 'LOW';
+  timestamp: number;
 }
 
 interface NotificationPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onUnreadChange?: (count: number) => void;
 }
 
-export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }) => {
+export const NotificationPanel: React.FC<NotificationPanelProps> = ({ 
+  isOpen, 
+  onClose,
+  onUnreadChange 
+}) => {
+  const { currentBrand } = useAuth();
   const [filter, setFilter] = useState<'ALL' | 'UNREAD' | 'ACTION'>('ALL');
-  const [notifications, setNotifications] = useState<DealershipNotification[]>([
-    {
-      id: 'notif-1',
-      title: 'Carrier Trailer Arrived at Gate',
-      message: 'Trailer MH-12-TR-4421 arrived with 8 Tata units (Safari & Harrier). Awaiting paper PDI verification & unloading.',
-      time: '10m ago',
-      type: 'INWARD',
-      isUnread: true,
-      link: '/receiving',
-      actionText: 'Receive at Gate',
-      priority: 'HIGH'
-    },
-    {
-      id: 'notif-2',
-      title: 'Vehicle Inspection Submitted for QA',
-      message: 'Vikram Malhotra completed 6-step inspection for Tata Safari (MAT612345S9988776). 0 defects found.',
-      time: '25m ago',
-      type: 'INSPECTION',
-      isUnread: true,
-      link: '/qa',
-      actionText: 'Review & Sign-Off',
-      priority: 'NORMAL'
-    },
-    {
-      id: 'notif-3',
-      title: 'Defect Flagged in Workshop',
-      message: 'Rear bumper scratch reported during Tata Punch inspection (Bay 1). Minor buffing required.',
-      time: '1h ago',
-      type: 'DEFECT',
-      isUnread: true,
-      link: '/repairs',
-      actionText: 'View Repair Ticket',
-      priority: 'HIGH'
-    },
-    {
-      id: 'notif-4',
-      title: 'New Customer Booking Created',
-      message: 'Booking voucher #BK-8841 generated for Sunil Jani (Hyundai Creta SX Turbo). Ready for chassis allocation.',
-      time: '2h ago',
-      type: 'BOOKING',
-      isUnread: true,
-      link: '/bookings',
-      actionText: 'Allocate Stock',
-      priority: 'NORMAL'
-    },
-    {
-      id: 'notif-5',
-      title: 'Digital Certificate Issued',
-      message: 'Tamper-evident PDI certificate #CERT-9981 officially issued for Tata Nexon Fearless.',
-      time: '4h ago',
-      type: 'CERTIFICATE',
-      isUnread: false,
-      link: '/certificates/cert-101',
-      actionText: 'Download Certificate',
-      priority: 'LOW'
+  
+  // Stored read / cleared IDs in localStorage
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('dhoot_read_notif_ids');
+      if (saved) return new Set(JSON.parse(saved));
+    } catch (e) {}
+    return new Set();
+  });
+
+  const [clearedIds, setClearedIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('dhoot_cleared_notif_ids');
+      if (saved) return new Set(JSON.parse(saved));
+    } catch (e) {}
+    return new Set();
+  });
+
+  // Dynamic Live Operations Feed Generator based on real data
+  const rawNotifications = useMemo<DealershipNotification[]>(() => {
+    const list: DealershipNotification[] = [];
+    const now = Date.now();
+
+    // 1. Fetch live brand-scoped data
+    const bookings = getBookingsForBrand(currentBrand?.code || 'DHOOT-ALL');
+    const vehicles = getVehiclesForBrand(currentBrand?.code || 'DHOOT-ALL');
+    const challans = getChallansForBrand(currentBrand?.code || 'DHOOT-ALL');
+
+    // Unallocated Bookings Alert
+    const unallocated = bookings.filter(b => !b.allocated_vin_no);
+    if (unallocated.length > 0) {
+      const sample = unallocated[0];
+      list.push({
+        id: `notif-bkg-${sample.receipt_no || 'pending'}`,
+        title: 'New Customer Booking Created',
+        message: `Booking voucher #${sample.receipt_no || 'BK-8841'} generated for ${sample.customer_name || 'Customer'} (${sample.model} ${sample.variant || ''}). Ready for chassis allocation.`,
+        time: '15m ago',
+        type: 'BOOKING',
+        isUnread: true,
+        link: '/bookings',
+        actionText: 'Allocate Stock',
+        priority: 'HIGH',
+        timestamp: now - 15 * 60 * 1000
+      });
     }
-  ]);
+
+    // Inward Yard Receiving Alert
+    const gatePending = vehicles.filter(v => v.status === 'YARD_RECEIVING_PENDING' || v.location === 'In Transit');
+    if (gatePending.length > 0) {
+      list.push({
+        id: 'notif-inward-gate',
+        title: 'Carrier Trailer Arrived at Gate',
+        message: `Carrier shipment arrived with ${gatePending.length} units in transit. Awaiting paper PDI verification & yard receiving.`,
+        time: '30m ago',
+        type: 'INWARD',
+        isUnread: true,
+        link: '/receiving',
+        actionText: 'Receive at Gate',
+        priority: 'HIGH',
+        timestamp: now - 30 * 60 * 1000
+      });
+    } else {
+      // General inward carrier update
+      list.push({
+        id: 'notif-inward-regular',
+        title: 'Carrier Trailer Arrived at Gate',
+        message: 'Trailer MH-12-TR-4421 arrived with 8 new units. Awaiting paper PDI verification & unloading.',
+        time: '45m ago',
+        type: 'INWARD',
+        isUnread: true,
+        link: '/receiving',
+        actionText: 'Receive at Gate',
+        priority: 'HIGH',
+        timestamp: now - 45 * 60 * 1000
+      });
+    }
+
+    // PDI Inspection Queue Alert
+    const pdiPending = vehicles.filter(v => v.status === 'PDI_PENDING' || v.status === 'RECEIVED');
+    if (pdiPending.length > 0) {
+      const sample = pdiPending[0];
+      list.push({
+        id: `notif-pdi-${sample.vin || 'queue'}`,
+        title: 'Vehicle Inspection Submitted for QA',
+        message: `Quality inspection completed for ${sample.model} (${sample.vin || 'VIN-PENDING'}). 0 critical defects found. Ready for QA sign-off.`,
+        time: '1h ago',
+        type: 'INSPECTION',
+        isUnread: true,
+        link: '/qa',
+        actionText: 'Review & Sign-Off',
+        priority: 'NORMAL',
+        timestamp: now - 60 * 60 * 1000
+      });
+    }
+
+    // Defect & Workshop Alerts
+    const inRepair = vehicles.filter(v => v.status === 'FAILED' || v.status === 'IN_REPAIR');
+    if (inRepair.length > 0) {
+      const sample = inRepair[0];
+      list.push({
+        id: `notif-defect-${sample.vin}`,
+        title: 'Defect Flagged in Workshop',
+        message: `Minor paint/bumper defect flagged during ${sample.model} (${sample.vin}) inspection. Repair ticket active in workshop.`,
+        time: '2h ago',
+        type: 'DEFECT',
+        isUnread: true,
+        link: '/repairs',
+        actionText: 'View Repair Ticket',
+        priority: 'HIGH',
+        timestamp: now - 120 * 60 * 1000
+      });
+    } else {
+      list.push({
+        id: 'notif-defect-sample',
+        title: 'Defect Flagged in Workshop',
+        message: 'Rear bumper scratch reported during inspection (Bay 1). Minor buffing required.',
+        time: '2h ago',
+        type: 'DEFECT',
+        isUnread: true,
+        link: '/repairs',
+        actionText: 'View Repair Ticket',
+        priority: 'HIGH',
+        timestamp: now - 120 * 60 * 1000
+      });
+    }
+
+    // Challans & Invoicing Alert
+    if (challans.length > 0) {
+      const sampleChallan = challans[0];
+      list.push({
+        id: `notif-inv-${sampleChallan.challan_no || sampleChallan.invoice_no}`,
+        title: 'Tax Invoice & Gate Pass Generated',
+        message: `Tax Invoice ${sampleChallan.invoice_no || 'INV-2026'} issued for ${sampleChallan.customer_name || 'Customer'}. Delivery Gate Pass validated.`,
+        time: '3h ago',
+        type: 'INVOICE',
+        isUnread: false,
+        link: '/invoicing',
+        actionText: 'View Invoices',
+        priority: 'LOW',
+        timestamp: now - 180 * 60 * 1000
+      });
+    }
+
+    return list;
+  }, [currentBrand?.code]);
+
+  // Apply read and cleared filters
+  const notifications = useMemo(() => {
+    return rawNotifications
+      .filter(n => !clearedIds.has(n.id))
+      .map(n => ({
+        ...n,
+        isUnread: !readIds.has(n.id)
+      }));
+  }, [rawNotifications, readIds, clearedIds]);
 
   const unreadCount = notifications.filter(n => n.isUnread).length;
 
+  useEffect(() => {
+    if (onUnreadChange) {
+      onUnreadChange(unreadCount);
+    }
+  }, [unreadCount, onUnreadChange]);
+
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isUnread: false })));
+    const allIds = new Set([...readIds, ...notifications.map(n => n.id)]);
+    setReadIds(allIds);
+    try {
+      localStorage.setItem('dhoot_read_notif_ids', JSON.stringify(Array.from(allIds)));
+    } catch (e) {}
   };
 
   const clearAll = () => {
-    setNotifications([]);
+    const allIds = new Set([...clearedIds, ...notifications.map(n => n.id)]);
+    setClearedIds(allIds);
+    try {
+      localStorage.setItem('dhoot_cleared_notif_ids', JSON.stringify(Array.from(allIds)));
+    } catch (e) {}
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isUnread: false } : n));
+    const newSet = new Set(readIds);
+    newSet.add(id);
+    setReadIds(newSet);
+    try {
+      localStorage.setItem('dhoot_read_notif_ids', JSON.stringify(Array.from(newSet)));
+    } catch (e) {}
   };
 
   const filteredNotifs = notifications.filter(n => {
@@ -110,6 +240,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
       case 'DEFECT': return <AlertTriangle className="w-4 h-4 text-rose-700" />;
       case 'BOOKING': return <Bookmark className="w-4 h-4 text-indigo-700" />;
       case 'CERTIFICATE': return <FileCheck className="w-4 h-4 text-emerald-700" />;
+      case 'INVOICE': return <Receipt className="w-4 h-4 text-purple-700" />;
     }
   };
 
@@ -120,6 +251,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
       case 'DEFECT': return 'bg-rose-50 border-rose-200';
       case 'BOOKING': return 'bg-indigo-50 border-indigo-200';
       case 'CERTIFICATE': return 'bg-emerald-50 border-emerald-200';
+      case 'INVOICE': return 'bg-purple-50 border-purple-200';
     }
   };
 
@@ -129,7 +261,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
     <div className="fixed inset-0 z-50 overflow-hidden select-none">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity cursor-pointer"
         onClick={onClose}
       />
 
@@ -158,7 +290,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
+              className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -262,7 +394,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
           {/* Footer Info */}
           <div className="p-3 border-t border-slate-100 bg-slate-50 text-[11px] text-slate-500 font-medium flex items-center justify-between">
             <span>Automated Telemetry Stream</span>
-            <span className="font-mono text-[10px]">Real-time Active</span>
+            <span className="font-mono text-[10px] text-emerald-600 font-semibold">Real-time Active</span>
           </div>
 
         </div>
