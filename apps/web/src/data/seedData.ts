@@ -309,7 +309,12 @@ export const syncWithSupabase = async () => {
     try {
       const { data: dbChallans } = await supabase.from('challan_invoices').select('*');
       if (dbChallans && Array.isArray(dbChallans)) {
-        localStorage.setItem('dhoot_challans_inventory', JSON.stringify(dbChallans));
+        const normalized = dbChallans.map((c: any) => ({
+          ...c,
+          mobile: c.mobile || c.mobile_no || '',
+          other: c.other || c.other_charges || 0
+        }));
+        localStorage.setItem('dhoot_challans_inventory', JSON.stringify(normalized));
         window.dispatchEvent(new Event('challans-updated'));
       }
     } catch (e) {}
