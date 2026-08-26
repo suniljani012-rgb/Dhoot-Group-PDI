@@ -8,7 +8,7 @@ import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand } from '../data/seedData';
-import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
+import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface StockVehicle {
   id: string;
@@ -114,26 +114,19 @@ export const VehiclesPage: React.FC = () => {
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            Stock Inventory
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Stockyard inventory, customer allocations, and vehicle status ledger
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title="Stock Inventory"
+        subtitle="Stockyard inventory, customer allocations, and vehicle status ledger"
+        action={
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
             <span>Import Excel Stock</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stock KPI Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -165,7 +158,7 @@ export const VehiclesPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-7 text-xs bg-canvas border border-line rounded px-2 text-ink focus:outline-none focus:border-line-strong"
+                className="h-7 text-xs bg-canvas border border-line rounded px-2 text-ink focus:outline-none focus:border-line-strong font-medium"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="RECEIVED">Received</option>
@@ -181,7 +174,7 @@ export const VehiclesPage: React.FC = () => {
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium text-[11px] uppercase tracking-[0.06em]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold text-[11px] uppercase tracking-[0.06em]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">VIN / Chassis</th>

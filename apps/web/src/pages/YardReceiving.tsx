@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand } from '../data/seedData';
-import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
+import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 interface IncomingVehicle {
   id: string;
@@ -298,16 +298,10 @@ export const YardReceivingPage: React.FC = () => {
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            Gate Inward Receiving
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Record carrier trailer arrivals, verify OEM documents, and stage vehicles in stockyard bays
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Gate Inward Receiving"
+        subtitle="Record carrier trailer arrivals, verify OEM documents, and stage vehicles in stockyard bays"
+      />
 
       {/* Yard Gate KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -363,7 +357,7 @@ export const YardReceivingPage: React.FC = () => {
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">VIN / Chassis</th>

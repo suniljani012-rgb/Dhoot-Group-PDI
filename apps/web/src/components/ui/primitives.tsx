@@ -1,6 +1,27 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 
+/* ------------------------------------------------------------- PageHeader */
+export const PageHeader: React.FC<{
+  title: string;
+  subtitle?: string;
+  badge?: React.ReactNode;
+  action?: React.ReactNode;
+}> = ({ title, subtitle, badge, action }) => (
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-line/60">
+    <div className="border-l-4 border-l-accent pl-3">
+      <div className="flex items-center gap-2">
+        <h1 className="text-lg font-bold tracking-[-0.015em] text-ink">
+          {title}
+        </h1>
+        {badge}
+      </div>
+      {subtitle && <p className="text-xs text-ink-3 mt-0.5 font-medium">{subtitle}</p>}
+    </div>
+    {action && <div className="flex items-center gap-2">{action}</div>}
+  </div>
+);
+
 /* ------------------------------------------------------------------ Panel */
 export const Panel: React.FC<{
   title?: React.ReactNode;
@@ -10,12 +31,13 @@ export const Panel: React.FC<{
   className?: string;
   children: React.ReactNode;
 }> = ({ title, action, footer, bodyClassName = '', className = '', children }) => (
-  <div className={`bg-surface border border-line rounded-panel shadow-xs ${className}`}>
+  <div className={`bg-surface border border-line rounded-panel shadow-xs overflow-hidden ${className}`}>
     {(title || action) && (
-      <div className="flex items-center justify-between px-4 py-3 border-b border-line gap-3">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-slate-100/80 via-canvas to-surface border-b border-line gap-3 border-l-4 border-l-accent">
         {typeof title === 'string' ? (
-          <h2 className="text-xs font-semibold tracking-[-0.01em] text-ink uppercase tracking-[0.04em]">
-            {title}
+          <h2 className="text-xs font-bold text-ink uppercase tracking-[0.06em] flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+            <span>{title}</span>
           </h2>
         ) : (
           title
@@ -24,7 +46,7 @@ export const Panel: React.FC<{
       </div>
     )}
     <div className={bodyClassName}>{children}</div>
-    {footer && <div className="px-4 py-2.5 border-t border-line text-xs bg-canvas/40">{footer}</div>}
+    {footer && <div className="px-4 py-2.5 border-t border-line text-xs bg-canvas/60">{footer}</div>}
   </div>
 );
 
@@ -48,13 +70,13 @@ export const Stat: React.FC<{
       : 'text-ink';
 
   const Content = (
-    <div className="bg-surface border border-line rounded p-3 shadow-xs hover:border-line-strong transition-colors h-full flex flex-col justify-between">
+    <div className="bg-surface border border-line rounded p-3 shadow-xs hover:border-accent/40 transition-all h-full flex flex-col justify-between group">
       <div className="flex items-baseline justify-between">
-        <span className="eyebrow">{label}</span>
-        {to && <span className="text-xs text-ink-3">→</span>}
+        <span className="eyebrow group-hover:text-accent transition-colors">{label}</span>
+        {to && <span className="text-xs text-ink-3 group-hover:text-accent transition-colors">→</span>}
       </div>
       <div className="mt-1.5 flex items-baseline gap-1.5">
-        <span className={`text-2xl font-semibold tracking-[-0.02em] tnum ${valueColor}`}>
+        <span className={`text-2xl font-bold tracking-[-0.02em] tnum ${valueColor}`}>
           {value}
         </span>
       </div>
@@ -81,10 +103,10 @@ export const Badge: React.FC<{
 }> = ({ tone = 'neutral', children, className = '' }) => {
   const tones: Record<BadgeTone, string> = {
     neutral: 'bg-canvas text-ink-2 border-line',
-    accent: 'bg-accent-soft text-accent border-accent/20',
-    ok: 'bg-ok/10 text-ok border-ok/20',
-    warn: 'bg-warn/10 text-warn border-warn/20',
-    danger: 'bg-danger/10 text-danger border-danger/20',
+    accent: 'bg-accent-soft text-accent border-accent/20 font-semibold',
+    ok: 'bg-ok/10 text-ok border-ok/20 font-semibold',
+    warn: 'bg-warn/10 text-warn border-warn/20 font-semibold',
+    danger: 'bg-danger/10 text-danger border-danger/20 font-semibold',
   };
   return (
     <span

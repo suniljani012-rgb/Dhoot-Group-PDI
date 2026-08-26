@@ -9,7 +9,7 @@ import {
   Landmark, ShieldAlert, Phone, Mail, UserCheck
 } from 'lucide-react';
 import { AdminUsersPage } from './AdminUsers';
-import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
+import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface PdiRuleItem {
   id: string;
@@ -429,26 +429,19 @@ export const AdminMasterPanel: React.FC = () => {
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            Master Data & System Config
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Configure vehicle models, inspection checkpoints, facility branches, and financier partners
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title="Master Data & System Config"
+        subtitle="Configure vehicle models, inspection checkpoints, facility branches, and financier partners"
+        action={
           <button
             onClick={() => alert('Exporting complete dealership configuration masters to CSV...')}
-            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
             <span>Export Masters</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Tabs Navigation Bar */}
       <div className="flex items-center gap-1 overflow-x-auto bg-surface border border-line rounded p-1 text-xs">

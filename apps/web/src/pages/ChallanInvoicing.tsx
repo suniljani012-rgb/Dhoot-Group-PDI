@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getApiUrl } from '../utils/apiConfig';
-import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
+import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface ChallanRecord {
   id: string;
@@ -280,34 +280,29 @@ const SEED_CHALLANS: ChallanRecord[] = [
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            Invoicing & Gatepass Delivery
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Generate tax invoices, calculate charges, and issue gate passes for customer delivery
-          </p>
-        </div>
+      <PageHeader
+        title="Invoicing & Gatepass Delivery"
+        subtitle="Generate tax invoices, calculate charges, and issue gate passes for customer delivery"
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
+              <span>Import Excel Invoices</span>
+            </button>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
-            <span>Import Excel Invoices</span>
-          </button>
-
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 text-white/80" />
-            <span>New Invoice</span>
-          </button>
-        </div>
-      </div>
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5 text-white/80" />
+              <span>New Invoice</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* Billing & Invoicing KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -353,7 +348,7 @@ const SEED_CHALLANS: ChallanRecord[] = [
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Challan / Invoice</th>

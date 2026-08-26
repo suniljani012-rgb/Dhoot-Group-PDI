@@ -6,7 +6,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand } from '../data/seedData';
-import { Panel, Stat, Badge, Bar, Empty } from '../components/ui/primitives';
+import { Panel, Stat, Badge, Bar, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface PdiInspectionItem {
   id: string;
@@ -97,34 +97,29 @@ export const PdiQueuePage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            PDI Inspection Queue
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Conduct standardized digital checklist inspections, verify vehicle systems, and sign off quality certificates
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            to="/receiving"
-            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 text-ink-3" />
-            <span>Receive New Car</span>
-          </Link>
-          <button
-            onClick={() => alert('Exporting PDI Inspection Queue to Excel CSV...')}
-            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
-            <span>Export Excel</span>
-          </button>
-        </div>
-      </div>
+      {/* Header Banner */}
+      <PageHeader
+        title="PDI Inspection Queue"
+        subtitle="Manage 64-point vehicle quality checklists, track inspector progress, and approve certifications"
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              to="/receiving"
+              className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5 text-ink-3" />
+              <span>Receive New Car</span>
+            </Link>
+            <button
+              onClick={() => alert('Exporting PDI Inspection Queue to Excel CSV...')}
+              className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
+              <span>Export Excel</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -170,7 +165,7 @@ export const PdiQueuePage: React.FC = () => {
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">VIN / Chassis</th>

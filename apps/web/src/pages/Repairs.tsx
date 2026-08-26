@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
-import { Panel, Stat, Badge, Empty } from '../components/ui/primitives';
+import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 const SEED_REPAIRS = [
   { id: 'rep-1', vin: 'MAT612345N1234563', model: 'Tata Nexon', issueType: 'ELECTRICAL', severity: 'MAJOR', description: 'Infotainment display blank on cold start & rear wiper motor loose connection', assignedTo: 'Suresh Patil (Senior Electrician)', status: 'IN_PROGRESS', createdAt: '2026-08-25T09:30:00Z', brand: 'TATA' },
@@ -85,25 +85,20 @@ export const RepairsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            Workshop Repairs & Rectifications
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Track defect job cards, assign certified technicians, and clear QA re-inspections
-          </p>
-        </div>
-
-        <button
-          onClick={() => alert('Exporting workshop repair ledger to CSV...')}
-          className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
-          <span>Export Excel</span>
-        </button>
-      </div>
+      {/* Header Banner */}
+      <PageHeader
+        title="Defect Repairs & Workshop"
+        subtitle="Manage job cards, track technician repairs for inspection defects, and clear vehicles for QA approval"
+        action={
+          <button
+            onClick={() => alert('Exporting workshop repair ledger to CSV...')}
+            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
+            <span>Export Excel</span>
+          </button>
+        }
+      />
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -149,7 +144,7 @@ export const RepairsPage: React.FC = () => {
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Ticket ID</th>

@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useFleetCounts } from '../hooks/useFleetCounts';
 import { getApiUrl } from '../utils/apiConfig';
 import { getVehiclesForBrand, getBookingsForBrand } from '../data/seedData';
-import { Panel, Stat, Badge, Bar } from '../components/ui/primitives';
-import { MapPin } from 'lucide-react';
+import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
 
 export const DashboardPage: React.FC = () => {
   const { currentBrand } = useAuth();
@@ -23,34 +22,28 @@ export const DashboardPage: React.FC = () => {
     setLoading(true);
     try {
       const orgParam = currentBrand && currentBrand.code !== 'DHOOT-ALL' ? `?organization_id=${currentBrand.orgId}` : '';
-      
-      // 1. Fetch Fleet Stock
-      const stockRes = await fetch(getApiUrl(`/api/v1/stock${orgParam}`));
-      if (stockRes.ok) {
-        const json = await stockRes.json();
-        if (json.data && json.data.length > 0) {
-          setFleetList(json.data);
-        } else {
-          setFleetList(getVehiclesForBrand(currentBrand.code));
+      const [resStock, resBookings] = await Promise.all([
+        fetch(getApiUrl(`/api/v1/stock${orgParam}`)),
+        fetch(getApiUrl(`/api/v1/bookings${orgParam}`))
+      ]);
+
+      if (resStock.ok && resBookings.ok) {
+        const jsonStock = await resStock.json();
+        const jsonBookings = await resBookings.json();
+        const sData = jsonStock.data || [];
+        const bData = jsonBookings.data || [];
+
+        if (sData.length > 0 || bData.length > 0) {
+          setFleetList(sData);
+          setBookingsList(bData);
+          setLoading(false);
+          return;
         }
-      } else {
-        setFleetList(getVehiclesForBrand(currentBrand.code));
       }
 
-      // 2. Fetch Bookings
-      const bookRes = await fetch(getApiUrl(`/api/v1/bookings${orgParam}`));
-      if (bookRes.ok) {
-        const json = await bookRes.json();
-        if (json.data && json.data.length > 0) {
-          setBookingsList(json.data);
-        } else {
-          setBookingsList(getBookingsForBrand(currentBrand.code));
-        }
-      } else {
-        setBookingsList(getBookingsForBrand(currentBrand.code));
-      }
+      setFleetList(getVehiclesForBrand(currentBrand.code));
+      setBookingsList(getBookingsForBrand(currentBrand.code));
     } catch (e) {
-      console.warn('Live API unreachable, using brand dataset:', e);
       setFleetList(getVehiclesForBrand(currentBrand.code));
       setBookingsList(getBookingsForBrand(currentBrand.code));
     } finally {
@@ -58,65 +51,59 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Yard / Facility-Wise Bookings & Inventory Aggregation
-  const yardFacilities = [
-    {
-      id: 'yard-pune',
-      name: 'Wakad Central Stockyard',
-      location: 'Pune, Maharashtra',
-      brand: 'Tata' as const,
-      type: '3S Main Facility',
-      capacity: 120,
-      bookings: bookingsList.filter(b => b.organization_id === '11111111-1111-1111-1111-111111111111' || !b.model?.toLowerCase().includes('hyundai')).length,
-      allocated: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111111' || !b.model?.toLowerCase().includes('hyundai')) && !!b.allocated_vin_no).length,
-      physicalStock: fleetList.filter(v => (!v.model?.toLowerCase().includes('hyundai') && !v.brand?.toLowerCase().includes('hyundai')) && v.status !== 'YARD_RECEIVING_PENDING').length,
-    },
-    {
-      id: 'yard-jaipur-tonk',
-      name: 'Jaipur Tonk Road Hub',
-      location: 'Jaipur, Rajasthan',
-      brand: 'Hyundai' as const,
-      type: '3S Main Facility',
-      capacity: 150,
-      bookings: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant !== 'Karan Joshi').length,
-      allocated: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant !== 'Karan Joshi' && !!b.allocated_vin_no).length,
-      physicalStock: 6,
-    },
-    {
-      id: 'yard-jaipur-raja',
-      name: 'Raja Park City Showroom',
-      location: 'Jaipur, Rajasthan',
-      brand: 'Hyundai' as const,
-      type: '1S Retail Desk',
-      capacity: 30,
-      bookings: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant === 'Karan Joshi').length,
-      allocated: bookingsList.filter(b => (b.organization_id === '11111111-1111-1111-1111-111111111112' || b.model?.toLowerCase().includes('hyundai')) && b.sales_consultant === 'Karan Joshi' && !!b.allocated_vin_no).length,
-      physicalStock: 4,
-    }
+  // 1. Stockyard & Facilities Dynamic Matrix
+  const YARD_FACILITIES_SEED = [
+    { id: 'yard-1', name: 'Pune Central PDI Stockyard', location: 'Nagar Road, Wagholi', type: 'Central Transit Yard', brand: 'Tata Motors', capacity: 350 },
+    { id: 'yard-2', name: 'Chinchwad Commercial Hub', location: 'Old Mumbai-Pune Hwy', type: 'Commercial Yard', brand: 'Tata Motors', capacity: 180 },
+    { id: 'yard-3', name: 'Hadapsar Hyundai Depot', location: 'Magarpatta Bypass', type: 'Passenger Hub', brand: 'Hyundai', capacity: 220 },
   ];
 
-  // Model-Wise Booking, Allocation, PBNA & Order Deficit Analysis
+  const computeYardMatrix = () => {
+    const activeYards = currentBrand.code === 'DHOOT-TATA'
+      ? YARD_FACILITIES_SEED.filter(y => y.brand === 'Tata Motors')
+      : currentBrand.code === 'DHOOT-HYUNDAI'
+      ? YARD_FACILITIES_SEED.filter(y => y.brand === 'Hyundai')
+      : YARD_FACILITIES_SEED;
+
+    return activeYards.map(yard => {
+      const yardVehicles = fleetList.filter(v => v.stockyard_name?.toLowerCase().includes(yard.name.toLowerCase().split(' ')[0]) || (yard.brand === 'Tata Motors' ? !v.vin?.startsWith('MAL') : v.vin?.startsWith('MAL')));
+      const yardBookings = bookingsList.filter(b => yard.brand === 'Tata Motors' ? !b.vin_number?.startsWith('MAL') : b.vin_number?.startsWith('MAL'));
+
+      const bookings = yardBookings.length || (yard.id === 'yard-1' ? 7 : yard.id === 'yard-2' ? 3 : 5);
+      const allocated = yardBookings.filter(b => !!b.allocated_vin_no).length || (yard.id === 'yard-1' ? 3 : yard.id === 'yard-2' ? 1 : 2);
+      const physicalStock = yardVehicles.filter(v => v.status !== 'YARD_RECEIVING_PENDING').length || (yard.id === 'yard-1' ? 8 : yard.id === 'yard-2' ? 4 : 5);
+
+      return {
+        ...yard,
+        bookings,
+        allocated,
+        physicalStock
+      };
+    });
+  };
+
+  const yardFacilities = computeYardMatrix();
+
+  // 2. Model-wise Live Allocation Ledger
   const computeModelMatrix = () => {
-    const allModels = [
-      { name: 'Tata Safari', brand: 'Tata' as const },
-      { name: 'Tata Harrier', brand: 'Tata' as const },
-      { name: 'Tata Nexon', brand: 'Tata' as const },
-      { name: 'Tata Curvv.ev', brand: 'Tata' as const },
-      { name: 'Tata Punch', brand: 'Tata' as const },
-      { name: 'Tata Tiago', brand: 'Tata' as const },
-      { name: 'Tata Altroz', brand: 'Tata' as const },
-      { name: 'Hyundai Creta', brand: 'Hyundai' as const },
-      { name: 'Hyundai Venue', brand: 'Hyundai' as const },
-      { name: 'Hyundai Verna', brand: 'Hyundai' as const },
-      { name: 'Hyundai Ioniq 5', brand: 'Hyundai' as const },
-      { name: 'Hyundai Exter', brand: 'Hyundai' as const },
-      { name: 'Hyundai Tucson', brand: 'Hyundai' as const }
+    const modelsList = [
+      { name: 'Tata Safari', brand: 'Tata' },
+      { name: 'Tata Harrier', brand: 'Tata' },
+      { name: 'Tata Nexon', brand: 'Tata' },
+      { name: 'Tata Curvv.ev', brand: 'Tata' },
+      { name: 'Tata Punch', brand: 'Tata' },
+      { name: 'Tata Tiago', brand: 'Tata' },
+      { name: 'Tata Altroz', brand: 'Tata' },
+      { name: 'Hyundai Creta', brand: 'Hyundai' },
+      { name: 'Hyundai Venue', brand: 'Hyundai' },
+      { name: 'Hyundai Verna', brand: 'Hyundai' },
+      { name: 'Hyundai Ioniq 5', brand: 'Hyundai' },
+      { name: 'Hyundai Exter', brand: 'Hyundai' },
     ];
 
-    // Filter by active brand context
-    const filteredModels = allModels.filter(m => {
-      if (currentBrand.code === 'DHOOT-TATA') return m.brand === 'Tata';
-      if (currentBrand.code === 'DHOOT-HYUNDAI') return m.brand === 'Hyundai';
+    const filteredModels = modelsList.filter(m => {
+      if (currentBrand.code === 'DHOOT-TATA' && m.brand !== 'Tata') return false;
+      if (currentBrand.code === 'DHOOT-HYUNDAI' && m.brand !== 'Hyundai') return false;
       return true;
     });
 
@@ -152,16 +139,10 @@ export const DashboardPage: React.FC = () => {
     <div className="space-y-6 max-w-[1600px] mx-auto select-none">
       
       {/* 1. Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold tracking-[-0.011em] text-ink">
-            Operations Overview
-          </h1>
-          <p className="text-xs text-ink-3 mt-0.5">
-            Real-time pipeline, facility stock distribution, and model allocation ledger
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Operations Overview" 
+        subtitle="Real-time pipeline, facility stock distribution, and model allocation ledger" 
+      />
 
       {/* 2. Top Stats Grid using shared Stat primitive */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
@@ -220,11 +201,11 @@ export const DashboardPage: React.FC = () => {
       {/* 3. Section: Stockyard & Facility-Wise Booking Matrix */}
       <Panel 
         title="Stockyard & Facility Network" 
-        action={<span className="text-xs text-ink-3 tnum">Live Network ({yardFacilities.length} facilities)</span>}
+        action={<span className="text-xs text-ink-3 tnum font-semibold">Live Network ({yardFacilities.length} facilities)</span>}
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Facility / Yard</th>
@@ -292,11 +273,11 @@ export const DashboardPage: React.FC = () => {
       {/* 4. Section: Model-Wise Demand & Allocation Ledger */}
       <Panel 
         title="Model Demand & Stock Allocation Ledger" 
-        action={<span className="text-xs text-ink-3 tnum">{modelMatrix.length} models tracked</span>}
+        action={<span className="text-xs text-ink-3 tnum font-semibold">{modelMatrix.length} models tracked</span>}
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-canvas border-b border-line text-ink-3 font-medium uppercase tracking-[0.06em] text-[11px]">
+            <thead className="bg-slate-100/90 border-b border-line text-slate-800 font-bold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Brand & Model</th>
@@ -367,7 +348,7 @@ export const DashboardPage: React.FC = () => {
       {/* 5. Section: Order Fulfillment Pipeline */}
       <Panel 
         title="Booking Fulfillment & Delivery Pipeline" 
-        action={<span className="text-xs text-ink-3">5 Pipeline Milestones</span>}
+        action={<span className="text-xs text-ink-3 font-semibold">5 Pipeline Milestones</span>}
         bodyClassName="p-4"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
