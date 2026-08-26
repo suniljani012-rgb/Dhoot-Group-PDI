@@ -29,7 +29,8 @@ export const DashboardPage: React.FC = () => {
 
   // Dedicated Model Modal state
   const [selectedModalModel, setSelectedModalModel] = useState<string | null>(null);
-  const [modalActiveTab, setModalActiveTab] = useState<'MATRIX' | 'CUSTOMERS'>('MATRIX');
+  const [modalActiveTab, setModalActiveTab] = useState<'MATRIX' | 'CUSTOMERS' | 'CHASSIS'>('MATRIX');
+  const [activeChassisSelection, setActiveChassisSelection] = useState<{ variant: string; colour: string; vehicles: any[] } | null>(null);
   const [drilldownSearch, setDrilldownSearch] = useState('');
   const [variantFilter, setVariantFilter] = useState<string>('ALL');
   const [colourFilter, setColourFilter] = useState<string>('ALL');
@@ -741,11 +742,14 @@ export const DashboardPage: React.FC = () => {
               {/* Tab Selector & Model Switcher & Close */}
               <div className="flex items-center gap-2 flex-wrap">
                 
-                {/* 2 Navigation Tabs */}
+                {/* Navigation Tabs */}
                 <div className="flex items-center bg-surface border border-line rounded p-0.5 shadow-xs">
                   <button
                     type="button"
-                    onClick={() => setModalActiveTab('MATRIX')}
+                    onClick={() => {
+                      setModalActiveTab('MATRIX');
+                      setActiveChassisSelection(null);
+                    }}
                     className={`px-3 py-1 text-xs font-semibold rounded transition-colors flex items-center gap-1.5 cursor-pointer ${
                       modalActiveTab === 'MATRIX' ? 'bg-accent text-white shadow-xs' : 'text-ink-2 hover:text-ink'
                     }`}
@@ -755,7 +759,10 @@ export const DashboardPage: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setModalActiveTab('CUSTOMERS')}
+                    onClick={() => {
+                      setModalActiveTab('CUSTOMERS');
+                      setActiveChassisSelection(null);
+                    }}
                     className={`px-3 py-1 text-xs font-semibold rounded transition-colors flex items-center gap-1.5 cursor-pointer ${
                       modalActiveTab === 'CUSTOMERS' ? 'bg-accent text-white shadow-xs' : 'text-ink-2 hover:text-ink'
                     }`}
@@ -763,6 +770,18 @@ export const DashboardPage: React.FC = () => {
                     <User className="w-3.5 h-3.5" />
                     <span>Customer Orders ({activeModalData.detailedBookings.length})</span>
                   </button>
+                  {activeChassisSelection && (
+                    <button
+                      type="button"
+                      onClick={() => setModalActiveTab('CHASSIS')}
+                      className={`px-3 py-1 text-xs font-semibold rounded transition-colors flex items-center gap-1.5 cursor-pointer ${
+                        modalActiveTab === 'CHASSIS' ? 'bg-accent text-white shadow-xs' : 'text-ink-2 hover:text-ink'
+                      }`}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Chassis VINs ({activeChassisSelection.vehicles.length})</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Model Switcher */}
@@ -1020,14 +1039,15 @@ export const DashboardPage: React.FC = () => {
                                         type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setViewingVinList({
+                                          setActiveChassisSelection({
                                             variant: row.variant,
                                             colour: row.colour,
                                             vehicles
                                           });
+                                          setModalActiveTab('CHASSIS');
                                         }}
                                         className="px-2.5 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer hover:bg-accent/10"
-                                        title="Click to view free vehicle VIN numbers & yard locations on top"
+                                        title="Click to view all free chassis VIN numbers & yard locations"
                                       >
                                         <Eye className="w-3.5 h-3.5 text-accent" />
                                         <span>{vehicles.length} Stock Units</span>
@@ -1045,6 +1065,96 @@ export const DashboardPage: React.FC = () => {
                         )}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+
+              
+              {/* TAB 3: CHASSIS VIN INVENTORY (Seamless full view on Eye Click) */}
+              {modalActiveTab === 'CHASSIS' && activeChassisSelection && (
+                <div className="space-y-3 animate-in fade-in">
+                  <div className="flex items-center justify-between bg-canvas p-3 rounded-md border border-line flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalActiveTab('MATRIX');
+                          setActiveChassisSelection(null);
+                        }}
+                        className="px-2.5 py-1 bg-surface border border-line hover:border-accent text-accent rounded text-xs font-semibold flex items-center gap-1 shadow-xs cursor-pointer"
+                      >
+                        <span>← Back to Matrix</span>
+                      </button>
+                      <div className="text-xs">
+                        <span className="font-bold text-ink block">
+                          Chassis Stock: {activeChassisSelection.variant} • {activeChassisSelection.colour}
+                        </span>
+                        <span className="text-[11px] text-ink-3">
+                          Live Dealership Stock Sheet • {activeChassisSelection.vehicles.length} Units Ready to Allot
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="px-2.5 py-1 rounded bg-ok/10 text-ok border border-ok/30 text-xs font-bold">
+                      {activeChassisSelection.vehicles.length} Physical Units in Yard
+                    </span>
+                  </div>
+
+                  <div className="border border-line rounded overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs min-w-[950px]">
+                        <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                          <tr>
+                            <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                            <th className="py-2.5 px-3 whitespace-nowrap">Chassis VIN Number</th>
+                            <th className="py-2.5 px-3 whitespace-nowrap">Current Stockyard Facility</th>
+                            <th className="py-2.5 px-3 text-right whitespace-nowrap">Ageing (Days)</th>
+                            <th className="py-2.5 px-3 whitespace-nowrap">Date of Billing</th>
+                            <th className="py-2.5 px-3 text-center whitespace-nowrap">PDI Status</th>
+                            <th className="py-2.5 px-3 text-center whitespace-nowrap">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-line text-ink-2">
+                          {activeChassisSelection.vehicles.map((veh: any, vIdx: number) => (
+                            <tr key={veh.vin || vIdx} className="hover:bg-canvas transition-colors">
+                              <td className="py-3 px-3 text-center text-ink-3 font-mono text-[11px]">
+                                {vIdx + 1}
+                              </td>
+                              <td className="py-3 px-3 font-mono font-bold text-ink whitespace-nowrap">
+                                <span className="text-accent text-xs">{veh.vin}</span>
+                              </td>
+                              <td className="py-3 px-3 font-semibold text-ink whitespace-nowrap">
+                                <div className="flex items-center gap-1.5">
+                                  <Warehouse className="w-3.5 h-3.5 text-accent shrink-0" />
+                                  <span>{veh.location}</span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-3 text-right font-bold text-ink tnum whitespace-nowrap">
+                                {veh.ageing_days} Days
+                              </td>
+                              <td className="py-3 px-3 text-ink-3 whitespace-nowrap">
+                                {veh.purchase_date ? formatDate(veh.purchase_date) : '—'}
+                              </td>
+                              <td className="py-3 px-3 text-center whitespace-nowrap">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/20">
+                                  {veh.status || 'RECEIVED'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-3 text-center whitespace-nowrap">
+                                <Link
+                                  to="/vehicles"
+                                  onClick={() => setSelectedModalModel(null)}
+                                  className="px-2.5 py-1 bg-surface border border-line hover:border-accent text-accent rounded text-[11px] font-semibold inline-flex items-center gap-1 shadow-xs"
+                                >
+                                  <span>Open in Stock</span>
+                                  <ArrowRight className="w-3 h-3" />
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}
