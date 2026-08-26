@@ -720,7 +720,140 @@ export const DashboardPage: React.FC = () => {
       {/* ========================================================================= */}
       {selectedModalModel && activeModalData && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-none animate-in fade-in">
-          <div className="bg-surface text-ink w-full max-w-6xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[92vh]">
+          <div className="bg-surface text-ink w-full max-w-6xl rounded-panel overflow-hidden border border-line shadow-pop flex flex-col max-h-[92vh] relative">
+
+            {/* ========================================================================= */}
+            {/* 100% TOP-LEVEL INTERNAL OVERLAY VIEW: CHASSIS VIN DETAILS ON EYE CLICK     */}
+            {/* ========================================================================= */}
+            {viewingVinList && (
+              <div className="absolute inset-0 z-50 bg-surface flex flex-col animate-in fade-in">
+                
+                {/* Overlay Header */}
+                <div className="px-5 py-4 border-b border-line bg-canvas flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setViewingVinList(null)}
+                      className="px-3 py-1.5 rounded bg-surface border border-line hover:border-accent text-accent text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <span>← Back to Matrix</span>
+                    </button>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-ink">
+                          Available Free Stock VINs: {viewingVinList.variant}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/30">
+                          {viewingVinList.vehicles.length} Units Free in Stock
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-ink-3">
+                        <span className="flex items-center gap-1">
+                          <Palette className="w-3.5 h-3.5 text-accent" />
+                          <span>Colour: <strong>{viewingVinList.colour}</strong></span>
+                        </span>
+                        <span>•</span>
+                        <span>Model: <strong>{activeModalData.name}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingVinList(null)}
+                    className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Overlay Body */}
+                <div className="p-5 overflow-y-auto space-y-4 text-xs flex-1">
+                  <div className="flex items-center justify-between bg-accent-soft p-3 rounded border border-accent/20">
+                    <div className="flex items-center gap-2 text-ink font-semibold">
+                      <Warehouse className="w-4 h-4 text-accent" />
+                      <span>Physical Stockyard Inventory matched with live Stock Ledger</span>
+                    </div>
+                    <span className="text-xs font-bold text-ok">
+                      All {viewingVinList.vehicles.length} Units Ready for Customer Allocation
+                    </span>
+                  </div>
+
+                  <div className="border border-line rounded overflow-hidden">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                        <tr>
+                          <th className="py-2.5 px-3 w-10 text-center">#</th>
+                          <th className="py-2.5 px-3">Chassis VIN Number</th>
+                          <th className="py-2.5 px-3">Current Stockyard Facility</th>
+                          <th className="py-2.5 px-3 text-right">Ageing (Days)</th>
+                          <th className="py-2.5 px-3">Date of Billing</th>
+                          <th className="py-2.5 px-3 text-center">Vehicle / PDI Status</th>
+                          <th className="py-2.5 px-3 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-line text-ink-2">
+                        {viewingVinList.vehicles.map((veh, vIdx) => (
+                          <tr key={veh.vin || vIdx} className="hover:bg-canvas transition-colors">
+                            <td className="py-3 px-3 text-center text-ink-3 font-mono text-[11px]">
+                              {vIdx + 1}
+                            </td>
+                            <td className="py-3 px-3 font-mono font-bold text-ink whitespace-nowrap">
+                              <span className="text-accent text-xs">{veh.vin}</span>
+                            </td>
+                            <td className="py-3 px-3 font-semibold text-ink whitespace-nowrap">
+                              <div className="flex items-center gap-1.5">
+                                <Warehouse className="w-3.5 h-3.5 text-accent shrink-0" />
+                                <span>{veh.location}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-right font-bold text-ink tnum whitespace-nowrap">
+                              {veh.ageing_days} Days
+                            </td>
+                            <td className="py-3 px-3 text-ink-3 whitespace-nowrap">
+                              {veh.purchase_date ? formatDate(veh.purchase_date) : '—'}
+                            </td>
+                            <td className="py-3 px-3 text-center whitespace-nowrap">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/20">
+                                {veh.status || 'RECEIVED'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-center whitespace-nowrap">
+                              <Link
+                                to="/vehicles"
+                                onClick={() => {
+                                  setViewingVinList(null);
+                                  setSelectedModalModel(null);
+                                }}
+                                className="px-2.5 py-1 bg-surface border border-line hover:border-accent text-accent rounded text-[11px] font-semibold inline-flex items-center gap-1 shadow-xs"
+                              >
+                                <span>View in Stock Sheet</span>
+                                <ArrowRight className="w-3 h-3" />
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Overlay Footer */}
+                <div className="px-5 py-3 border-t border-line bg-canvas flex items-center justify-between">
+                  <span className="text-xs text-ink-3">
+                    Showing {viewingVinList.vehicles.length} Free Physical Units in Stock
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setViewingVinList(null)}
+                    className="h-8 px-4 rounded bg-accent text-white text-xs font-semibold shadow-xs cursor-pointer"
+                  >
+                    Back to Matrix View
+                  </button>
+                </div>
+
+              </div>
+            )}
             
             {/* Modal Header */}
             <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas flex-wrap gap-3">
@@ -1019,18 +1152,19 @@ export const DashboardPage: React.FC = () => {
                                     {vehicles.length > 0 ? (
                                       <button
                                         type="button"
-                                        onClick={() => {
-                                          setExpandedVinRowKey(isExpanded ? null : rowKey);
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setViewingVinList({
+                                            variant: row.variant,
+                                            colour: row.colour,
+                                            vehicles
+                                          });
                                         }}
-                                        className={`px-2.5 py-1 rounded border text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer ${
-                                          isExpanded 
-                                            ? 'bg-accent text-white border-accent' 
-                                            : 'bg-surface border-line hover:border-accent text-accent hover:bg-accent/5'
-                                        }`}
-                                        title="Click to view free vehicle VIN numbers and yard location directly below"
+                                        className="px-2.5 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer hover:bg-accent/10"
+                                        title="Click to view free vehicle VIN numbers & yard locations on top"
                                       >
-                                        <Eye className="w-3.5 h-3.5" />
-                                        <span>{vehicles.length} Stock Units {isExpanded ? '▲' : '▼'}</span>
+                                        <Eye className="w-3.5 h-3.5 text-accent" />
+                                        <span>{vehicles.length} Stock Units</span>
                                       </button>
                                     ) : (
                                       <span className="text-ink-3 font-mono text-xs">—</span>
@@ -1038,82 +1172,7 @@ export const DashboardPage: React.FC = () => {
                                   </td>
                                 </tr>
 
-                                {/* INLINE EXPANDED VIN DETAILS ROW DIRECTLY BELOW */}
-                                {isExpanded && vehicles.length > 0 && (
-                                  <tr className="bg-canvas border-y-2 border-accent/40 animate-in fade-in">
-                                    <td colSpan={10} className="p-4">
-                                      <div className="bg-surface rounded-md border border-line p-3 shadow-xs space-y-3">
-                                        
-                                        <div className="flex items-center justify-between pb-2 border-b border-line">
-                                          <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded bg-accent text-white flex items-center justify-center text-xs">
-                                              <Eye className="w-3.5 h-3.5" />
-                                            </div>
-                                            <div>
-                                              <h4 className="font-bold text-ink text-xs">
-                                                Available Physical Chassis Numbers: {row.variant} • {row.colour}
-                                              </h4>
-                                              <span className="text-[10px] text-ink-3">
-                                                Matched with Live Dealership Stock Sheet • {vehicles.length} Units Ready to Allot
-                                              </span>
-                                            </div>
-                                          </div>
 
-                                          <button
-                                            type="button"
-                                            onClick={() => setExpandedVinRowKey(null)}
-                                            className="text-xs text-ink-3 hover:text-ink px-2 py-0.5 rounded bg-canvas border border-line cursor-pointer"
-                                          >
-                                            ✕ Close View
-                                          </button>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                                          {vehicles.map((vItem: any, vIdx: number) => (
-                                            <div key={vIdx} className="p-2.5 bg-canvas border border-line rounded hover:border-accent/50 transition-colors space-y-1.5">
-                                              <div className="flex items-center justify-between">
-                                                <span className="font-mono font-bold text-ink text-xs text-accent">
-                                                  {vItem.vin}
-                                                </span>
-                                                <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-ok/10 text-ok border border-ok/20">
-                                                  {vItem.status}
-                                                </span>
-                                              </div>
-
-                                              <div className="text-[11px] text-ink-2 space-y-0.5">
-                                                <div className="flex items-center gap-1 font-semibold text-ink">
-                                                  <Warehouse className="w-3 h-3 text-accent shrink-0" />
-                                                  <span>{vItem.location}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-ink-3 text-[10px]">
-                                                  <span>Ageing: <strong className="text-ink">{vItem.ageing_days} Days</strong></span>
-                                                  {vItem.purchase_date && (
-                                                    <span>Billed: {formatDate(vItem.purchase_date)}</span>
-                                                  )}
-                                                </div>
-                                              </div>
-
-                                              <div className="pt-1.5 border-t border-line flex items-center justify-between">
-                                                <span className="text-[10px] text-ok font-semibold">Ready for Allotment</span>
-                                                <Link
-                                                  to="/vehicles"
-                                                  onClick={() => {
-                                                    setSelectedModalModel(null);
-                                                  }}
-                                                  className="text-[10px] text-accent hover:underline font-semibold flex items-center gap-0.5"
-                                                >
-                                                  <span>Open in Stock</span>
-                                                  <ArrowRight className="w-2.5 h-2.5" />
-                                                </Link>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )}
                               </React.Fragment>
                             );
                           })
