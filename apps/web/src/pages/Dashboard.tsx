@@ -49,16 +49,88 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
+  // 8 Executive AdminLTE KPI Metric Cards
   const kpis = [
-    { label: 'Total Vehicle', value: counts.totalStock, change: `${counts.totalStock} Units`, isUp: true, link: '/vehicles', color: 'text-blue-700', bg: 'bg-blue-50/50' },
-    { label: 'Gate Inward', value: counts.receivingPending, change: `${counts.receivingPending} En-route`, isUp: true, link: '/receiving', color: 'text-amber-700', bg: 'bg-amber-50/50', alert: counts.receivingPending > 0 },
-    { label: 'Yard Stock', value: counts.inYard, change: `${counts.inYard} On-site`, isUp: true, link: '/vehicles', color: 'text-slate-800', bg: 'bg-slate-50' },
-    { label: 'PDI Pending', value: counts.pdiPending, change: `${counts.pdiPending} Ready`, isUp: false, link: '/pdi', color: 'text-orange-700', bg: 'bg-orange-50/50', alert: counts.pdiPending > 0 },
-    { label: 'PDI Certified', value: counts.pdiDone, change: `${counts.pdiDone} Certified`, isUp: true, link: '/pdi', color: 'text-emerald-700', bg: 'bg-emerald-50/50' },
-    { label: 'Bookings', value: counts.totalBookings, change: `${counts.totalBookings} Orders`, isUp: true, link: '/bookings', color: 'text-indigo-700', bg: 'bg-indigo-50/50' },
-    { label: 'VIN Allocated', value: counts.allocatedVehicles, change: `${counts.allocatedVehicles} Tagged`, isUp: true, link: '/bookings', color: 'text-purple-700', bg: 'bg-purple-50/50' },
-    { label: 'In Workshop', value: counts.inRepair, change: `${counts.inRepair} Repairs`, isUp: false, link: '/repairs', color: 'text-rose-700', bg: 'bg-rose-50/50' }
+    { 
+      label: 'Total Vehicle', 
+      value: counts.totalStock, 
+      sub: `${counts.totalStock} Units in Fleet`, 
+      link: '/vehicles', 
+      icon: Car, 
+      bgLight: 'bg-blue-50 text-blue-600',
+      hoverBar: 'group-hover:bg-blue-600 group-hover:text-white',
+      moreText: 'View Inventory'
+    },
+    { 
+      label: 'Gate Inward', 
+      value: counts.receivingPending, 
+      sub: `${counts.receivingPending} En-route Trailer`, 
+      link: '/receiving', 
+      icon: Truck, 
+      bgLight: 'bg-amber-50 text-amber-600',
+      hoverBar: 'group-hover:bg-amber-500 group-hover:text-white',
+      moreText: 'Receiving Desk'
+    },
+    { 
+      label: 'Yard Stock', 
+      value: counts.inYard, 
+      sub: `${counts.inYard} On-site in Bays`, 
+      link: '/vehicles', 
+      icon: Building, 
+      bgLight: 'bg-slate-100 text-slate-700',
+      hoverBar: 'group-hover:bg-slate-800 group-hover:text-white',
+      moreText: 'Yard Stock'
+    },
+    { 
+      label: 'PDI Pending', 
+      value: counts.pdiPending, 
+      sub: `${counts.pdiPending} Ready for Check`, 
+      link: '/pdi', 
+      icon: Clock, 
+      bgLight: 'bg-orange-50 text-orange-600',
+      hoverBar: 'group-hover:bg-orange-500 group-hover:text-white',
+      moreText: 'PDI Workstation'
+    },
+    { 
+      label: 'PDI Certified', 
+      value: counts.pdiDone, 
+      sub: `${counts.pdiDone} QA Passed`, 
+      link: '/pdi', 
+      icon: CheckCircle2, 
+      bgLight: 'bg-emerald-50 text-emerald-600',
+      hoverBar: 'group-hover:bg-emerald-600 group-hover:text-white',
+      moreText: 'Certificates'
+    },
+    { 
+      label: 'Bookings', 
+      value: counts.totalBookings, 
+      sub: `${counts.totalBookings} Active Orders`, 
+      link: '/bookings', 
+      icon: Bookmark, 
+      bgLight: 'bg-indigo-50 text-indigo-600',
+      hoverBar: 'group-hover:bg-indigo-600 group-hover:text-white',
+      moreText: 'Booking Desk'
+    },
+    { 
+      label: 'VIN Allocated', 
+      value: counts.allocatedVehicles, 
+      sub: `${counts.allocatedVehicles} Tagged to Order`, 
+      link: '/bookings', 
+      icon: UserCheck, 
+      bgLight: 'bg-purple-50 text-purple-600',
+      hoverBar: 'group-hover:bg-purple-600 group-hover:text-white',
+      moreText: 'Allocations'
+    },
+    { 
+      label: 'In Workshop', 
+      value: counts.inRepair, 
+      sub: `${counts.inRepair} Active Job Cards`, 
+      link: '/repairs', 
+      icon: Wrench, 
+      bgLight: 'bg-rose-50 text-rose-600',
+      hoverBar: 'group-hover:bg-rose-600 group-hover:text-white',
+      moreText: 'Workshop Repairs'
+    }
   ];
 
   // Dynamic Multi-Franchise Model Distribution
@@ -152,27 +224,37 @@ export const DashboardPage: React.FC = () => {
         </h1>
       </div>
 
-      {/* 2. Executive 8-Metric KPI Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-        {kpis.map((kpi, idx) => (
-          <Link
-            key={idx}
-            to={kpi.link}
-            className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between"
-          >
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
-              {kpi.label}
-            </span>
-            <div className="my-1">
-              <span className="text-lg font-bold font-mono text-slate-900">
-                {kpi.value}
-              </span>
-            </div>
-            <span className="text-[10px] font-medium text-slate-500 truncate block">
-              {kpi.change}
-            </span>
-          </Link>
-        ))}
+      {/* 2. AdminLTE-Inspired Small-Box Metric Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+        {kpis.map((kpi, idx) => {
+          const Icon = kpi.icon;
+          return (
+            <Link
+              key={idx}
+              to={kpi.link}
+              className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden flex flex-col justify-between hover:shadow-md transition-all group"
+            >
+              <div className="p-3.5 flex items-start justify-between">
+                <div>
+                  <div className="text-xl font-bold font-mono text-slate-900 leading-none">
+                    {kpi.value}
+                  </div>
+                  <p className="text-[11px] font-semibold text-slate-600 mt-1.5 uppercase tracking-wider">
+                    {kpi.label}
+                  </p>
+                </div>
+                <div className={`w-8 h-8 rounded-lg ${kpi.bgLight} flex items-center justify-center shrink-0`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className={`px-3 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-500 ${kpi.hoverBar} transition-colors`}>
+                <span>{kpi.moreText}</span>
+                <ArrowRight className="w-3 h-3" />
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* 3. Central Full-Width Operations Table */}
