@@ -7,10 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
-const SEED_REPAIRS = [
-  { id: 'rep-1', vin: 'MAT612345N1234563', model: 'Tata Nexon', issueType: 'ELECTRICAL', severity: 'MAJOR', description: 'Infotainment display blank on cold start & rear wiper motor loose connection', assignedTo: 'Suresh Patil (Senior Electrician)', status: 'IN_PROGRESS', createdAt: '2026-08-25T09:30:00Z', brand: 'TATA' },
-  { id: 'rep-2', vin: 'MALC12345V3344553', model: 'Hyundai Verna', issueType: 'BODY_PAINT', severity: 'MINOR', description: 'Minor scratch on left rear quarter panel during transit unloading', assignedTo: 'Kishore Mali (Paint Specialist)', status: 'IN_PROGRESS', createdAt: '2026-08-25T10:15:00Z', brand: 'HYUNDAI' }
-];
+const SEED_REPAIRS: any[] = [];
 
 export const RepairsPage: React.FC = () => {
   const { currentBrand } = useAuth();

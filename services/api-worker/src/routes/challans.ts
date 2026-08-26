@@ -1,6 +1,6 @@
+import { Env } from '../index';
 import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
-import { Env } from '../index';
 
 export const challansRouter = new Hono<{ Bindings: Env; Variables: any }>();
 
@@ -10,7 +10,6 @@ let localChallansStore: any[] = [];
 challansRouter.get('/', async (c) => {
   const orgId = c.req.query('organization_id');
   const search = c.req.query('search');
-  const status = c.req.query('status');
 
   let results: any[] = [...localChallansStore];
 
@@ -27,36 +26,21 @@ challansRouter.get('/', async (c) => {
   } catch (e) {}
 
   if (orgId && orgId !== 'ALL') {
-    results = results.filter(c => c.organization_id === orgId);
+    results = results.filter(ch => ch.organization_id === orgId);
   }
-  if (status && status !== 'ALL') {
-    results = results.filter(c => c.status === status);
-  }
+
   if (search) {
     const q = search.toLowerCase();
-    results = results.filter(c => 
-      (c.customer_name || '').toLowerCase().includes(q) ||
-      (c.challan_no || '').toLowerCase().includes(q) ||
-      (c.invoice_no || '').toLowerCase().includes(q) ||
-      (c.vin_no || '').toLowerCase().includes(q) ||
-      (c.mobile || '').includes(q) ||
-      (c.model || '').toLowerCase().includes(q)
+    results = results.filter(ch => 
+      (ch.challan_no || '').toLowerCase().includes(q) ||
+      (ch.invoice_no || '').toLowerCase().includes(q) ||
+      (ch.customer_name || '').toLowerCase().includes(q) ||
+      (ch.vin_no || '').toLowerCase().includes(q) ||
+      (ch.model || '').toLowerCase().includes(q)
     );
   }
 
   return c.json({ success: true, data: results, meta: { total: results.length } });
-});
-
-// POST /api/v1/challans — Create single invoice/challan
-challansRouter.post('/', async (c) => {
-  const b = await c.req.json();
-  const newRecord = {
-    id: `chl-${Date.now()}`,
-    ...b,
-    created_at: new Date().toISOString()
-  };
-  localChallansStore = [newRecord, ...localChallansStore];
-  return c.json({ success: true, data: newRecord }, 201);
 });
 
 // POST /api/v1/challans/bulk-import
@@ -64,8 +48,30 @@ challansRouter.post('/bulk-import', async (c) => {
   const body = await c.req.json();
   const items = body.records || body.challans || [];
   if (!Array.isArray(items) || items.length === 0) {
-    return c.json({ success: false, error: { message: 'Invalid or empty challans list' } }, 400);
+    return c.json({ success: false, error: { message: 'Invalid or empty records list' } }, 400);
   }
+
   localChallansStore = [...items, ...localChallansStore];
+
+  try {
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    const sanitized = items.map((r: any) => ({
+      challan_no: r.challan_no || `CH-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      invoice_no: r.invoice_no || `INV-${Date.now()}`,
+      customer_name: r.customer_name || 'Valued Customer',
+      vin_no: r.vin_no || r.vin || 'VIN-PENDING',
+      model: r.model || 'Standard Model',
+      variant: r.variant || 'Standard Variant',
+      colour: r.colour || r.color || 'Standard Colour',
+      sale_consultant: r.sales_consultant || r.sale_consultant || null,
+      team_leader: r.team_leader || null,
+      financier_name: r.financier_name || null,
+      status: r.status || 'INVOICED',
+      organization_id: r.organization_id || '11111111-1111-1111-1111-111111111111'
+    }));
+
+    await supabase.from('challan_invoices').insert(sanitized);
+  } catch (e) {}
+
   return c.json({ success: true, data: { imported_count: items.length, total_count: localChallansStore.length } }, 201);
 });

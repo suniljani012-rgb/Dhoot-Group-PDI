@@ -305,7 +305,16 @@ export const syncWithSupabase = async () => {
       }
     } catch (e) {}
 
-    // 3. Fetch Stockyards & Branches
+    // 3. Fetch Live Challans from Database
+    try {
+      const { data: dbChallans } = await supabase.from('challan_invoices').select('*');
+      if (dbChallans && Array.isArray(dbChallans)) {
+        localStorage.setItem('dhoot_challans_inventory', JSON.stringify(dbChallans));
+        window.dispatchEvent(new Event('challans-updated'));
+      }
+    } catch (e) {}
+
+    // 4. Fetch Stockyards & Branches
     try {
       const { data: dbYards } = await supabase.from('stockyards').select('*');
       if (dbYards && Array.isArray(dbYards) && dbYards.length > 0) {

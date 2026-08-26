@@ -15,8 +15,9 @@ bookingsRouter.get('/', async (c) => {
   let results: any[] = [...localBookingsStore];
 
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY || c.env.SUPABASE_ANON_KEY);
-    let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    // Exclude STK- prefix records which belong to stock
+    let query = supabase.from('bookings').select('*').not('receipt_no', 'like', 'STK-%').order('created_at', { ascending: false });
     if (orgId && orgId !== 'ALL') {
       query = query.eq('organization_id', orgId);
     }
@@ -61,8 +62,8 @@ bookingsRouter.post('/bulk-import', async (c) => {
   localBookingsStore = [...items, ...localBookingsStore];
 
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY || c.env.SUPABASE_ANON_KEY);
-    await supabase.from('bookings').upsert(items, { onConflict: 'receipt_no' });
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    await supabase.from('bookings').insert(items);
   } catch (e) {}
 
   return c.json({ success: true, data: { imported_count: items.length, total_count: localBookingsStore.length } }, 201);

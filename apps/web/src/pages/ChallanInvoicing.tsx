@@ -14,7 +14,7 @@ import * as XLSX from 'xlsx';
 import { formatDate } from '../utils/dateUtils';
 import { 
   getChallansForBrand, saveChallansInventory,
-  getVehiclesForBrand
+  getVehiclesForBrand, syncWithSupabase
 } from '../data/seedData';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
@@ -128,6 +128,10 @@ export const ChallanInvoicingPage: React.FC = () => {
     'Invoice Date',
     'Invoice No.'
   ];
+
+  useEffect(() => {
+    syncWithSupabase();
+  }, []);
 
   useEffect(() => {
     fetchChallans();
