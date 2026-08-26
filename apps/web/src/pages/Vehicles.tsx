@@ -259,24 +259,24 @@ export const VehiclesPage: React.FC = () => {
                         {v.status === 'YARD_RECEIVING_PENDING' ? (
                           <Link
                             to="/receiving"
-                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
+                            className="h-7 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs"
                           >
                             Receive
                           </Link>
-                        ) : v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY' ? (
+                        ) : v.status === 'PDI_APPROVED' ? (
                           <Link
-                            to="/certificates/cert-101"
-                            className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1"
+                            to={`/certificate/${v.id}`}
+                            className="h-7 px-2.5 rounded bg-ok/10 text-ok border border-ok/20 hover:bg-ok hover:text-white text-xs font-semibold transition-colors inline-flex items-center gap-1 whitespace-nowrap"
                           >
                             Certified
                           </Link>
                         ) : (
                           <Link
                             to="/pdi"
-                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
+                            className="h-7 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs"
                           >
                             <span>Inspect</span>
-                            <ChevronRight className="w-3 h-3 text-ink-3" />
+                            <ChevronRight className="w-3.5 h-3.5 text-ink-3" />
                           </Link>
                         )}
                       </td>

@@ -208,18 +208,19 @@ export const RepairsPage: React.FC = () => {
                           {t.status}
                         </Badge>
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
                         {t.status !== 'COMPLETED' ? (
                           <button
                             onClick={() => markComplete(t.id)}
-                            className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            className="h-7 px-2.5 rounded bg-ok text-white text-xs font-semibold transition-colors inline-flex items-center gap-1 whitespace-nowrap shadow-xs cursor-pointer"
                           >
-                            <Check className="w-3 h-3 stroke-[3]" />
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                             <span>Repaired</span>
                           </button>
                         ) : (
-                          <span className="text-[11px] font-medium text-ok inline-flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Cleared
+                          <span className="text-xs text-ok font-semibold inline-flex items-center gap-1 whitespace-nowrap">
+                            <Check className="w-3.5 h-3.5" />
+                            Done
                           </span>
                         )}
                       </td>

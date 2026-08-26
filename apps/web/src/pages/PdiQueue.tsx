@@ -230,13 +230,13 @@ export const PdiQueuePage: React.FC = () => {
                       <td className="py-2.5 px-3 text-ink-3 tnum text-[11px]">
                         {s.elapsedTime}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
                         <Link
                           to={`/pdi/${s.id}`}
-                          className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
+                          className="h-7 px-3 rounded bg-accent text-white hover:bg-accent-600 text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer"
                         >
                           <span>{s.progress > 0 ? 'Resume' : 'Start PDI'}</span>
-                          <ChevronRight className="w-3 h-3 text-ink-3" />
+                          <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
                       </td>
                     </tr>

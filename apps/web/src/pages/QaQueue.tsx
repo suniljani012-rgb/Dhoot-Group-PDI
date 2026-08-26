@@ -198,20 +198,20 @@ export const QaQueuePage: React.FC = () => {
                           {isApproved ? 'Approved & Certified' : 'QA Review Pending'}
                         </Badge>
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
                         {!isApproved ? (
-                          <div className="flex items-center justify-center gap-1.5">
+                          <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => handleApprove(item.id)}
-                              className="h-6 px-2 rounded bg-ok/10 text-ok border border-ok/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
+                              className="h-7 px-2.5 rounded bg-ok text-white text-xs font-semibold transition-colors inline-flex items-center gap-1 whitespace-nowrap shadow-xs cursor-pointer"
                             >
-                              <Check className="w-3 h-3 stroke-[3]" />
+                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                               <span>Approve</span>
                             </button>
                             <button
                               type="button"
-                              className="h-6 px-2 rounded bg-danger/10 text-danger border border-danger/20 text-xs font-medium transition-colors cursor-pointer"
+                              className="h-7 px-2.5 rounded bg-surface border border-danger/30 text-danger hover:bg-danger/10 text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
                             >
                               Reject
                             </button>
@@ -219,9 +219,9 @@ export const QaQueuePage: React.FC = () => {
                         ) : (
                           <Link
                             to={`/certificates/${item.certId}`}
-                            className="h-6 px-2 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors inline-flex items-center gap-1"
+                            className="h-7 px-2.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink transition-colors inline-flex items-center gap-1 whitespace-nowrap shadow-xs"
                           >
-                            <FileText className="w-3 h-3 text-ok" />
+                            <FileText className="w-3.5 h-3.5 text-ok" />
                             <span>Certificate</span>
                           </Link>
                         )}
