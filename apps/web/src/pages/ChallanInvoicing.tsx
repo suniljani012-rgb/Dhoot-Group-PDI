@@ -174,76 +174,103 @@ export const ChallanInvoicingPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  const cleanHeader = (h: string) => String(h || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
   const processChallanGrid = (grid: any[][]) => {
     if (!grid || grid.length <= 1) {
       setParsedRows([]);
+      setImportError('Spreadsheet appears to be empty.');
       return;
     }
 
-    let headerRowIdx = 0;
-    for (let r = 0; r < Math.min(6, grid.length); r++) {
-      const rowStr = grid[r].map(c => String(c || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join(' ');
-      if (rowStr.includes('challan') || rowStr.includes('invoice') || rowStr.includes('customer')) {
-        headerRowIdx = r;
-        break;
+    // 1. Find Header Row (Scan top 10 rows for highest keyword match)
+    let bestHeaderRowIdx = 0;
+    let maxMatchCount = 0;
+
+    const keywords = ['booking', 'challan', 'invoice', 'customer', 'vin', 'chassis', 'mobile', 'model', 'variant', 'colour', 'amount', 'date', 'price', 'discount', 'net'];
+
+    for (let r = 0; r < Math.min(10, grid.length); r++) {
+      const rowStr = grid[r].map(c => cleanHeader(String(c || ''))).join(' ');
+      let matches = 0;
+      keywords.forEach(kw => {
+        if (rowStr.includes(kw)) matches++;
+      });
+
+      if (matches > maxMatchCount) {
+        maxMatchCount = matches;
+        bestHeaderRowIdx = r;
       }
     }
 
+    const headerRowIdx = bestHeaderRowIdx;
     const rawHeaders = grid[headerRowIdx].map(h => String(h || '').trim());
-    const findCol = (names: string[]): number => {
+
+    const findCol = (aliases: string[]): number => {
       return rawHeaders.findIndex(h => {
-        const clean = String(h || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        return names.some(n => clean === n.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        const clean = cleanHeader(h);
+        return aliases.some(alias => {
+          const cleanAlias = cleanHeader(alias);
+          return clean === cleanAlias || (clean.length >= 4 && clean.includes(cleanAlias)) || (cleanAlias.length >= 4 && cleanAlias.includes(clean));
+        });
       });
     };
 
-    const idxBookingDate = findCol(['Booking Date', 'BookingDate']);
-    const idxChallanNo = findCol(['Challan No', 'ChallanNo', 'Challan Number']);
-    const idxChallanDate = findCol(['Challan Date', 'ChallanDate']);
-    const idxDeliveryDate = findCol(['Delivery Date', 'DeliveryDate']);
-    const idxChallanType = findCol(['Challan Type', 'ChallanType', 'Type']);
-    const idxVinNo = findCol(['Vin No', 'VinNo', 'VIN', 'Chassis No']);
-    const idxCustomerName = findCol(['Customer Name', 'CustomerName', 'Customer']);
-    const idxMobile = findCol(['Mobile', 'Mobile No', 'Phone']);
-    const idxCity = findCol(['City', 'Location']);
-    const idxModel = findCol(['Model', 'Vehicle Model']);
-    const idxVariant = findCol(['Variant', 'Trim']);
-    const idxColour = findCol(['Colour', 'Color']);
-    const idxSalesConsultant = findCol(['Sale Consultant', 'Sales Consultant', 'SC']);
-    const idxTeamLeader = findCol(['Team Leader', 'TL']);
-    const idxFinancier = findCol(['Financier Name', 'Financier', 'Bank']);
-    const idxCorporate = findCol(['Corporate']);
-    const idxExchange = findCol(['Exchange']);
-    const idxExShowroom = findCol(['Ex Show Room', 'Ex Showroom', 'ExShowRoom']);
-    const idxDiscount = findCol(['Discount']);
-    const idxNet = findCol(['Net']);
-    const idxInsurancePer = findCol(['Insurance Per', 'Insurance %']);
-    const idxInsuranceAmt = findCol(['Insurance Amount', 'Insurance Amt']);
-    const idxEp = findCol(['Ep', 'EP']);
-    const idxRti = findCol(['Rti', 'RTI']);
-    const idxCm = findCol(['Cm', 'CM']);
-    const idxRtoCity = findCol(['Rto City', 'RTO City']);
-    const idxRtoAmt = findCol(['Rto Amount', 'RTO Amount', 'RTO']);
-    const idxHmlAcc = findCol(['Hml Acc', 'HML Acc']);
-    const idxOwnAcc = findCol(['Own Acc']);
-    const idxAccDisc = findCol(['Acc Discount Amount', 'Acc Discount']);
-    const idxAccAmt = findCol(['Acc Amount', 'Accessories Amount']);
-    const idxTrc = findCol(['Trc', 'TRC']);
-    const idxWarranty = findCol(['Warranty', 'EW']);
-    const idxHandling = findCol(['Handling Charges', 'Handling']);
-    const idxOther = findCol(['Other', 'Other Charges']);
-    const idxFastTag = findCol(['Fast Tag', 'FastTag']);
-    const idxTcs = findCol(['TCS', 'Tcs']);
-    const idxNetAmount = findCol(['Net Amount', 'Total Net Amount', 'Invoice Total']);
-    const idxInvoiceDate = findCol(['Invoice Date', 'InvoiceDate']);
-    const idxInvoiceNo = findCol(['Invoice No.', 'Invoice No', 'Invoice Number']);
+    // Robust 40-Column Header Aliases
+    const idxBookingDate = findCol(['Booking Date', 'BookingDate', 'Bkg Date', 'Book Date', 'Booking_Date', 'Date of Booking']);
+    const idxChallanNo = findCol(['Challan No', 'ChallanNo', 'Challan Number', 'Challan_No', 'Gate Pass No', 'Gatepass No', 'GP No', 'Delivery Challan', 'DC No', 'Challan']);
+    const idxChallanDate = findCol(['Challan Date', 'ChallanDate', 'Challan_Date', 'GP Date', 'Gate Pass Date', 'DC Date']);
+    const idxDeliveryDate = findCol(['Delivery Date', 'DeliveryDate', 'Del Date', 'Del_Date', 'Promise Date', 'Promised Delivery Date', 'PDD']);
+    const idxChallanType = findCol(['Challan Type', 'ChallanType', 'Type', 'Delivery Type', 'Transaction Type']);
+    const idxVinNo = findCol(['Vin No', 'VinNo', 'VIN', 'Chassis No', 'Chassis Number', 'Chassis', 'VIN Number', 'Serial No']);
+    const idxCustomerName = findCol(['Customer Name', 'CustomerName', 'Customer', 'Party Name', 'Buyer Name', 'Purchaser', 'Client Name', 'Name']);
+    const idxMobile = findCol(['Mobile', 'Mobile No', 'Mobile Number', 'MobileNo', 'Phone', 'Phone No', 'Contact', 'Contact No', 'Cell']);
+    const idxCity = findCol(['City', 'Town', 'District', 'Location', 'Place', 'Area', 'Address']);
+    const idxModel = findCol(['Model', 'Vehicle Model', 'Car Model', 'Vehicle', 'Product', 'Item']);
+    const idxVariant = findCol(['Variant', 'Trim', 'Model Variant', 'Item Description', 'Description', 'Ver']);
+    const idxColour = findCol(['Colour', 'Color', 'Exterior Color', 'Paint', 'Color Description', 'Colour Description']);
+    const idxSalesConsultant = findCol(['Sale Consultant', 'Sales Consultant', 'Sales Executive', 'DSE', 'SC', 'Advisor', 'Sales Person', 'Executive']);
+    const idxTeamLeader = findCol(['Team Leader', 'Team Lead', 'TL', 'Group Leader']);
+    const idxFinancier = findCol(['Financier Name', 'Financier', 'Bank', 'Bank Name', 'Finance Company', 'Hypothecation', 'Hypo', 'Financer']);
+    const idxCorporate = findCol(['Corporate', 'Corp', 'Corporate Discount', 'Corporate Scheme']);
+    const idxExchange = findCol(['Exchange', 'Exch', 'Exchange Bonus', 'Exchange Discount']);
+    const idxExShowroom = findCol(['Ex Show Room', 'Ex Showroom', 'ExShowRoom', 'Ex Showroom Price', 'Ex-Showroom', 'Showroom Price', 'Basic Price', 'Base Price']);
+    const idxDiscount = findCol(['Discount', 'Disc', 'Total Discount', 'Consumer Discount', 'Scheme Discount']);
+    const idxNet = findCol(['Net', 'Net Ex Showroom', 'Net Price', 'Net Basic']);
+    const idxInsurancePer = findCol(['Insurance Per', 'Insurance %', 'Ins %', 'Ins Per', 'Insurance Percentage']);
+    const idxInsuranceAmt = findCol(['Insurance Amount', 'Insurance Amt', 'Insurance', 'Ins Amount', 'Ins Amt', 'Total Insurance']);
+    const idxEp = findCol(['Ep', 'EP', 'Engine Protect', 'Engine Protection']);
+    const idxRti = findCol(['Rti', 'RTI', 'Return to Invoice']);
+    const idxCm = findCol(['Cm', 'CM', 'Consumables', 'Consumable Cover']);
+    const idxRtoCity = findCol(['Rto City', 'RTO City', 'RTO Location', 'Passing City', 'Passing Location']);
+    const idxRtoAmt = findCol(['Rto Amount', 'RTO Amount', 'RTO', 'Registration Amount', 'Reg Amt', 'Road Tax', 'Tax Amount']);
+    const idxHmlAcc = findCol(['Hml Acc', 'HML Acc', 'HML Accessories', 'HML']);
+    const idxOwnAcc = findCol(['Own Acc', 'Own Accessories', 'Direct Acc']);
+    const idxAccDisc = findCol(['Acc Discount Amount', 'Acc Discount', 'Accessory Discount', 'Acc Disc']);
+    const idxAccAmt = findCol(['Acc Amount', 'Accessories Amount', 'Accessory Amount', 'Acc Amt', 'Accessories', 'VAS Amount']);
+    const idxTrc = findCol(['Trc', 'TRC', 'Temp Registration', 'Temp Reg', 'TRC Amount']);
+    const idxWarranty = findCol(['Warranty', 'EW', 'Extended Warranty', 'Ext Warranty', 'Warranty Amount']);
+    const idxHandling = findCol(['Handling Charges', 'Handling', 'Logistics', 'Logistic Charges', 'Depot Charges']);
+    const idxOther = findCol(['Other', 'Other Charges', 'Misc', 'Miscellaneous', 'Incidental']);
+    const idxFastTag = findCol(['Fast Tag', 'FastTag', 'Fastag', 'Fastag Amount']);
+    const idxTcs = findCol(['TCS', 'Tcs', 'TCS Amount', 'TCS %']);
+    const idxNetAmount = findCol(['Net Amount', 'Total Net Amount', 'Invoice Total', 'Invoice Amount', 'Total Amount', 'Grand Total', 'Bill Amount', 'Net Total']);
+    const idxInvoiceDate = findCol(['Invoice Date', 'InvoiceDate', 'Inv Date', 'Inv_Date', 'Bill Date', 'Billing Date', 'Tax Invoice Date']);
+    const idxInvoiceNo = findCol(['Invoice No.', 'Invoice No', 'Invoice Number', 'InvoiceNo', 'Inv No', 'Inv_No', 'Bill No', 'Bill Number', 'Tax Invoice No']);
 
-    const parseNum = (val: any) => Number(String(val || '0').replace(/[^0-9.-]/g, '')) || 0;
+    const parseNum = (val: any) => {
+      if (val === undefined || val === null) return 0;
+      const clean = String(val).replace(/[^0-9.-]/g, '');
+      const num = parseFloat(clean);
+      return isNaN(num) ? 0 : num;
+    };
 
-    const existingKeys = new Set(records.map(r => (r.challan_no || r.invoice_no || r.vin_no).toUpperCase().trim()));
-    const seenInSheet = new Set<string>();
+    const parseDateValue = (val: any) => {
+      if (!val) return formatDate(new Date());
+      return formatDate(val);
+    };
 
     const rows: ChallanRecord[] = [];
+    const seenInSheet = new Set<string>();
     let duplicateCount = 0;
 
     for (let i = headerRowIdx + 1; i < grid.length; i++) {
@@ -252,64 +279,86 @@ export const ChallanInvoicingPage: React.FC = () => {
         continue;
       }
 
-      const getVal = (colIdx: number, fallbackIdx?: number): string => {
-        if (colIdx >= 0 && cols[colIdx] !== undefined && cols[colIdx] !== null) return String(cols[colIdx]).trim();
-        if (fallbackIdx !== undefined && cols[fallbackIdx] !== undefined && cols[fallbackIdx] !== null) return String(cols[fallbackIdx]).trim();
+      const getColVal = (idx: number): string => {
+        if (idx >= 0 && idx < cols.length && cols[idx] !== undefined && cols[idx] !== null) {
+          const v = cols[idx];
+          if (v instanceof Date) return formatDate(v);
+          return String(v).trim();
+        }
         return '';
       };
 
-      const challanNo = getVal(idxChallanNo, 1) || `CHL-${202600 + i}`;
-      const invoiceNo = getVal(idxInvoiceNo, 39) || `INV-${202600 + i}`;
-      const vinNo = getVal(idxVinNo, 5) || `MAT${Date.now()}${i}`;
+      const challanNo = getColVal(idxChallanNo) || `CHL-${202600 + i}`;
+      const invoiceNo = getColVal(idxInvoiceNo) || `INV-${202600 + i}`;
+      const vinNo = getColVal(idxVinNo) || `MAT${Date.now()}${i}`;
+      const custName = getColVal(idxCustomerName) || `Customer ${i}`;
 
-      const dedupeKey = (challanNo || invoiceNo || vinNo).toUpperCase().trim();
-      if (existingKeys.has(dedupeKey) || seenInSheet.has(dedupeKey)) {
+      const dedupeKey = (challanNo + '_' + invoiceNo + '_' + vinNo).toUpperCase().trim();
+      if (seenInSheet.has(dedupeKey)) {
         duplicateCount++;
         continue;
       }
       seenInSheet.add(dedupeKey);
 
+      const exShowroom = parseNum(getColVal(idxExShowroom));
+      const discount = parseNum(getColVal(idxDiscount));
+      const net = parseNum(getColVal(idxNet)) || (exShowroom - discount);
+      const insuranceAmt = parseNum(getColVal(idxInsuranceAmt));
+      const rtoAmt = parseNum(getColVal(idxRtoAmt));
+      const accAmt = parseNum(getColVal(idxAccAmt));
+      const fastTag = parseNum(getColVal(idxFastTag)) || 500;
+      const tcs = parseNum(getColVal(idxTcs));
+      const other = parseNum(getColVal(idxOther));
+      const warranty = parseNum(getColVal(idxWarranty));
+      const handling = parseNum(getColVal(idxHandling));
+      const trc = parseNum(getColVal(idxTrc));
+
+      let netAmount = parseNum(getColVal(idxNetAmount));
+      if (netAmount === 0) {
+        netAmount = net + insuranceAmt + rtoAmt + accAmt + fastTag + tcs + other + warranty + handling + trc;
+      }
+
       rows.push({
         id: `chl-${Date.now()}-${i}`,
-        booking_date: getVal(idxBookingDate, 0) ? formatDate(getVal(idxBookingDate, 0)) : formatDate(new Date()),
+        booking_date: parseDateValue(getColVal(idxBookingDate)),
         challan_no: challanNo,
-        challan_date: getVal(idxChallanDate, 2) ? formatDate(getVal(idxChallanDate, 2)) : formatDate(new Date()),
-        delivery_date: getVal(idxDeliveryDate, 3) ? formatDate(getVal(idxDeliveryDate, 3)) : formatDate(new Date()),
-        challan_type: getVal(idxChallanType, 4) || 'TAX_INVOICE_DELIVERY',
+        challan_date: parseDateValue(getColVal(idxChallanDate)),
+        delivery_date: parseDateValue(getColVal(idxDeliveryDate)),
+        challan_type: getColVal(idxChallanType) || 'TAX_INVOICE_DELIVERY',
         vin_no: vinNo,
-        customer_name: getVal(idxCustomerName, 6) || `Customer ${i}`,
-        mobile: getVal(idxMobile, 7) || '+91 98000 00000',
-        city: getVal(idxCity, 8) || 'Jodhpur',
-        model: getVal(idxModel, 9) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari'),
-        variant: getVal(idxVariant, 10) || 'Standard',
-        colour: getVal(idxColour, 11) || 'White',
-        sale_consultant: getVal(idxSalesConsultant, 12) || 'Sales Desk',
-        team_leader: getVal(idxTeamLeader, 13) || '',
-        financier_name: getVal(idxFinancier, 14) || 'Self Funded',
-        corporate: getVal(idxCorporate, 15) || 'No',
-        exchange: getVal(idxExchange, 16) || 'No',
-        ex_showroom: parseNum(getVal(idxExShowroom, 17)),
-        discount: parseNum(getVal(idxDiscount, 18)),
-        net: parseNum(getVal(idxNet, 19)),
-        insurance_per: parseNum(getVal(idxInsurancePer, 20)),
-        insurance_amount: parseNum(getVal(idxInsuranceAmt, 21)),
-        ep: parseNum(getVal(idxEp, 22)),
-        rti: parseNum(getVal(idxRti, 23)),
-        cm: parseNum(getVal(idxCm, 24)),
-        rto_city: getVal(idxRtoCity, 25) || 'Jodhpur',
-        rto_amount: parseNum(getVal(idxRtoAmt, 26)),
-        hml_acc: parseNum(getVal(idxHmlAcc, 27)),
-        own_acc: parseNum(getVal(idxOwnAcc, 28)),
-        acc_discount_amount: parseNum(getVal(idxAccDisc, 29)),
-        acc_amount: parseNum(getVal(idxAccAmt, 30)),
-        trc: parseNum(getVal(idxTrc, 31)),
-        warranty: parseNum(getVal(idxWarranty, 32)),
-        handling_charges: parseNum(getVal(idxHandling, 33)),
-        other: parseNum(getVal(idxOther, 34)),
-        fast_tag: parseNum(getVal(idxFastTag, 35)),
-        tcs: parseNum(getVal(idxTcs, 36)),
-        net_amount: parseNum(getVal(idxNetAmount, 37)),
-        invoice_date: getVal(idxInvoiceDate, 38) ? formatDate(getVal(idxInvoiceDate, 38)) : formatDate(new Date()),
+        customer_name: custName,
+        mobile: getColVal(idxMobile) || '+91 98290 12345',
+        city: getColVal(idxCity) || 'Jodhpur',
+        model: getColVal(idxModel) || (currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai Creta' : 'Tata Safari'),
+        variant: getColVal(idxVariant) || 'Accomplished / SX',
+        colour: getColVal(idxColour) || 'White / Black',
+        sale_consultant: getColVal(idxSalesConsultant) || 'Sales Desk',
+        team_leader: getColVal(idxTeamLeader) || '',
+        financier_name: getColVal(idxFinancier) || 'Self Funded',
+        corporate: getColVal(idxCorporate) || 'No',
+        exchange: getColVal(idxExchange) || 'No',
+        ex_showroom: exShowroom,
+        discount: discount,
+        net: net,
+        insurance_per: parseNum(getColVal(idxInsurancePer)),
+        insurance_amount: insuranceAmt,
+        ep: parseNum(getColVal(idxEp)),
+        rti: parseNum(getColVal(idxRti)),
+        cm: parseNum(getColVal(idxCm)),
+        rto_city: getColVal(idxRtoCity) || getColVal(idxCity) || 'Jodhpur',
+        rto_amount: rtoAmt,
+        hml_acc: parseNum(getColVal(idxHmlAcc)),
+        own_acc: parseNum(getColVal(idxOwnAcc)),
+        acc_discount_amount: parseNum(getColVal(idxAccDisc)),
+        acc_amount: accAmt,
+        trc: trc,
+        warranty: warranty,
+        handling_charges: handling,
+        other: other,
+        fast_tag: fastTag,
+        tcs: tcs,
+        net_amount: netAmount,
+        invoice_date: parseDateValue(getColVal(idxInvoiceDate)),
         invoice_no: invoiceNo,
         status: 'INVOICED',
         created_at: new Date().toISOString()

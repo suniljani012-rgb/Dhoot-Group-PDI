@@ -14,18 +14,14 @@ export function formatDate(input: string | number | Date | null | undefined): st
   if (!input) return '—';
 
   try {
-    // If input is an Excel serial date number (e.g., 45529)
-    if (typeof input === 'number' || (!isNaN(Number(input)) && !String(input).includes('-') && !String(input).includes('/'))) {
-      const serial = Number(input);
-      if (serial > 20000 && serial < 80000) {
-        // Excel serial date formula: (serial - 25569) * 86400 * 1000
-        const jsDate = new Date((serial - 25569) * 86400 * 1000);
-        if (!isNaN(jsDate.getTime())) {
-          const day = String(jsDate.getDate()).padStart(2, '0');
-          const month = MONTH_NAMES[jsDate.getMonth()];
-          const year = jsDate.getFullYear();
-          return `${day}-${month}-${year}`;
-        }
+    // If input is an Excel serial date number (e.g., 45529 for year 2024-2026)
+    if (typeof input === 'number' && input >= 40000 && input <= 65000) {
+      const jsDate = new Date((input - 25569) * 86400 * 1000);
+      if (!isNaN(jsDate.getTime())) {
+        const day = String(jsDate.getDate()).padStart(2, '0');
+        const month = MONTH_NAMES[jsDate.getMonth()];
+        const year = jsDate.getFullYear();
+        return `${day}-${month}-${year}`;
       }
     }
 
