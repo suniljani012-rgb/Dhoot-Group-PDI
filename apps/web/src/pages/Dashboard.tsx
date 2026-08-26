@@ -7,7 +7,7 @@ import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards } from '.
 import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
 import { Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, ArrowRight, Sliders, ShieldCheck } from 'lucide-react';
 
-const normalizeStr = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const norm = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export const DashboardPage: React.FC = () => {
   const { currentBrand } = useAuth();
@@ -53,15 +53,15 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // 1. Dynamic Stockyard Network Matrix from Active Yards & Real Stock
+  // 1. Dynamic Stockyard Network Matrix (Without Yard In-Charge Column)
   const yardFacilities = useMemo(() => {
     const activeYards = getActiveStockyards(currentBrand?.code);
 
     return activeYards.map(yard => {
-      const yardNameNorm = normalizeStr(yard.name);
+      const yardNameNorm = norm(yard.name);
       
       const yardVehicles = fleetList.filter(v => {
-        const vLocNorm = normalizeStr(v.location);
+        const vLocNorm = norm(v.location);
         return vLocNorm === yardNameNorm || vLocNorm.includes(yardNameNorm) || yardNameNorm.includes(vLocNorm);
       });
 
@@ -78,8 +78,6 @@ export const DashboardPage: React.FC = () => {
         brand: yard.brand,
         city: yard.city,
         capacity: yard.capacity,
-        manager: yard.manager,
-        phone: yard.phone,
         physicalStock,
         allocated,
         freeStock,
@@ -89,30 +87,32 @@ export const DashboardPage: React.FC = () => {
     });
   }, [currentBrand?.code, fleetList]);
 
-  // 2. Comprehensive Model-Wise Demand & Allocation Ledger (100% Real Live Data)
+  // 2. Comprehensive Model-Wise Demand & PBNA/VNA Ledger
+  // PBNA = Pending booking, vehicle IS in stock
+  // VNA = Pending booking, vehicle IS NOT in stock
   const modelMatrix = useMemo(() => {
-    // Collect all unique model names from live stock and bookings
-    const knownModels = currentBrand.models.map(m => ({ name: m, brand: currentBrand.name }));
     const stockModelNames = fleetList.map(v => v.model).filter(Boolean);
     const bookingModelNames = bookingsList.map(b => b.model).filter(Boolean);
     const allUniqueNames = Array.from(new Set([...currentBrand.models, ...stockModelNames, ...bookingModelNames]));
 
     return allUniqueNames.map(modelName => {
-      const normModel = normalizeStr(modelName);
+      const normModel = norm(modelName);
 
       // Bookings for this model
-      const modelBookings = bookingsList.filter(b => normalizeStr(b.model) === normModel || normModel.includes(normalizeStr(b.model)));
+      const modelBookings = bookingsList.filter(b => norm(b.model) === normModel || normModel.includes(norm(b.model)));
       const totalBookings = modelBookings.length;
       const allocatedBookings = modelBookings.filter(b => !!b.allocated_vin_no).length;
-      const pbna = Math.max(0, totalBookings - allocatedBookings);
+      const unallocatedBookings = modelBookings.filter(b => !b.allocated_vin_no);
 
       // Stock for this model
-      const modelVehicles = fleetList.filter(v => normalizeStr(v.model) === normModel || normModel.includes(normalizeStr(v.model)));
+      const modelVehicles = fleetList.filter(v => norm(v.model) === normModel || normModel.includes(norm(v.model)));
       const physicalInYard = modelVehicles.filter(v => v.status !== 'YARD_RECEIVING_PENDING' && v.location !== 'In Transit').length;
       const freeYardStock = modelVehicles.filter(v => v.status !== 'YARD_RECEIVING_PENDING' && v.location !== 'In Transit' && !v.customer_name && v.status !== 'ALLOCATED').length;
       const inTransit = modelVehicles.filter(v => v.location === 'In Transit' || v.status === 'YARD_RECEIVING_PENDING').length;
       
-      const indentRequired = Math.max(0, pbna - freeYardStock);
+      // Calculate PBNA vs VNA for this model
+      const pbna = Math.min(unallocatedBookings.length, freeYardStock);
+      const vna = Math.max(0, unallocatedBookings.length - freeYardStock);
       const allocRate = totalBookings > 0 ? Math.round((allocatedBookings / totalBookings) * 100) : (physicalInYard > 0 ? 100 : 0);
 
       return {
@@ -121,10 +121,10 @@ export const DashboardPage: React.FC = () => {
         totalBookings,
         allocatedBookings,
         pbna,
+        vna,
         physicalInYard,
         freeYardStock,
         inTransit,
-        indentRequired,
         allocRate
       };
     });
@@ -146,7 +146,7 @@ export const DashboardPage: React.FC = () => {
         }
       />
 
-      {/* 2. Top 8 KPI Metric Cards Row (Clean, readable, actionable) */}
+      {/* 2. Top 8 KPI Metric Cards Row (Clean, readable, actionable with exact PBNA & VNA) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
         <Stat 
           label="Total Bookings" 
@@ -162,14 +162,21 @@ export const DashboardPage: React.FC = () => {
           tone="ok"
         />
         <Stat 
-          label="PBNA Bookings" 
+          label="PBNA (Vehicle in Stock)" 
           value={counts.totalPbnaVehicle} 
-          note="Pending Allocation" 
+          note="Stock Available for Allotment" 
           tone={counts.totalPbnaVehicle > 0 ? 'warn' : 'default'} 
           to="/bookings" 
         />
         <Stat 
-          label="Physical Stock" 
+          label="VNA (Vehicle Not in Stock)" 
+          value={counts.totalVnaVehicle} 
+          note="Factory Indent Required" 
+          tone={counts.totalVnaVehicle > 0 ? 'danger' : 'default'} 
+          to="/bookings" 
+        />
+        <Stat 
+          label="Physical Yard Stock" 
           value={counts.totalPhysicalStock} 
           note="In Dealership Yards" 
           to="/vehicles" 
@@ -188,13 +195,6 @@ export const DashboardPage: React.FC = () => {
           to="/receiving" 
         />
         <Stat 
-          label="Indent Deficit" 
-          value={counts.orderRequired} 
-          note="Reorder Needed" 
-          tone={counts.orderRequired > 0 ? 'danger' : 'default'} 
-          to="/bookings" 
-        />
-        <Stat 
           label="PDI Certified" 
           value={counts.pdiDone} 
           note="Ready for Delivery" 
@@ -203,7 +203,7 @@ export const DashboardPage: React.FC = () => {
         />
       </div>
 
-      {/* 3. Section: Stockyard & Facility Network (100% Real Live Active Yards) */}
+      {/* 3. Section: Stockyard & Facility Network (Without Yard In-Charge Column) */}
       <Panel 
         title={
           <div className="flex items-center gap-2">
@@ -226,7 +226,6 @@ export const DashboardPage: React.FC = () => {
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Stockyard Facility</th>
                 <th className="py-2.5 px-3">Location / City</th>
-                <th className="py-2.5 px-3">Yard In-Charge</th>
                 <th className="py-2.5 px-3 text-right">Physical Stock</th>
                 <th className="py-2.5 px-3 text-right">VIN Allocated</th>
                 <th className="py-2.5 px-3 text-right">Free Stock (VNA)</th>
@@ -248,9 +247,6 @@ export const DashboardPage: React.FC = () => {
                   </td>
                   <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
                     {yard.city}
-                  </td>
-                  <td className="py-2.5 px-3 text-ink whitespace-nowrap">
-                    {yard.manager}
                   </td>
                   <td className="py-2.5 px-3 text-right font-bold text-ink tnum">
                     {yard.physicalStock}
@@ -277,7 +273,7 @@ export const DashboardPage: React.FC = () => {
         </div>
       </Panel>
 
-      {/* 4. Section: Model-Wise Demand & Allocation Ledger */}
+      {/* 4. Section: Model-Wise Demand & PBNA/VNA Allocation Ledger */}
       <Panel 
         title={
           <div className="flex items-center gap-2">
@@ -303,11 +299,11 @@ export const DashboardPage: React.FC = () => {
                 <th className="py-2.5 px-3">Vehicle Model</th>
                 <th className="py-2.5 px-3 text-right">Customer Bookings</th>
                 <th className="py-2.5 px-3 text-right">VIN Allocated</th>
-                <th className="py-2.5 px-3 text-right">PBNA (Pending)</th>
+                <th className="py-2.5 px-3 text-right">PBNA (Vehicle in Stock)</th>
+                <th className="py-2.5 px-3 text-right">VNA (Vehicle Not in Stock)</th>
                 <th className="py-2.5 px-3 text-right">Physical Yard Stock</th>
                 <th className="py-2.5 px-3 text-right">Free Stock (VNA)</th>
                 <th className="py-2.5 px-3 text-right">In-Transit</th>
-                <th className="py-2.5 px-3 text-right">Indent Deficit</th>
                 <th className="py-2.5 px-3 w-40">Allocation Rate</th>
               </tr>
             </thead>
@@ -326,8 +322,15 @@ export const DashboardPage: React.FC = () => {
                   <td className="py-2.5 px-3 text-right font-medium text-ok tnum">
                     {item.allocatedBookings}
                   </td>
-                  <td className="py-2.5 px-3 text-right font-medium text-warn tnum">
+                  <td className="py-2.5 px-3 text-right font-bold text-warn tnum">
                     {item.pbna}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-bold tnum">
+                    {item.vna > 0 ? (
+                      <span className="text-danger">+{item.vna}</span>
+                    ) : (
+                      <span className="text-ink-3">0</span>
+                    )}
                   </td>
                   <td className="py-2.5 px-3 text-right font-medium text-ink tnum">
                     {item.physicalInYard}
@@ -337,13 +340,6 @@ export const DashboardPage: React.FC = () => {
                   </td>
                   <td className="py-2.5 px-3 text-right font-medium text-ink-3 tnum">
                     {item.inTransit}
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-bold tnum">
-                    {item.indentRequired > 0 ? (
-                      <span className="text-danger">+{item.indentRequired}</span>
-                    ) : (
-                      <span className="text-ok">0</span>
-                    )}
                   </td>
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">

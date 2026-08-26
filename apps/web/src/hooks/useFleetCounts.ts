@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getVehiclesForBrand, getBookingsForBrand, getChallansForBrand } from '../data/seedData';
+import { getVehiclesForBrand, getBookingsForBrand } from '../data/seedData';
 
 export interface FleetCounts {
   totalStock: number;
@@ -9,6 +9,7 @@ export interface FleetCounts {
   totalAllotedStock: number;
   totalFreeVehicle: number;
   totalPbnaVehicle: number;
+  totalVnaVehicle: number;
   orderRequired: number;
   receivingPending: number;
   inYard: number;
@@ -20,6 +21,8 @@ export interface FleetCounts {
   loading: boolean;
 }
 
+const norm = (s?: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
 export const useFleetCounts = (): FleetCounts => {
   const { currentBrand } = useAuth();
   
@@ -30,6 +33,7 @@ export const useFleetCounts = (): FleetCounts => {
     totalAllotedStock: 0,
     totalFreeVehicle: 0,
     totalPbnaVehicle: 0,
+    totalVnaVehicle: 0,
     orderRequired: 0,
     receivingPending: 0,
     inYard: 0,
@@ -58,7 +62,7 @@ export const useFleetCounts = (): FleetCounts => {
         const status = (v.status || v.vehicle_status || '').toUpperCase();
         const isAllocated = !!v.customer_name || status === 'ALLOCATED';
 
-        if (status === 'YARD_RECEIVING_PENDING' || status === 'GATE_INWARD_PENDING' || status === 'IN_TRANSIT') {
+        if (status === 'YARD_RECEIVING_PENDING' || status === 'GATE_INWARD_PENDING' || status === 'IN_TRANSIT' || v.location === 'In Transit') {
           receivingPending++;
         } else {
           inYard++;
@@ -76,8 +80,44 @@ export const useFleetCounts = (): FleetCounts => {
       const totalPhysicalStock = inYard;
       const totalFreeVehicle = Math.max(0, totalPhysicalStock - totalAllotedStock);
       const totalBookings = bookings.length;
-      const pbnaBookings = bookings.filter(b => !b.allocated_vin_no && b.status !== 'DELIVERED');
-      const totalPbnaVehicle = pbnaBookings.length;
+      
+      // Calculate PBNA vs VNA based on matching Model + Variant + Colour in free stock
+      const unallocatedBookings = bookings.filter(b => !b.allocated_vin_no && (b.status || '').toUpperCase() !== 'DELIVERED');
+      const freeVehicles = vehicles.filter(v => 
+        !v.customer_name && 
+        v.status !== 'ALLOCATED' && 
+        v.status !== 'YARD_RECEIVING_PENDING' && 
+        v.location !== 'In Transit'
+      );
+
+      const matchedVinSet = new Set<string>();
+      let totalPbnaVehicle = 0; // Booking pending, matching vehicle IS in stock
+      let totalVnaVehicle = 0;  // Booking pending, matching vehicle IS NOT in stock
+
+      unallocatedBookings.forEach(b => {
+        const bModel = norm(b.model);
+        const bVariant = norm(b.variant);
+        const bColor = norm(b.colour);
+
+        const matchingVeh = freeVehicles.find(v => {
+          if (matchedVinSet.has(v.vin)) return false;
+          const vModel = norm(v.model);
+          const vVariant = norm(v.variant);
+          const vColor = norm(v.color || v.colour);
+
+          if (vModel === bModel && vVariant === bVariant && vColor === bColor) return true;
+          if (vModel === bModel && vVariant === bVariant) return true;
+          if (vModel === bModel && (!vVariant || !bVariant)) return true;
+          return false;
+        });
+
+        if (matchingVeh) {
+          matchedVinSet.add(matchingVeh.vin);
+          totalPbnaVehicle++;
+        } else {
+          totalVnaVehicle++;
+        }
+      });
 
       setCounts({
         totalStock: vehicles.length,
@@ -86,7 +126,8 @@ export const useFleetCounts = (): FleetCounts => {
         totalAllotedStock,
         totalFreeVehicle,
         totalPbnaVehicle,
-        orderRequired: Math.max(0, totalPbnaVehicle - totalFreeVehicle),
+        totalVnaVehicle,
+        orderRequired: totalVnaVehicle,
         receivingPending,
         inYard,
         pdiPending,
