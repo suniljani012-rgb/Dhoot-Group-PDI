@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { NewVehicleModal } from '../components/vehicles/NewVehicleModal';
 import { ExcelStockImporter } from '../components/vehicles/ExcelStockImporter';
 import { getApiUrl } from '../utils/apiConfig';
-import { getVehiclesForBrand, clearStockInventory } from '../data/seedData';
+import { getVehiclesForBrand, clearStockInventory, getActiveStockyards } from '../data/seedData';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
 export interface StockVehicle {
@@ -153,7 +153,9 @@ export const VehiclesPage: React.FC = () => {
 
   // Distinct Models & Locations for Filter Dropdowns
   const uniqueModels = Array.from(new Set(vehicles.map(v => v.model).filter(Boolean)));
-  const uniqueLocations = Array.from(new Set(vehicles.map(v => v.location).filter(Boolean)));
+  const activeYards = getActiveStockyards(currentBrand.code).map(y => y.name);
+  const vehicleLocations = vehicles.map(v => v.location).filter(Boolean);
+  const uniqueLocations = Array.from(new Set([...activeYards, ...vehicleLocations]));
 
   const filtered = vehicles.filter(v => {
     const s = searchTerm.toLowerCase();

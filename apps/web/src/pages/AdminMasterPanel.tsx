@@ -6,10 +6,16 @@ import {
   Briefcase, MapPin, DollarSign, Layers, Shield, Sparkles, 
   FileSpreadsheet, Activity, Wrench, X, Loader2, Camera,
   Video, Edit3, Trash2, Check, AlertTriangle, Sliders,
-  Landmark, ShieldAlert, Phone, Mail, UserCheck
+  Landmark, ShieldAlert, Phone, Mail, UserCheck, Warehouse,
+  ToggleLeft, ToggleRight, CheckCircle, XCircle
 } from 'lucide-react';
 import { AdminUsersPage } from './AdminUsers';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
+import { 
+  YardItem, BranchItem, 
+  getStockyards, saveStockyards, 
+  getBranches, saveBranches 
+} from '../data/seedData';
 
 export interface PdiRuleItem {
   id: string;
@@ -23,23 +29,6 @@ export interface PdiRuleItem {
   videoRequired: boolean;
   severity: 'CRITICAL' | 'MAJOR' | 'MINOR' | 'OBSERVATION';
   toolRequired?: string;
-}
-
-export interface BranchItem {
-  id: string;
-  code: string;
-  name: string;
-  brand: string;
-  type: string;
-  city: string;
-  state: string;
-  pincode?: string;
-  address?: string;
-  capacity: string;
-  phone: string;
-  email?: string;
-  manager: string;
-  status?: string;
 }
 
 export interface FinancierItem {
@@ -70,10 +59,168 @@ export interface InsuranceItem {
 
 export const AdminMasterPanel: React.FC = () => {
   const { currentBrand } = useAuth();
-  const [activeTab, setActiveTab] = useState<'PDI_RULES' | 'USERS' | 'MODELS' | 'BRANCHES' | 'FINANCE' | 'INSURANCE'>('PDI_RULES');
+  const [activeTab, setActiveTab] = useState<'PDI_RULES' | 'USERS' | 'MODELS' | 'YARDS' | 'BRANCHES' | 'FINANCE' | 'INSURANCE'>('YARDS');
 
   // =========================================================================
-  // 1. PDI Rules State
+  // 1. Stockyards State & Handlers
+  // =========================================================================
+  const [yards, setYards] = useState<YardItem[]>(() => getStockyards());
+  const [yardBrandFilter, setYardBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
+  const [yardSearch, setYardSearch] = useState('');
+  const [showYardModal, setShowYardModal] = useState(false);
+  const [editingYard, setEditingYard] = useState<YardItem | null>(null);
+  const [yardForm, setYardForm] = useState<YardItem>({
+    id: '',
+    code: '',
+    name: '',
+    brand: 'Tata Motors',
+    city: 'Jodhpur',
+    state: 'Rajasthan',
+    capacity: '100 Cars',
+    manager: '',
+    phone: '+91 ',
+    status: 'ACTIVE'
+  });
+
+  const handleToggleYardStatus = (id: string) => {
+    const updated = yards.map(y => {
+      if (y.id === id) {
+        const nextStatus = y.status === 'ACTIVE' ? ('INACTIVE' as const) : ('ACTIVE' as const);
+        return { ...y, status: nextStatus };
+      }
+      return y;
+    });
+    setYards(updated);
+    saveStockyards(updated);
+  };
+
+  const handleOpenAddYard = () => {
+    setEditingYard(null);
+    setYardForm({
+      id: `yrd-${Date.now()}`,
+      code: `YRD-${Date.now().toString().slice(-4)}`,
+      name: '',
+      brand: currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai' : 'Tata Motors',
+      city: 'Jodhpur',
+      state: 'Rajasthan',
+      capacity: '100 Cars',
+      manager: '',
+      phone: '+91 98290 ',
+      status: 'ACTIVE'
+    });
+    setShowYardModal(true);
+  };
+
+  const handleOpenEditYard = (y: YardItem) => {
+    setEditingYard(y);
+    setYardForm({ ...y });
+    setShowYardModal(true);
+  };
+
+  const handleSaveYard = (e: React.FormEvent) => {
+    e.preventDefault();
+    let updated: YardItem[];
+    if (editingYard) {
+      updated = yards.map(y => y.id === editingYard.id ? { ...yardForm, id: editingYard.id } : y);
+    } else {
+      updated = [{ ...yardForm, id: `yrd-${Date.now()}` }, ...yards];
+    }
+    setYards(updated);
+    saveStockyards(updated);
+    setShowYardModal(false);
+    setEditingYard(null);
+  };
+
+  const handleDeleteYard = (id: string) => {
+    if (confirm('Are you sure you want to remove this stockyard?')) {
+      const updated = yards.filter(y => y.id !== id);
+      setYards(updated);
+      saveStockyards(updated);
+    }
+  };
+
+  // =========================================================================
+  // 2. Branches State & Handlers
+  // =========================================================================
+  const [branches, setBranches] = useState<BranchItem[]>(() => getBranches());
+  const [branchBrandFilter, setBranchBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
+  const [branchSearch, setBranchSearch] = useState('');
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<BranchItem | null>(null);
+  const [branchForm, setBranchForm] = useState<BranchItem>({
+    id: '',
+    code: '',
+    name: '',
+    brand: 'Tata Motors',
+    type: '3S Showroom & Service',
+    city: 'Jodhpur',
+    state: 'Rajasthan',
+    capacity: '80 Cars',
+    manager: '',
+    phone: '+91 ',
+    status: 'ACTIVE'
+  });
+
+  const handleToggleBranchStatus = (id: string) => {
+    const updated = branches.map(b => {
+      if (b.id === id) {
+        const nextStatus = b.status === 'ACTIVE' ? ('INACTIVE' as const) : ('ACTIVE' as const);
+        return { ...b, status: nextStatus };
+      }
+      return b;
+    });
+    setBranches(updated);
+    saveBranches(updated);
+  };
+
+  const handleOpenAddBranch = () => {
+    setEditingBranch(null);
+    setBranchForm({
+      id: `br-${Date.now()}`,
+      code: `BR-${Date.now().toString().slice(-4)}`,
+      name: '',
+      brand: currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai' : 'Tata Motors',
+      type: '3S Showroom & Service',
+      city: 'Jodhpur',
+      state: 'Rajasthan',
+      capacity: '60 Cars',
+      manager: '',
+      phone: '+91 98290 ',
+      status: 'ACTIVE'
+    });
+    setShowBranchModal(true);
+  };
+
+  const handleOpenEditBranch = (b: BranchItem) => {
+    setEditingBranch(b);
+    setBranchForm({ ...b });
+    setShowBranchModal(true);
+  };
+
+  const handleSaveBranch = (e: React.FormEvent) => {
+    e.preventDefault();
+    let updated: BranchItem[];
+    if (editingBranch) {
+      updated = branches.map(b => b.id === editingBranch.id ? { ...branchForm, id: editingBranch.id } : b);
+    } else {
+      updated = [{ ...branchForm, id: `br-${Date.now()}` }, ...branches];
+    }
+    setBranches(updated);
+    saveBranches(updated);
+    setShowBranchModal(false);
+    setEditingBranch(null);
+  };
+
+  const handleDeleteBranch = (id: string) => {
+    if (confirm('Are you sure you want to remove this branch/showroom?')) {
+      const updated = branches.filter(b => b.id !== id);
+      setBranches(updated);
+      saveBranches(updated);
+    }
+  };
+
+  // =========================================================================
+  // 3. PDI Rules State
   // =========================================================================
   const [pdiRules, setPdiRules] = useState<PdiRuleItem[]>(() => {
     const saved = localStorage.getItem('autoprime_pdi_rules');
@@ -94,57 +241,7 @@ export const AdminMasterPanel: React.FC = () => {
   });
 
   // =========================================================================
-  // 2. Showrooms & Stockyards State
-  // =========================================================================
-  const [branches, setBranches] = useState<BranchItem[]>(() => {
-    const saved = localStorage.getItem('autoprime_branches');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [
-      { id: 'br-1', code: 'BR-PUN-01', name: 'Dhoot Group - Wakad Central Hub', brand: 'Tata Motors', type: '3S (Sales, Service, Spares)', city: 'Pune', state: 'Maharashtra', pincode: '411057', address: 'Plot 45, Wakad Bypass Highway', capacity: '120 Cars', phone: '+91 20 6711 9000', email: 'wakad.tata@dhootgroup.com', manager: 'Rajesh Patil', status: 'ACTIVE' },
-      { id: 'br-2', code: 'BR-JAI-01', name: 'Dhoot Group - Jaipur Tonk Road Hub', brand: 'Tata Motors', type: '3S (Sales, Service, Spares)', city: 'Jaipur', state: 'Rajasthan', pincode: '302015', address: 'Tonk Road Commercial Arcade', capacity: '150 Cars', phone: '+91 141 278 1100', email: 'jaipur.tata@dhootgroup.com', manager: 'Sunil Sharma', status: 'ACTIVE' },
-      { id: 'br-3', code: 'BR-JAI-02', name: 'Dhoot Group - Raja Park Showroom', brand: 'Hyundai', type: '1S Showroom', city: 'Jaipur', state: 'Rajasthan', pincode: '302004', address: 'Main Raja Park Avenue', capacity: '30 Cars', phone: '+91 141 262 4455', email: 'rajapark.hyundai@dhootgroup.com', manager: 'Manish Rathore', status: 'ACTIVE' },
-      { id: 'br-4', code: 'BR-YRD-01', name: 'Dhoot Group - Chakan Central Stockyard', brand: 'Dhoot Group Shared', type: 'Central Stockyard', city: 'Pune', state: 'Maharashtra', pincode: '410501', address: 'MIDC Phase II Logistics Hub', capacity: '350 Cars', phone: '+91 2135 667788', email: 'chakan.yard@dhootgroup.com', manager: 'Vikram Sonawane', status: 'ACTIVE' },
-    ];
-  });
-
-  // =========================================================================
-  // 3. Banks & Financiers State
-  // =========================================================================
-  const [financiers, setFinanciers] = useState<FinancierItem[]>(() => {
-    const saved = localStorage.getItem('autoprime_financiers');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [
-      { id: 'fin-1', name: 'State Bank of India (SBI Auto Loans)', category: 'NATIONALISED_BANK', code: 'FIN-SBI-01', contactPerson: 'Anil Kumar (Chief Manager)', designation: 'Chief Manager Auto Desk', phone: '+91 141 223 9011', email: 'autoloans.sbi@sbi.co.in', maxLtv: 90, processingFee: 0.25, activeStatus: 'Active Tie-Up' },
-      { id: 'fin-2', name: 'HDFC Bank Ltd', category: 'PRIVATE_BANK', code: 'FIN-HDFC-02', contactPerson: 'Pooja Verma (DSA Head)', designation: 'Zonal DSA Head', phone: '+91 20 6789 2200', email: 'auto.hdfc@hdfcbank.com', maxLtv: 95, processingFee: 0.50, activeStatus: 'Active Tie-Up' },
-      { id: 'fin-3', name: 'ICICI Bank Ltd', category: 'PRIVATE_BANK', code: 'FIN-ICICI-03', contactPerson: 'Rajesh Nair (Zonal Lead)', designation: 'Regional Retail Lead', phone: '+91 22 4567 1100', email: 'autodesk@icicibank.com', maxLtv: 90, processingFee: 0.50, activeStatus: 'Active Tie-Up' },
-      { id: 'fin-4', name: 'Tata Capital Financial Services', category: 'OEM_CAPTIVE_NBFC', code: 'FIN-TCF-04', contactPerson: 'Vikram Joshi (Zonal Head)', designation: 'Zonal Captive Head', phone: '+91 1800 209 6060', email: 'dealerdesk@tatacapital.com', maxLtv: 100, processingFee: 0.00, activeStatus: 'Active Tie-Up' },
-      { id: 'fin-5', name: 'Bajaj Finance Ltd', category: 'NBFC', code: 'FIN-BFL-05', contactPerson: 'Sunil Mehta (Regional Manager)', designation: 'Regional Manager Auto Loans', phone: '+91 20 7157 6064', email: 'auto@bajajfinserv.in', maxLtv: 85, processingFee: 0.75, activeStatus: 'Active Tie-Up' },
-    ];
-  });
-
-  // =========================================================================
-  // 4. Insurance Companies State
-  // =========================================================================
-  const [insuranceProviders, setInsuranceProviders] = useState<InsuranceItem[]>(() => {
-    const saved = localStorage.getItem('autoprime_insurance');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [
-      { id: 'ins-1', name: 'Tata AIG General Insurance', code: 'INS-AIG-01', claimsHead: 'Kavita Sen (Zonal Claims Lead)', surveyorName: 'Vinod Sharma', surveyorContact: '+91 1800 266 7780', cashlessTieUp: true, discountPercentage: 65, policyTypes: 'Zero Dep, Engine Protect, RTI, Key Replacement' },
-      { id: 'ins-2', name: 'ICICI Lombard General Insurance', code: 'INS-LOM-02', claimsHead: 'Manoj Sharma (Surveyor Head)', surveyorName: 'Rajesh Gupta', surveyorContact: '+91 1800 2666', cashlessTieUp: true, discountPercentage: 60, policyTypes: 'Zero Dep, RTI, Consumables Cover' },
-      { id: 'ins-3', name: 'Bajaj Allianz General Insurance', code: 'INS-BAJ-03', claimsHead: 'Alok Gupta (Regional Claims Mgr)', surveyorName: 'Amit Verma', surveyorContact: '+91 1800 209 5858', cashlessTieUp: true, discountPercentage: 62, policyTypes: 'Zero Dep, Engine Protect, Tyre Protect' },
-      { id: 'ins-4', name: 'HDFC ERGO General Insurance', code: 'INS-ERG-04', claimsHead: 'Sneha Patel (Claims Desk)', surveyorName: 'Dinesh Joshi', surveyorContact: '+91 1800 266 6444', cashlessTieUp: true, discountPercentage: 58, policyTypes: 'Zero Dep, 24x7 Roadside Assistance' },
-      { id: 'ins-5', name: 'National Insurance Company Ltd', code: 'INS-NIC-05', claimsHead: 'R. K. Verma (Divisional Officer)', surveyorName: 'Prakash Rao', surveyorContact: '+91 1800 345 0330', cashlessTieUp: true, discountPercentage: 50, policyTypes: 'Comprehensive Standard Package' },
-    ];
-  });
-
-  // =========================================================================
-  // 5. Vehicle Models State
+  // 4. Vehicle Models State
   // =========================================================================
   const [vehicleModels, setVehicleModels] = useState<any[]>(() => {
     const saved = localStorage.getItem('autoprime_models');
@@ -165,290 +262,90 @@ export const AdminMasterPanel: React.FC = () => {
   });
 
   // =========================================================================
-  // MODAL FORMS STATE & CONTROLS
+  // 5. Financiers State
   // =========================================================================
-  const [showRuleModal, setShowRuleModal] = useState(false);
-  const [editingRule, setEditingRule] = useState<PdiRuleItem | null>(null);
-  const [ruleForm, setRuleForm] = useState<PdiRuleItem>({
-    id: `RULE-${Date.now().toString().slice(-4)}`,
-    stage: 'Exterior',
-    category: 'Body Panels',
-    code: 'RULE-01',
-    title: '',
-    description: '',
-    mandatory: true,
-    photosRequired: 1,
-    videoRequired: false,
-    severity: 'CRITICAL',
-    toolRequired: 'Visual'
+  const [financiers, setFinanciers] = useState<FinancierItem[]>(() => {
+    const saved = localStorage.getItem('autoprime_financiers');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 'fin-1', name: 'State Bank of India (SBI Auto Loans)', category: 'NATIONALISED_BANK', code: 'FIN-SBI-01', contactPerson: 'Anil Kumar (Chief Manager)', designation: 'Chief Manager Auto Desk', phone: '+91 141 223 9011', email: 'autoloans.sbi@sbi.co.in', maxLtv: 90, processingFee: 0.25, activeStatus: 'Active Tie-Up' },
+      { id: 'fin-2', name: 'HDFC Bank Ltd', category: 'PRIVATE_BANK', code: 'FIN-HDFC-02', contactPerson: 'Pooja Verma (DSA Head)', designation: 'Zonal DSA Head', phone: '+91 20 6789 2200', email: 'auto.hdfc@hdfcbank.com', maxLtv: 95, processingFee: 0.50, activeStatus: 'Active Tie-Up' },
+      { id: 'fin-3', name: 'ICICI Bank Ltd', category: 'PRIVATE_BANK', code: 'FIN-ICICI-03', contactPerson: 'Rajesh Nair (Zonal Lead)', designation: 'Regional Retail Lead', phone: '+91 22 4567 1100', email: 'autodesk@icicibank.com', maxLtv: 90, processingFee: 0.50, activeStatus: 'Active Tie-Up' },
+      { id: 'fin-4', name: 'Tata Capital Financial Services', category: 'OEM_CAPTIVE_NBFC', code: 'FIN-TCF-04', contactPerson: 'Vikram Joshi (Zonal Head)', designation: 'Zonal Captive Head', phone: '+91 1800 209 6060', email: 'dealerdesk@tatacapital.com', maxLtv: 100, processingFee: 0.00, activeStatus: 'Active Tie-Up' },
+      { id: 'fin-5', name: 'Bajaj Finance Ltd', category: 'NBFC', code: 'FIN-BFL-05', contactPerson: 'Sunil Mehta (Regional Manager)', designation: 'Regional Manager Auto Loans', phone: '+91 20 7157 6064', email: 'auto@bajajfinserv.in', maxLtv: 85, processingFee: 0.75, activeStatus: 'Active Tie-Up' },
+    ];
   });
 
-  const [showBranchModal, setShowBranchModal] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<BranchItem | null>(null);
-  const [branchForm, setBranchForm] = useState<BranchItem>({
-    id: '',
-    code: `BR-${Date.now().toString().slice(-4)}`,
-    name: '',
-    brand: 'Tata Motors',
-    type: '3S (Sales, Service, Spares)',
-    city: 'Pune',
-    state: 'Maharashtra',
-    pincode: '411057',
-    address: '',
-    capacity: '100 Cars',
-    phone: '+91 ',
-    email: '',
-    manager: '',
-    status: 'ACTIVE'
+  // =========================================================================
+  // 6. Insurance Providers State
+  // =========================================================================
+  const [insuranceProviders, setInsuranceProviders] = useState<InsuranceItem[]>(() => {
+    const saved = localStorage.getItem('autoprime_insurance');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 'ins-1', name: 'Tata AIG General Insurance', code: 'INS-AIG-01', claimsHead: 'Kavita Sen (Zonal Claims Lead)', surveyorName: 'Vinod Sharma', surveyorContact: '+91 1800 266 7780', cashlessTieUp: true, discountPercentage: 65, policyTypes: 'Zero Dep, Engine Protect, RTI, Key Replacement' },
+      { id: 'ins-2', name: 'ICICI Lombard General Insurance', code: 'INS-LOM-02', claimsHead: 'Manoj Sharma (Surveyor Head)', surveyorName: 'Rajesh Gupta', surveyorContact: '+91 1800 2666', cashlessTieUp: true, discountPercentage: 60, policyTypes: 'Zero Dep, RTI, Consumables Cover' },
+      { id: 'ins-3', name: 'Bajaj Allianz General Insurance', code: 'INS-BAJ-03', claimsHead: 'Alok Gupta (Regional Claims Mgr)', surveyorName: 'Amit Verma', surveyorContact: '+91 1800 209 5858', cashlessTieUp: true, discountPercentage: 62, policyTypes: 'Zero Dep, Engine Protect, Tyre Protect' },
+      { id: 'ins-4', name: 'HDFC ERGO General Insurance', code: 'INS-ERG-04', claimsHead: 'Sneha Patel (Claims Desk)', surveyorName: 'Dinesh Joshi', surveyorContact: '+91 1800 266 6444', cashlessTieUp: true, discountPercentage: 58, policyTypes: 'Zero Dep, 24x7 Roadside Assistance' },
+      { id: 'ins-5', name: 'National Insurance Company Ltd', code: 'INS-NIC-05', claimsHead: 'R. K. Verma (Divisional Officer)', surveyorName: 'Prakash Rao', surveyorContact: '+91 1800 345 0330', cashlessTieUp: true, discountPercentage: 50, policyTypes: 'Comprehensive Standard Package' },
+    ];
   });
 
-  const [showFinModal, setShowFinModal] = useState(false);
-  const [editingFinancier, setEditingFinancier] = useState<FinancierItem | null>(null);
-  const [finForm, setFinForm] = useState<FinancierItem>({
-    id: '',
-    name: '',
-    category: 'PRIVATE_BANK',
-    code: `FIN-${Date.now().toString().slice(-4)}`,
-    contactPerson: '',
-    designation: 'DSA Manager',
-    phone: '+91 ',
-    email: '',
-    maxLtv: 90,
-    processingFee: 0.5,
-    activeStatus: 'Active Tie-Up'
-  });
-
-  const [showInsModal, setShowInsModal] = useState(false);
-  const [editingInsurance, setEditingInsurance] = useState<InsuranceItem | null>(null);
-  const [insForm, setInsForm] = useState<InsuranceItem>({
-    id: '',
-    name: '',
-    code: `INS-${Date.now().toString().slice(-4)}`,
-    claimsHead: '',
-    surveyorName: '',
-    surveyorContact: '+91 1800 ',
-    cashlessTieUp: true,
-    discountPercentage: 60,
-    policyTypes: 'Zero Dep, Engine Protect, RTI'
-  });
-
-  const [showModelModal, setShowModelModal] = useState(false);
-  const [editingModel, setEditingModel] = useState<any | null>(null);
-  const [modelForm, setModelForm] = useState({
-    brand: 'Tata Motors',
-    model_name: '',
-    body_type: 'SUV',
-    base_ex_showroom: 999000,
-    fuel_types: 'PETROL, DIESEL',
-    transmission: 'Manual & Automatic',
-    seating_capacity: '5 Seater',
-    variants: 'Pure, Adventure, Fearless',
-    colors: 'Oberon Black, Daytona Grey, White',
-    gst_rate: 28
-  });
-
-  const [modelBrandFilter, setModelBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
-  const [branchBrandFilter, setBranchBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
-
-  useEffect(() => {
-    if (currentBrand.code === 'DHOOT-TATA') {
-      setModelBrandFilter('Tata Motors');
-      setBranchBrandFilter('Tata Motors');
-    } else if (currentBrand.code === 'DHOOT-HYUNDAI') {
-      setModelBrandFilter('Hyundai');
-      setBranchBrandFilter('Hyundai');
-    } else {
-      setModelBrandFilter('ALL');
-      setBranchBrandFilter('ALL');
-    }
-  }, [currentBrand.code]);
-
-  // ==========================================
-  // HANDLERS: PDI RULES
-  // ==========================================
-  const handleSaveRule = (e: React.FormEvent) => {
-    e.preventDefault();
-    let updated: PdiRuleItem[];
-    if (editingRule) {
-      updated = pdiRules.map(r => r.id === editingRule.id ? { ...ruleForm, id: editingRule.id } : r);
-    } else {
-      updated = [...pdiRules, { ...ruleForm, id: `RULE-${pdiRules.length + 1 < 10 ? '0' : ''}${pdiRules.length + 1}` }];
-    }
-    setPdiRules(updated);
-    localStorage.setItem('autoprime_pdi_rules', JSON.stringify(updated));
-    setShowRuleModal(false);
-    setEditingRule(null);
-  };
-
-  const handleDeleteRule = (id: string) => {
-    if (confirm('Delete this inspection checkpoint from the active checklist?')) {
-      const updated = pdiRules.filter(r => r.id !== id);
-      setPdiRules(updated);
-      localStorage.setItem('autoprime_pdi_rules', JSON.stringify(updated));
-    }
-  };
-
-  // ==========================================
-  // HANDLERS: BRANCHES
-  // ==========================================
-  const handleSaveBranch = (e: React.FormEvent) => {
-    e.preventDefault();
-    let updated: BranchItem[];
-    if (editingBranch) {
-      updated = branches.map(b => b.id === editingBranch.id ? { ...branchForm, id: editingBranch.id } : b);
-    } else {
-      const newBr: BranchItem = {
-        id: `br-${Date.now()}`,
-        ...branchForm
-      };
-      updated = [newBr, ...branches];
-    }
-    setBranches(updated);
-    localStorage.setItem('autoprime_branches', JSON.stringify(updated));
-    setShowBranchModal(false);
-    setEditingBranch(null);
-  };
-
-  const handleDeleteBranch = (id: string) => {
-    if (confirm('Are you sure you want to remove this showroom/stockyard?')) {
-      const updated = branches.filter(b => b.id !== id);
-      setBranches(updated);
-      localStorage.setItem('autoprime_branches', JSON.stringify(updated));
-    }
-  };
-
-  // ==========================================
-  // HANDLERS: FINANCIERS
-  // ==========================================
-  const handleSaveFinancier = (e: React.FormEvent) => {
-    e.preventDefault();
-    let updated: FinancierItem[];
-    if (editingFinancier) {
-      updated = financiers.map(f => f.id === editingFinancier.id ? { ...finForm, id: editingFinancier.id } : f);
-    } else {
-      const newF: FinancierItem = {
-        id: `fin-${Date.now()}`,
-        ...finForm
-      };
-      updated = [newF, ...financiers];
-    }
-    setFinanciers(updated);
-    localStorage.setItem('autoprime_financiers', JSON.stringify(updated));
-    setShowFinModal(false);
-    setEditingFinancier(null);
-  };
-
-  const handleDeleteFinancier = (id: string) => {
-    if (confirm('Remove this banking financier partner?')) {
-      const updated = financiers.filter(f => f.id !== id);
-      setFinanciers(updated);
-      localStorage.setItem('autoprime_financiers', JSON.stringify(updated));
-    }
-  };
-
-  // ==========================================
-  // HANDLERS: INSURANCE
-  // ==========================================
-  const handleSaveInsurance = (e: React.FormEvent) => {
-    e.preventDefault();
-    let updated: InsuranceItem[];
-    if (editingInsurance) {
-      updated = insuranceProviders.map(i => i.id === editingInsurance.id ? { ...insForm, id: editingInsurance.id } : i);
-    } else {
-      const newIns: InsuranceItem = {
-        id: `ins-${Date.now()}`,
-        ...insForm
-      };
-      updated = [newIns, ...insuranceProviders];
-    }
-    setInsuranceProviders(updated);
-    localStorage.setItem('autoprime_insurance', JSON.stringify(updated));
-    setShowInsModal(false);
-    setEditingInsurance(null);
-  };
-
-  const handleDeleteInsurance = (id: string) => {
-    if (confirm('Remove this general insurance partner?')) {
-      const updated = insuranceProviders.filter(i => i.id !== id);
-      setInsuranceProviders(updated);
-      localStorage.setItem('autoprime_insurance', JSON.stringify(updated));
-    }
-  };
-
-  // ==========================================
-  // HANDLERS: VEHICLE MODELS
-  // ==========================================
-  const handleSaveModel = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formatted = {
-      brand: modelForm.brand,
-      model_name: modelForm.model_name,
-      body_type: modelForm.body_type,
-      base_ex_showroom: Number(modelForm.base_ex_showroom),
-      fuel_types: typeof modelForm.fuel_types === 'string' ? modelForm.fuel_types.split(',').map(s => s.trim()) : modelForm.fuel_types,
-      transmission: modelForm.transmission,
-      seating_capacity: modelForm.seating_capacity,
-      variants: typeof modelForm.variants === 'string' ? modelForm.variants.split(',').map(s => s.trim()) : modelForm.variants,
-      colors: typeof modelForm.colors === 'string' ? modelForm.colors.split(',').map(s => s.trim()) : modelForm.colors,
-      gst_rate: Number(modelForm.gst_rate) || 28
-    };
-
-    let updated: any[];
-    if (editingModel) {
-      updated = vehicleModels.map(m => m.id === editingModel.id ? { ...formatted, id: editingModel.id } : m);
-    } else {
-      updated = [{ ...formatted, id: `m-${Date.now()}` }, ...vehicleModels];
-    }
-    setVehicleModels(updated);
-    localStorage.setItem('autoprime_models', JSON.stringify(updated));
-    setShowModelModal(false);
-    setEditingModel(null);
-  };
-
-  const handleDeleteModel = (id: string) => {
-    if (confirm('Remove this model from vehicle catalog?')) {
-      const updated = vehicleModels.filter(m => m.id !== id);
-      setVehicleModels(updated);
-      localStorage.setItem('autoprime_models', JSON.stringify(updated));
-    }
-  };
-
-  const filteredModels = vehicleModels.filter(m => {
-    if (modelBrandFilter === 'Tata Motors') return m.brand?.includes('Tata');
-    if (modelBrandFilter === 'Hyundai') return m.brand?.includes('Hyundai');
-    return true;
+  // Filtered lists
+  const filteredYards = yards.filter(y => {
+    const matchesBrand = yardBrandFilter === 'ALL' || y.brand === yardBrandFilter || y.brand === 'Shared';
+    const matchesSearch = !yardSearch || y.name.toLowerCase().includes(yardSearch.toLowerCase()) || y.city.toLowerCase().includes(yardSearch.toLowerCase());
+    return matchesBrand && matchesSearch;
   });
 
   const filteredBranches = branches.filter(b => {
-    if (branchBrandFilter === 'Tata Motors') return b.brand?.includes('Tata') || b.brand?.includes('Shared');
-    if (branchBrandFilter === 'Hyundai') return b.brand?.includes('Hyundai') || b.brand?.includes('Shared');
-    return true;
+    const matchesBrand = branchBrandFilter === 'ALL' || b.brand === branchBrandFilter || b.brand === 'Shared';
+    const matchesSearch = !branchSearch || b.name.toLowerCase().includes(branchSearch.toLowerCase()) || b.city.toLowerCase().includes(branchSearch.toLowerCase());
+    return matchesBrand && matchesSearch;
   });
 
+  const activeYardsCount = yards.filter(y => y.status === 'ACTIVE').length;
+  const activeBranchesCount = branches.filter(b => b.status === 'ACTIVE').length;
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto select-none">
+    <div className="space-y-4 max-w-[1600px] mx-auto select-none pb-20">
       
       {/* Top Header */}
       <PageHeader
-        title="Master Data & System Config"
-        subtitle="Configure vehicle models, inspection checkpoints, facility branches, and financier partners"
-        action={
-          <button
-            onClick={() => alert('Exporting complete dealership configuration masters to CSV...')}
-            className="h-8 px-3 rounded bg-surface border border-line hover:border-line-strong text-xs font-medium text-ink transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-ok" />
-            <span>Export Masters</span>
-          </button>
-        }
+        title="Master Data & Facility Management"
+        subtitle="Manage OEM Stockyards, Showroom Branches, Inspection Checkpoints, Vehicle Models & Financiers"
       />
 
       {/* Tabs Navigation Bar */}
       <div className="flex items-center gap-1 overflow-x-auto bg-surface border border-line rounded p-1 text-xs">
         <button
+          onClick={() => setActiveTab('YARDS')}
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'YARDS' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          }`}
+        >
+          <Warehouse className="w-3.5 h-3.5" />
+          <span>Stockyards ({activeYardsCount} Active)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('BRANCHES')}
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'BRANCHES' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Branches & Showrooms ({activeBranchesCount} Active)</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('PDI_RULES')}
-          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'PDI_RULES' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'PDI_RULES' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Sliders className="w-3.5 h-3.5" />
@@ -457,8 +354,8 @@ export const AdminMasterPanel: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('USERS')}
-          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'USERS' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'USERS' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -467,28 +364,18 @@ export const AdminMasterPanel: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('MODELS')}
-          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'MODELS' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'MODELS' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Car className="w-3.5 h-3.5" />
-          <span>Models ({filteredModels.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('BRANCHES')}
-          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'BRANCHES' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
-          }`}
-        >
-          <Building2 className="w-3.5 h-3.5" />
-          <span>Showrooms & Yards ({filteredBranches.length})</span>
+          <span>Models ({vehicleModels.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('FINANCE')}
-          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'FINANCE' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'FINANCE' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
           <Landmark className="w-3.5 h-3.5" />
@@ -497,637 +384,545 @@ export const AdminMasterPanel: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('INSURANCE')}
-          className={`flex items-center gap-1.5 h-7 px-3 rounded-chip text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'INSURANCE' ? 'bg-canvas text-ink border border-line font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
+          className={`flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'INSURANCE' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-ink-3 hover:text-ink-2'
           }`}
         >
-          <ShieldAlert className="w-3.5 h-3.5" />
+          <Shield className="w-3.5 h-3.5" />
           <span>Insurance ({insuranceProviders.length})</span>
         </button>
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: DYNAMIC INSPECTION RULES ENGINE                                    */}
+      {/* TAB 1: STOCKYARDS MASTER (TATA & HYUNDAI YARDS)                           */}
       {/* ========================================================================= */}
-      {activeTab === 'PDI_RULES' && (
-        <div className="bg-surface border border-line rounded-panel p-5 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
-            <div>
-              <h2 className="text-xs font-bold text-slate-900">Inspection Checkpoints & Evidence Rules</h2>
-              <p className="text-[11px] text-slate-400">
-                Configure checkpoint parameters, required photo counts (0-4), and mandatory video recording rules.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                setEditingRule(null);
-                setRuleForm({
-                  id: `RULE-${pdiRules.length + 1}`,
-                  stage: 'Exterior',
-                  category: 'General Inspection',
-                  code: `RULE-0${pdiRules.length + 1}`,
-                  title: '',
-                  description: '',
-                  mandatory: true,
-                  photosRequired: 1,
-                  videoRequired: false,
-                  severity: 'CRITICAL',
-                  toolRequired: 'Visual'
-                });
-                setShowRuleModal(true);
-              }}
-              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Add Inspection Point</span>
-            </button>
+      {activeTab === 'YARDS' && (
+        <div className="space-y-4">
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Stat label="Total Stockyards" value={yards.length} note="Configured Yards" />
+            <Stat label="Active Stockyards" value={activeYardsCount} note="Visible in Dropdowns" tone="ok" />
+            <Stat label="Tata Stockyards" value={yards.filter(y => y.brand === 'Tata Motors').length} note="Tata Dealerships" />
+            <Stat label="Hyundai Stockyards" value={yards.filter(y => y.brand === 'Hyundai').length} note="Hyundai Dealerships" tone="accent" />
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto border border-line rounded">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Rule ID</th>
-                  <th className="py-2.5 px-3">Stage</th>
-                  <th className="py-2.5 px-3">Inspection Checkpoint</th>
-                  <th className="py-2.5 px-3">Detailed Instruction</th>
-                  <th className="py-2.5 px-3">Photos</th>
-                  <th className="py-2.5 px-3">Video</th>
-                  <th className="py-2.5 px-3">Severity</th>
-                  <th className="py-2.5 px-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {pdiRules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-canvas/80 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{rule.id}</td>
-                    <td className="py-2.5 px-3 font-bold text-slate-800">{rule.stage}</td>
-                    <td className="py-2.5 px-3 font-bold text-slate-900">{rule.title}</td>
-                    <td className="py-2.5 px-3 text-slate-600 max-w-sm truncate" title={rule.description}>{rule.description}</td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                        rule.photosRequired > 0 ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        <Camera className="w-3 h-3" />
-                        {rule.photosRequired} Photos
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                        rule.videoRequired ? 'bg-purple-50 text-purple-800 border border-purple-200' : 'bg-slate-100 text-slate-400'
-                      }`}>
-                        <Video className="w-3 h-3" />
-                        {rule.videoRequired ? 'Mandatory Video' : 'Optional'}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        rule.severity === 'CRITICAL' ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
-                      }`}>
-                        {rule.severity}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setEditingRule(rule);
-                            setRuleForm(rule);
-                            setShowRuleModal(true);
-                          }}
-                          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Edit Rule Checkpoint"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRule(rule.id)}
-                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Rule Checkpoint"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 2: USERS & RBAC ROLES                                                 */}
-      {/* ========================================================================= */}
-      {activeTab === 'USERS' && (
-        <AdminUsersPage />
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 3: VEHICLE CATALOG & PRICE MATRIX                                     */}
-      {/* ========================================================================= */}
-      {activeTab === 'MODELS' && (
-        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
-            <div>
-              <h2 className="text-xs font-bold text-slate-900">Vehicle Models & Pricing Matrix</h2>
-              <p className="text-[11px] text-slate-400">Official catalog for Tata Motors & Hyundai Motor India</p>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded text-xs font-bold">
-                {(['ALL', 'Tata Motors', 'Hyundai'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setModelBrandFilter(tab)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
-                      modelBrandFilter === tab
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    {tab === 'ALL' ? 'All Brands' : tab}
-                  </button>
-                ))}
+          <Panel
+            title={
+              <div className="flex items-center gap-2">
+                <span>Stockyard Facilities Ledger</span>
+                <Badge tone="accent">{filteredYards.length} Facilities</Badge>
               </div>
+            }
+            action={
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search Yard Name or City..."
+                    value={yardSearch}
+                    onChange={(e) => setYardSearch(e.target.value)}
+                    className="h-8 pl-8 pr-3 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent"
+                  />
+                </div>
 
-              <button
-                onClick={() => {
-                  setEditingModel(null);
-                  setModelForm({
-                    brand: modelBrandFilter === 'Hyundai' ? 'Hyundai' : 'Tata Motors',
-                    model_name: '',
-                    body_type: 'SUV',
-                    base_ex_showroom: 999000,
-                    fuel_types: 'PETROL, DIESEL',
-                    transmission: 'Manual & Automatic',
-                    seating_capacity: '5 Seater',
-                    variants: 'Pure, Adventure, Fearless',
-                    colors: 'Oberon Black, Daytona Grey, White',
-                    gst_rate: 28
-                  });
-                  setShowModelModal(true);
-                }}
-                className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Vehicle Model</span>
-              </button>
-            </div>
-          </div>
+                <select
+                  value={yardBrandFilter}
+                  onChange={(e) => setYardBrandFilter(e.target.value as any)}
+                  className="h-8 text-xs bg-canvas border border-line rounded px-2 text-ink focus:outline-none focus:border-accent font-medium"
+                >
+                  <option value="ALL">All Brands</option>
+                  <option value="Tata Motors">Tata Motors Yards</option>
+                  <option value="Hyundai">Hyundai Yards</option>
+                </select>
 
-          <div className="overflow-x-auto border border-line rounded">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Brand</th>
-                  <th className="py-2.5 px-3">Model Name</th>
-                  <th className="py-2.5 px-3">Body Type</th>
-                  <th className="py-2.5 px-3">Base Ex-Showroom</th>
-                  <th className="py-2.5 px-3">Fuel Options</th>
-                  <th className="py-2.5 px-3">Key Variants</th>
-                  <th className="py-2.5 px-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {vehicleModels
-                  .filter(m => {
-                    if (modelBrandFilter === 'Tata Motors') return m.brand?.includes('Tata');
-                    if (modelBrandFilter === 'Hyundai') return m.brand?.includes('Hyundai');
-                    return true;
-                  })
-                  .map((m) => (
-                  <tr key={m.id} className="hover:bg-canvas/80">
-                    <td className="py-2.5 px-3 font-bold text-slate-900">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        m.brand?.includes('Tata') ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
-                      }`}>
-                        {m.brand}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 font-bold text-slate-900">{m.model_name}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{m.body_type}</td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">₹{(Number(m.base_ex_showroom) || 0).toLocaleString('en-IN')}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{Array.isArray(m.fuel_types) ? m.fuel_types.join(', ') : m.fuel_types}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{Array.isArray(m.variants) ? m.variants.slice(0, 4).join(', ') : m.variants}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setEditingModel(m);
-                            setModelForm({
-                              brand: m.brand,
-                              model_name: m.model_name,
-                              body_type: m.body_type,
-                              base_ex_showroom: m.base_ex_showroom,
-                              fuel_types: Array.isArray(m.fuel_types) ? m.fuel_types.join(', ') : m.fuel_types,
-                              transmission: m.transmission || 'Manual & Automatic',
-                              seating_capacity: m.seating_capacity || '5 Seater',
-                              variants: Array.isArray(m.variants) ? m.variants.join(', ') : m.variants,
-                              colors: Array.isArray(m.colors) ? m.colors.join(', ') : (m.colors || 'White, Black, Grey'),
-                              gst_rate: m.gst_rate || 28
-                            });
-                            setShowModelModal(true);
-                          }}
-                          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Edit Vehicle Model"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteModel(m.id)}
-                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Model"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
+                <button
+                  type="button"
+                  onClick={handleOpenAddYard}
+                  className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Stockyard</span>
+                </button>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Stockyard Name</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Brand Dealership</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Location / City</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Capacity</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Yard In-Charge</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Contact Phone</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Active Status (Click to Toggle)</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-line text-ink-2 text-xs">
+                  {filteredYards.map((y, idx) => {
+                    const isActive = y.status === 'ACTIVE';
+                    return (
+                      <tr key={y.id} className="hover:bg-canvas transition-colors">
+                        <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Warehouse className="w-3.5 h-3.5 text-accent shrink-0" />
+                            <span>{y.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <Badge tone={y.brand === 'Hyundai' ? 'accent' : 'neutral'}>
+                            {y.brand}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                          {y.city}, {y.state}
+                        </td>
+                        <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
+                          {y.capacity}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink whitespace-nowrap">
+                          {y.manager || 'Yard Supervisor'}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-ink-3 whitespace-nowrap">
+                          {y.phone}
+                        </td>
+                        
+                        {/* 1-Click Status Toggle */}
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleYardStatus(y.id)}
+                            className={`h-6 px-2.5 rounded-chip text-[11px] font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                              isActive
+                                ? 'bg-ok/10 text-ok border border-ok/30 hover:bg-ok/20'
+                                : 'bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20'
+                            }`}
+                          >
+                            {isActive ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-ok" />
+                                <span>ACTIVE (Visible in Dropdowns)</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3 text-danger" />
+                                <span>INACTIVE (Hidden)</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditYard(y)}
+                              className="p-1 rounded hover:bg-surface text-ink-3 hover:text-ink transition-colors cursor-pointer"
+                              title="Edit Stockyard"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteYard(y.id)}
+                              className="p-1 rounded hover:bg-danger/10 text-ink-3 hover:text-danger transition-colors cursor-pointer"
+                              title="Delete Stockyard"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: SHOWROOMS & STOCKYARDS                                             */}
+      {/* TAB 2: BRANCHES & SHOWROOMS MASTER (TATA & HYUNDAI BRANCHES)              */}
       {/* ========================================================================= */}
       {activeTab === 'BRANCHES' && (
-        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
-            <div>
-              <h2 className="text-xs font-bold text-slate-900">Showrooms, 3S Workshops & Central Stockyards</h2>
-              <p className="text-[11px] text-slate-400">Manage dealer facilities, stockyard capacity, and regional managers</p>
-            </div>
+        <div className="space-y-4">
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Stat label="Total Branches" value={branches.length} note="Showrooms & 3S Hubs" />
+            <Stat label="Active Branches" value={activeBranchesCount} note="Active Showrooms" tone="ok" />
+            <Stat label="Tata Branches" value={branches.filter(b => b.brand === 'Tata Motors').length} note="Tata Dealerships" />
+            <Stat label="Hyundai Branches" value={branches.filter(b => b.brand === 'Hyundai').length} note="Hyundai Dealerships" tone="accent" />
+          </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded text-xs font-bold">
-                {(['ALL', 'Tata Motors', 'Hyundai'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setBranchBrandFilter(tab)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px] ${
-                      branchBrandFilter === tab
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    {tab === 'ALL' ? 'All Facilities' : tab}
-                  </button>
-                ))}
+          <Panel
+            title={
+              <div className="flex items-center gap-2">
+                <span>Branch & Showroom Directory</span>
+                <Badge tone="accent">{filteredBranches.length} Showrooms</Badge>
               </div>
+            }
+            action={
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search Branch Name or City..."
+                    value={branchSearch}
+                    onChange={(e) => setBranchSearch(e.target.value)}
+                    className="h-8 pl-8 pr-3 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent"
+                  />
+                </div>
 
-              <button
-                onClick={() => {
-                  setEditingBranch(null);
-                  setBranchForm({
-                    id: '',
-                    code: `BR-${Date.now().toString().slice(-4)}`,
-                    name: '',
-                    brand: branchBrandFilter === 'Hyundai' ? 'Hyundai' : 'Tata Motors',
-                    type: '3S (Sales, Service, Spares)',
-                    city: 'Pune',
-                    state: 'Maharashtra',
-                    pincode: '411057',
-                    address: '',
-                    capacity: '100 Cars',
-                    phone: '+91 ',
-                    email: '',
-                    manager: '',
-                    status: 'ACTIVE'
-                  });
-                  setShowBranchModal(true);
-                }}
-                className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Showroom / Stockyard</span>
-              </button>
-            </div>
-          </div>
+                <select
+                  value={branchBrandFilter}
+                  onChange={(e) => setBranchBrandFilter(e.target.value as any)}
+                  className="h-8 text-xs bg-canvas border border-line rounded px-2 text-ink focus:outline-none focus:border-accent font-medium"
+                >
+                  <option value="ALL">All Brands</option>
+                  <option value="Tata Motors">Tata Motors Branches</option>
+                  <option value="Hyundai">Hyundai Branches</option>
+                </select>
 
-          <div className="overflow-x-auto border border-line rounded">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Branch Code</th>
-                  <th className="py-2.5 px-3">Facility Name</th>
-                  <th className="py-2.5 px-3">Dealership Brand</th>
-                  <th className="py-2.5 px-3">Facility Type</th>
-                  <th className="py-2.5 px-3">City & State</th>
-                  <th className="py-2.5 px-3">Yard Capacity</th>
-                  <th className="py-2.5 px-3">Manager & Contact</th>
-                  <th className="py-2.5 px-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {branches
-                  .filter(b => {
-                    if (branchBrandFilter === 'Tata Motors') return b.brand?.includes('Tata') || b.brand?.includes('Shared');
-                    if (branchBrandFilter === 'Hyundai') return b.brand?.includes('Hyundai') || b.brand?.includes('Shared');
-                    return true;
-                  })
-                  .map((b) => (
-                  <tr key={b.id} className="hover:bg-canvas/80">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{b.code}</td>
-                    <td className="py-2.5 px-3 font-bold text-slate-900">{b.name}</td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-700">{b.brand}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{b.type}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{b.city}, {b.state}</td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">{b.capacity}</td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-slate-800">{b.manager}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{b.phone}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setEditingBranch(b);
-                            setBranchForm(b);
-                            setShowBranchModal(true);
-                          }}
-                          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Edit Facility Details"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBranch(b.id)}
-                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Facility"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
+                <button
+                  type="button"
+                  onClick={handleOpenAddBranch}
+                  className="h-8 px-3 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Branch</span>
+                </button>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Branch / Showroom Name</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Brand</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Type</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">City</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Branch Manager</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Contact Phone</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Active Status (Click to Toggle)</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-line text-ink-2 text-xs">
+                  {filteredBranches.map((b, idx) => {
+                    const isActive = b.status === 'ACTIVE';
+                    return (
+                      <tr key={b.id} className="hover:bg-canvas transition-colors">
+                        <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-3.5 h-3.5 text-accent shrink-0" />
+                            <span>{b.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <Badge tone={b.brand === 'Hyundai' ? 'accent' : 'neutral'}>
+                            {b.brand}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                          {b.type}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                          {b.city}, {b.state}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink whitespace-nowrap">
+                          {b.manager}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-ink-3 whitespace-nowrap">
+                          {b.phone}
+                        </td>
+                        
+                        {/* 1-Click Status Toggle */}
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleBranchStatus(b.id)}
+                            className={`h-6 px-2.5 rounded-chip text-[11px] font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                              isActive
+                                ? 'bg-ok/10 text-ok border border-ok/30 hover:bg-ok/20'
+                                : 'bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20'
+                            }`}
+                          >
+                            {isActive ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-ok" />
+                                <span>ACTIVE (Visible in Dropdowns)</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3 text-danger" />
+                                <span>INACTIVE (Hidden)</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditBranch(b)}
+                              className="p-1 rounded hover:bg-surface text-ink-3 hover:text-ink transition-colors cursor-pointer"
+                              title="Edit Branch"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBranch(b.id)}
+                              className="p-1 rounded hover:bg-danger/10 text-ink-3 hover:text-danger transition-colors cursor-pointer"
+                              title="Delete Branch"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: BANKS & FINANCIERS                                                 */}
+      {/* OTHER TABS: USERS, PDI RULES, MODELS, FINANCE, INSURANCE                  */}
       {/* ========================================================================= */}
+      {activeTab === 'USERS' && <AdminUsersPage />}
+
+      {activeTab === 'PDI_RULES' && (
+        <Panel title="PDI Checkpoints Master">
+          <div className="p-4 text-xs text-ink-2 space-y-2">
+            <p>Inspection checkpoints for exterior, electricals, interior, engine bay, underbody, and road tests.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+              {pdiRules.map(r => (
+                <div key={r.id} className="p-3 bg-canvas border border-line rounded space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-ink">{r.title}</span>
+                    <Badge tone={r.severity === 'CRITICAL' ? 'danger' : 'warn'}>{r.severity}</Badge>
+                  </div>
+                  <p className="text-[11px] text-ink-3">{r.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Panel>
+      )}
+
+      {activeTab === 'MODELS' && (
+        <Panel title="Vehicle Models Catalog">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+            {vehicleModels.map(m => (
+              <div key={m.id} className="p-3.5 bg-canvas border border-line rounded space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-ink text-sm">{m.model_name}</span>
+                  <Badge tone={m.brand?.includes('Hyundai') ? 'accent' : 'neutral'}>{m.brand}</Badge>
+                </div>
+                <div className="text-xs text-ink-2 space-y-0.5">
+                  <p>Type: {m.body_type}</p>
+                  <p>Base Ex-Showroom: ₹{Number(m.base_ex_showroom).toLocaleString('en-IN')}</p>
+                  <p>Transmission: {m.transmission}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
       {activeTab === 'FINANCE' && (
-        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-line pb-3">
-            <div>
-              <h2 className="text-xs font-bold text-slate-900">Approved Banking & Auto Loan Financiers</h2>
-              <p className="text-[11px] text-slate-400">Manage DSA tie-ups, loan desk officers, and payout channels</p>
-            </div>
-            <button
-              onClick={() => {
-                setEditingFinancier(null);
-                setFinForm({
-                  id: '',
-                  name: '',
-                  category: 'PRIVATE_BANK',
-                  code: `FIN-${Date.now().toString().slice(-4)}`,
-                  contactPerson: '',
-                  designation: 'DSA Manager',
-                  phone: '+91 ',
-                  email: '',
-                  maxLtv: 90,
-                  processingFee: 0.5,
-                  activeStatus: 'Active Tie-Up'
-                });
-                setShowFinModal(true);
-              }}
-              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Bank / Financier</span>
-            </button>
+        <Panel title="Banking & Financier Partners">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+            {financiers.map(f => (
+              <div key={f.id} className="p-3.5 bg-canvas border border-line rounded space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-ink">{f.name}</span>
+                  <Badge tone="ok">{f.activeStatus}</Badge>
+                </div>
+                <p className="text-xs text-ink-2">Contact: {f.contactPerson} ({f.phone})</p>
+                <p className="text-xs text-ink-3">Max LTV: {f.maxLtv}% • Fee: {f.processingFee}%</p>
+              </div>
+            ))}
           </div>
-
-          <div className="overflow-x-auto border border-line rounded">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Institution Name</th>
-                  <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-3">Contact Person</th>
-                  <th className="py-2.5 px-3">Helpdesk Phone</th>
-                  <th className="py-2.5 px-3">Email Desk</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {financiers.map((f) => (
-                  <tr key={f.id} className="hover:bg-canvas/80">
-                    <td className="py-2.5 px-3 font-bold text-slate-900">{f.name}</td>
-                    <td className="py-2.5 px-3 text-slate-600">
-                      <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold text-slate-700">
-                        {f.category}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-700 font-semibold">{f.contactPerson}</td>
-                    <td className="py-2.5 px-3 font-mono text-slate-600">{f.phone}</td>
-                    <td className="py-2.5 px-3 font-mono text-slate-500 text-[10px]">{f.email}</td>
-                    <td className="py-2.5 px-3">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
-                        {f.activeStatus}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setEditingFinancier(f);
-                            setFinForm(f);
-                            setShowFinModal(true);
-                          }}
-                          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Edit Financier Details"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteFinancier(f.id)}
-                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Financier"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        </Panel>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 6: INSURANCE PROVIDERS                                                */}
-      {/* ========================================================================= */}
       {activeTab === 'INSURANCE' && (
-        <div className="bg-white border border-line rounded p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-line pb-3">
-            <div>
-              <h2 className="text-xs font-bold text-slate-900">Authorized General Insurance Partners</h2>
-              <p className="text-[11px] text-slate-400">Cashless claim tie-ups, surveyor contacts, and dealer OD discount grids</p>
-            </div>
-            <button
-              onClick={() => {
-                setEditingInsurance(null);
-                setInsForm({
-                  id: '',
-                  name: '',
-                  code: `INS-${Date.now().toString().slice(-4)}`,
-                  claimsHead: '',
-                  surveyorName: '',
-                  surveyorContact: '+91 1800 ',
-                  cashlessTieUp: true,
-                  discountPercentage: 60,
-                  policyTypes: 'Zero Dep, Engine Protect, RTI'
-                });
-                setShowInsModal(true);
-              }}
-              className="px-3.5 py-1.5 bg-accent hover:bg-accent-600 text-white rounded text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Insurance Company</span>
-            </button>
+        <Panel title="General Insurance Tie-ups">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+            {insuranceProviders.map(i => (
+              <div key={i.id} className="p-3.5 bg-canvas border border-line rounded space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-ink">{i.name}</span>
+                  <Badge tone="accent">Discount: {i.discountPercentage}%</Badge>
+                </div>
+                <p className="text-xs text-ink-2">Claims Lead: {i.claimsHead} ({i.surveyorContact})</p>
+                <p className="text-xs text-ink-3">Covers: {i.policyTypes}</p>
+              </div>
+            ))}
           </div>
-
-          <div className="overflow-x-auto border border-line rounded">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Insurance Company</th>
-                  <th className="py-2.5 px-3">Claims Head / Desk Lead</th>
-                  <th className="py-2.5 px-3">Surveyor Contact</th>
-                  <th className="py-2.5 px-3">OD Discount Grid</th>
-                  <th className="py-2.5 px-3">Cashless Status</th>
-                  <th className="py-2.5 px-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
-                {insuranceProviders.map((ins) => (
-                  <tr key={ins.id} className="hover:bg-canvas/80">
-                    <td className="py-2.5 px-3 font-bold text-slate-900">{ins.name}</td>
-                    <td className="py-2.5 px-3 text-slate-700 font-semibold">{ins.claimsHead}</td>
-                    <td className="py-2.5 px-3 font-mono text-slate-600">{ins.surveyorContact}</td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">{ins.discountPercentage}% OD Tariff</td>
-                    <td className="py-2.5 px-3">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
-                        ✓ Cashless Approved
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setEditingInsurance(ins);
-                            setInsForm(ins);
-                            setShowInsModal(true);
-                          }}
-                          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Edit Insurance Details"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteInsurance(ins.id)}
-                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Insurance"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        </Panel>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: ADD / EDIT PDI RULE (FULL SCHEMA COLUMNS)                         */}
+      {/* MODAL: ADD / EDIT STOCKYARD                                               */}
       {/* ========================================================================= */}
-      {showRuleModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <h3 className="font-bold text-sm">{editingRule ? `Edit Checkpoint: ${editingRule.id}` : 'Configure New Inspection Point'}</h3>
-              <button onClick={() => setShowRuleModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveRule} className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Inspection Stage *</label>
-                  <select value={ruleForm.stage} onChange={(e) => setRuleForm({ ...ruleForm, stage: e.target.value as any })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value="Exterior">Stage 1: Exterior</option>
-                    <option value="Electricals">Stage 2: Electricals</option>
-                    <option value="Interior">Stage 3: Interior</option>
-                    <option value="Engine Bay">Stage 4: Engine Bay</option>
-                    <option value="Underbody">Stage 5: Underbody</option>
-                    <option value="Road Test">Stage 6: Road Test</option>
-                  </select>
+      {showYardModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Warehouse className="w-4 h-4" />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Defect Severity If Failed *</label>
-                  <select value={ruleForm.severity} onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value as any })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value="CRITICAL">CRITICAL (Blocks Delivery)</option>
-                    <option value="MAJOR">MAJOR (Requires Workshop Fix)</option>
-                    <option value="MINOR">MINOR (Touch-up / Buffing)</option>
-                    <option value="OBSERVATION">OBSERVATION (Informational)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Category Code / Group</label>
-                  <input type="text" placeholder="e.g. Body Panels / Lighting" value={ruleForm.category || ''} onChange={(e) => setRuleForm({ ...ruleForm, category: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Required Diagnostic Tool</label>
-                  <input type="text" placeholder="e.g. VCI Scanner / Feeler Gauge" value={ruleForm.toolRequired || ''} onChange={(e) => setRuleForm({ ...ruleForm, toolRequired: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Checkpoint Point Title *</label>
-                  <input type="text" required placeholder="e.g. Body Panel Alignment & Paint Finish" value={ruleForm.title} onChange={(e) => setRuleForm({ ...ruleForm, title: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Detailed Inspection Instruction</label>
-                  <textarea rows={2} value={ruleForm.description} onChange={(e) => setRuleForm({ ...ruleForm, description: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Required Photos Count</label>
-                  <select value={ruleForm.photosRequired} onChange={(e) => setRuleForm({ ...ruleForm, photosRequired: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value={0}>0 (Optional)</option>
-                    <option value={1}>1 Mandatory Photo</option>
-                    <option value={2}>2 Mandatory Photos</option>
-                    <option value={3}>3 Mandatory Photos</option>
-                    <option value={4}>4 Mandatory Photos</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Video Recording Rule</label>
-                  <select value={ruleForm.videoRequired ? 'REQUIRED' : 'OPTIONAL'} onChange={(e) => setRuleForm({ ...ruleForm, videoRequired: e.target.value === 'REQUIRED' })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value="OPTIONAL">Optional Video</option>
-                    <option value="REQUIRED">Mandatory Video Recording</option>
-                  </select>
+                  <h2 className="text-sm font-semibold text-ink">
+                    {editingYard ? 'Edit Stockyard Facility' : 'Add New Stockyard Facility'}
+                  </h2>
+                  <p className="text-xs text-ink-3">Configure yard name, brand assignment, and operational status</p>
                 </div>
               </div>
-              <div className="pt-4 border-t border-line flex justify-end gap-2">
-                <button type="button" onClick={() => setShowRuleModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  {editingRule ? 'Update Rule' : 'Save Rule'}
+              <button
+                type="button"
+                onClick={() => setShowYardModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveYard} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Stockyard Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Basni Yard, Shantinath Yard, Sumerpur..."
+                    value={yardForm.name}
+                    onChange={(e) => setYardForm({ ...yardForm, name: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Brand Assignment *
+                  </label>
+                  <select
+                    value={yardForm.brand}
+                    onChange={(e) => setYardForm({ ...yardForm, brand: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="Tata Motors">Tata Motors</option>
+                    <option value="Hyundai">Hyundai</option>
+                    <option value="Shared">Dhoot Group Shared</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    City / Location *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jodhpur, Pali, Balotra..."
+                    value={yardForm.city}
+                    onChange={(e) => setYardForm({ ...yardForm, city: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Vehicle Storage Capacity
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 150 Cars"
+                    value={yardForm.capacity}
+                    onChange={(e) => setYardForm({ ...yardForm, capacity: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Operational Status *
+                  </label>
+                  <select
+                    value={yardForm.status}
+                    onChange={(e) => setYardForm({ ...yardForm, status: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="ACTIVE">ACTIVE (Visible in Dropdowns)</option>
+                    <option value="INACTIVE">INACTIVE (Hidden)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Yard In-Charge Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Ramesh Choudhary"
+                    value={yardForm.manager}
+                    onChange={(e) => setYardForm({ ...yardForm, manager: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Contact Phone
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="+91 98290 00000"
+                    value={yardForm.phone}
+                    onChange={(e) => setYardForm({ ...yardForm, phone: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowYardModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingYard ? 'Save Changes' : 'Create Stockyard'}</span>
                 </button>
               </div>
             </form>
@@ -1136,266 +931,147 @@ export const AdminMasterPanel: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: ADD / EDIT SHOWROOM / STOCKYARD (FULL SCHEMA COLUMNS)             */}
+      {/* MODAL: ADD / EDIT BRANCH                                                  */}
       {/* ========================================================================= */}
       {showBranchModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <h3 className="font-bold text-sm">{editingBranch ? `Edit Facility: ${editingBranch.code}` : 'Add Dealership Showroom / Stockyard'}</h3>
-              <button onClick={() => setShowBranchModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">
+                    {editingBranch ? 'Edit Showroom Branch' : 'Add New Showroom Branch'}
+                  </h2>
+                  <p className="text-xs text-ink-3">Configure branch name, brand dealership, and operational status</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBranchModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleSaveBranch} className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Branch / Facility Code *</label>
-                  <input type="text" required placeholder="e.g. BR-PUN-01" value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold" />
+
+            <form onSubmit={handleSaveBranch} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Branch / Showroom Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Pratap Nagar, Bhagat Ki Kothi, Sumerpur..."
+                    value={branchForm.name}
+                    onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
                 </div>
+
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Facility Name *</label>
-                  <input type="text" required placeholder="e.g. Dhoot Group - Wakad Hub" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Dealership Brand *</label>
-                  <select value={branchForm.brand} onChange={(e) => setBranchForm({ ...branchForm, brand: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Brand Assignment *
+                  </label>
+                  <select
+                    value={branchForm.brand}
+                    onChange={(e) => setBranchForm({ ...branchForm, brand: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
                     <option value="Tata Motors">Tata Motors</option>
                     <option value="Hyundai">Hyundai</option>
-                    <option value="Dhoot Group Shared">Dhoot Group Shared Facility</option>
+                    <option value="Shared">Dhoot Group Shared</option>
                   </select>
                 </div>
+
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Facility Type</label>
-                  <select value={branchForm.type} onChange={(e) => setBranchForm({ ...branchForm, type: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold">
-                    <option value="3S (Sales, Service, Spares)">3S (Sales, Service, Spares)</option>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Branch Type
+                  </label>
+                  <select
+                    value={branchForm.type}
+                    onChange={(e) => setBranchForm({ ...branchForm, type: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="3S Showroom & Service">3S Showroom & Service</option>
                     <option value="1S Showroom">1S Showroom</option>
-                    <option value="Central Stockyard">Central Stockyard</option>
-                    <option value="Bodyshop & Workshop">Bodyshop & Workshop</option>
+                    <option value="2S Workshop">2S Workshop</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">City</label>
-                  <input type="text" required value={branchForm.city} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">State</label>
-                  <input type="text" required value={branchForm.state} onChange={(e) => setBranchForm({ ...branchForm, state: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Pincode</label>
-                  <input type="text" placeholder="e.g. 411057" value={branchForm.pincode || ''} onChange={(e) => setBranchForm({ ...branchForm, pincode: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Yard Vehicle Capacity</label>
-                  <input type="text" placeholder="e.g. 150 Cars" value={branchForm.capacity} onChange={(e) => setBranchForm({ ...branchForm, capacity: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Full Postal Address</label>
-                  <input type="text" placeholder="Plot No, Street, Industrial Area" value={branchForm.address || ''} onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Facility / Yard Manager</label>
-                  <input type="text" placeholder="e.g. Rajesh Patil" value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Official Mobile Contact</label>
-                  <input type="tel" value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-              </div>
-              <div className="pt-4 border-t border-line flex justify-end gap-2">
-                <button type="button" onClick={() => setShowBranchModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  {editingBranch ? 'Update Facility' : 'Save Facility'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 3: ADD / EDIT BANK / FINANCIER (FULL SCHEMA COLUMNS)                 */}
-      {/* ========================================================================= */}
-      {showFinModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <h3 className="font-bold text-sm">{editingFinancier ? `Edit Financier: ${editingFinancier.name}` : 'Add Banking / Financier Partner'}</h3>
-              <button onClick={() => setShowFinModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveFinancier} className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Financial Institution Name *</label>
-                <input type="text" required placeholder="e.g. Kotak Mahindra Prime Ltd" value={finForm.name} onChange={(e) => setFinForm({ ...finForm, name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Category</label>
-                  <select value={finForm.category} onChange={(e) => setFinForm({ ...finForm, category: e.target.value as any })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value="PRIVATE_BANK">Private Bank</option>
-                    <option value="NATIONALISED_BANK">Nationalised PSU Bank</option>
-                    <option value="OEM_CAPTIVE_NBFC">OEM Captive Finance</option>
-                    <option value="NBFC">Non-Banking Financial Company (NBFC)</option>
-                  </select>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    City / Location *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jodhpur, Pali, Balotra..."
+                    value={branchForm.city}
+                    onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">DSA / Partner Code</label>
-                  <input type="text" placeholder="e.g. FIN-KOT-01" value={finForm.code || ''} onChange={(e) => setFinForm({ ...finForm, code: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Contact Person</label>
-                  <input type="text" placeholder="e.g. Ritesh Deshmukh" value={finForm.contactPerson} onChange={(e) => setFinForm({ ...finForm, contactPerson: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Official Phone</label>
-                  <input type="tel" value={finForm.phone} onChange={(e) => setFinForm({ ...finForm, phone: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Official Email Desk</label>
-                  <input type="email" placeholder="auto@bank.com" value={finForm.email} onChange={(e) => setFinForm({ ...finForm, email: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Max LTV (%)</label>
-                  <input type="number" value={finForm.maxLtv || 90} onChange={(e) => setFinForm({ ...finForm, maxLtv: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-              </div>
-              <div className="pt-4 border-t border-line flex justify-end gap-2">
-                <button type="button" onClick={() => setShowFinModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  {editingFinancier ? 'Update Financier' : 'Save Financier'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 4: ADD / EDIT INSURANCE COMPANY (FULL SCHEMA COLUMNS)                */}
-      {/* ========================================================================= */}
-      {showInsModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <h3 className="font-bold text-sm">{editingInsurance ? `Edit Insurance: ${editingInsurance.name}` : 'Add General Insurance Provider'}</h3>
-              <button onClick={() => setShowInsModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveInsurance} className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Insurance Company *</label>
-                  <input type="text" required placeholder="e.g. Royal Sundaram" value={insForm.name} onChange={(e) => setInsForm({ ...insForm, name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">IRDAI / Partner Code</label>
-                  <input type="text" placeholder="e.g. INS-ROY-01" value={insForm.code || ''} onChange={(e) => setInsForm({ ...insForm, code: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Claims Desk Head</label>
-                  <input type="text" placeholder="e.g. Arvind Mehta" value={insForm.claimsHead} onChange={(e) => setInsForm({ ...insForm, claimsHead: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Surveyor Contact</label>
-                  <input type="tel" value={insForm.surveyorContact} onChange={(e) => setInsForm({ ...insForm, surveyorContact: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Dealership OD Discount (%)</label>
-                  <input type="number" value={insForm.discountPercentage} onChange={(e) => setInsForm({ ...insForm, discountPercentage: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold text-emerald-700" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Cashless Claim Status</label>
-                  <select value={insForm.cashlessTieUp ? 'YES' : 'NO'} onChange={(e) => setInsForm({ ...insForm, cashlessTieUp: e.target.value === 'YES' })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value="YES">✓ Approved Cashless Partner</option>
-                    <option value="NO">Reimbursement Basis</option>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Operational Status *
+                  </label>
+                  <select
+                    value={branchForm.status}
+                    onChange={(e) => setBranchForm({ ...branchForm, status: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="ACTIVE">ACTIVE (Visible in Dropdowns)</option>
+                    <option value="INACTIVE">INACTIVE (Hidden)</option>
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Supported Policy Add-on Covers</label>
-                <input type="text" placeholder="e.g. Zero Dep, RTI, Engine Protect, Key Replacement" value={insForm.policyTypes || ''} onChange={(e) => setInsForm({ ...insForm, policyTypes: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-              </div>
-              <div className="pt-4 border-t border-line flex justify-end gap-2">
-                <button type="button" onClick={() => setShowInsModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  {editingInsurance ? 'Update Insurance' : 'Save Insurance Partner'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 5: ADD / EDIT VEHICLE MODEL (FULL SCHEMA COLUMNS)                    */}
-      {/* ========================================================================= */}
-      {showModelModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs select-none z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-panel shadow-pop border border-line overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas text-ink">
-              <h3 className="font-bold text-sm">{editingModel ? `Edit Model: ${editingModel.model_name}` : 'Add Vehicle Model to Catalog'}</h3>
-              <button onClick={() => setShowModelModal(false)} className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveModel} className="p-6 space-y-4 text-xs overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">OEM Brand *</label>
-                  <select value={modelForm.brand} onChange={(e) => setModelForm({ ...modelForm, brand: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold">
-                    <option value="Tata Motors">Tata Motors</option>
-                    <option value="Hyundai">Hyundai</option>
-                  </select>
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Branch Manager Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Rajesh Sharma"
+                    value={branchForm.manager}
+                    onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
                 </div>
+
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Model Name *</label>
-                  <input type="text" required placeholder="e.g. Tata Curvv or Hyundai Alcazar" value={modelForm.model_name} onChange={(e) => setModelForm({ ...modelForm, model_name: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-bold" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Body Type</label>
-                  <input type="text" placeholder="SUV / Sedan / EV" value={modelForm.body_type} onChange={(e) => setModelForm({ ...modelForm, body_type: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-semibold" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Base Price (₹)</label>
-                  <input type="number" value={modelForm.base_ex_showroom} onChange={(e) => setModelForm({ ...modelForm, base_ex_showroom: Number(e.target.value) })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono font-bold" />
+                  <label className="block text-xs font-semibold text-ink mb-1">
+                    Contact Phone
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="+91 98290 00000"
+                    value={branchForm.phone}
+                    onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Transmission Options</label>
-                  <input type="text" placeholder="Manual, Automatic, DCT" value={modelForm.transmission || ''} onChange={(e) => setModelForm({ ...modelForm, transmission: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Seating Capacity</label>
-                  <input type="text" placeholder="5 Seater / 7 Seater" value={modelForm.seating_capacity || ''} onChange={(e) => setModelForm({ ...modelForm, seating_capacity: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-                </div>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Fuel Types (Comma separated)</label>
-                <input type="text" placeholder="PETROL, DIESEL, iCNG, EV" value={String(modelForm.fuel_types || '')} onChange={(e) => setModelForm({ ...modelForm, fuel_types: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded" />
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Available Variants (Comma separated)</label>
-                <input type="text" placeholder="Pure, Adventure, Fearless, Accomplished" value={String(modelForm.variants || '')} onChange={(e) => setModelForm({ ...modelForm, variants: e.target.value })} className="w-full p-2.5 bg-canvas border border-line rounded font-mono" />
-              </div>
-              <div className="pt-4 border-t border-line flex justify-end gap-2">
-                <button type="button" onClick={() => setShowModelModal(false)} className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-accent hover:bg-accent-600 text-white font-semibold rounded shadow-xs">
-                  {editingModel ? 'Update Model' : 'Save Model'}
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowBranchModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingBranch ? 'Save Changes' : 'Create Branch'}</span>
                 </button>
               </div>
             </form>
@@ -1408,4 +1084,3 @@ export const AdminMasterPanel: React.FC = () => {
 };
 
 export const AdminMasterPanelPage = AdminMasterPanel;
-

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../utils/apiConfig';
-import { getVehiclesForBrand, saveStockInventory } from '../data/seedData';
+import { getVehiclesForBrand, saveStockInventory, getActiveStockyards } from '../data/seedData';
 import { formatDate } from '../utils/dateUtils';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
 
@@ -92,16 +92,27 @@ export const YardReceivingPage: React.FC = () => {
   const [receivingNotes, setReceivingNotes] = useState<string>('Unloaded safely from carrier. Zero physical transit damages.');
   const [isReceivingSuccess, setIsReceivingSuccess] = useState(false);
 
+  const [activeYardsList, setActiveYardsList] = useState(() => getActiveStockyards(currentBrand?.code));
+
   useEffect(() => {
     fetchIncomingStock();
+    setActiveYardsList(getActiveStockyards(currentBrand?.code));
 
     // Realtime Stock Synchronization
     const handleStockUpdate = () => {
       fetchIncomingStock();
     };
 
+    const handleYardsUpdate = () => {
+      setActiveYardsList(getActiveStockyards(currentBrand?.code));
+    };
+
     window.addEventListener('stock-updated', handleStockUpdate);
-    return () => window.removeEventListener('stock-updated', handleStockUpdate);
+    window.addEventListener('stockyards-updated', handleYardsUpdate);
+    return () => {
+      window.removeEventListener('stock-updated', handleStockUpdate);
+      window.removeEventListener('stockyards-updated', handleYardsUpdate);
+    };
   }, [currentBrand?.code]);
 
   const mapVehicles = (rows: any[]): IncomingVehicle[] => {
@@ -167,7 +178,8 @@ export const YardReceivingPage: React.FC = () => {
     setPaperPdiPhoto(null);
     setUnloadingVideo(null);
     setOdometer('8');
-    setYardBay(vehicle.yardBay || 'Bay 1 (Inspection Staging)');
+    const activeYards = getActiveStockyards(currentBrand?.code);
+    setYardBay(vehicle.yardBay || (activeYards.length > 0 ? activeYards[0].name : 'Basni Yard'));
     setIsReceivingSuccess(false);
   };
 
@@ -743,10 +755,11 @@ export const YardReceivingPage: React.FC = () => {
                         onChange={(e) => setYardBay(e.target.value)}
                         className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
                       >
-                        <option value="Bay 1 (Inspection Staging)">Bay 1 (Inspection Staging)</option>
-                        <option value="Bay 2 (PDI Staging Area)">Bay 2 (PDI Staging Area)</option>
-                        <option value="Bay 3 (EV Charging Staging)">Bay 3 (EV Charging Staging)</option>
-                        <option value="Bay 4 (Ready Fleet Stock)">Bay 4 (Ready Fleet Stock)</option>
+                        {activeYardsList.map(y => (
+                          <option key={y.id} value={y.name}>
+                            {y.name} ({y.city})
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
