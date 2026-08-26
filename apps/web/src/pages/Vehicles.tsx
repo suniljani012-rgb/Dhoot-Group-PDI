@@ -39,6 +39,39 @@ export interface StockVehicle {
   created_at?: string;
 }
 
+// Helper: Calculate Ageing Days from Date of Billing (Purchase Date)
+const calculateAgeingDays = (purchaseDate?: string, fallbackDays?: number): number => {
+  if (!purchaseDate) return fallbackDays || 0;
+  const d = new Date(purchaseDate);
+  if (isNaN(d.getTime())) return fallbackDays || 0;
+  const now = new Date();
+  const diffTime = Math.max(0, now.getTime() - d.getTime());
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
+
+// Helper: Resolve Location City/Area automatically from Yard Name
+const getYardLocation = (yardName?: string, locationFallback?: string): string => {
+  if (!yardName && !locationFallback) return '—';
+  const val = (yardName || locationFallback || '').toLowerCase().trim();
+  if (val.includes('transit')) return 'In Transit';
+  if (val.includes('plant') || val.includes('oem')) return 'OEM Plant';
+  if (val.includes('basni')) return 'Jodhpur (Basni)';
+  if (val.includes('pratap')) return 'Jodhpur (Pratap Nagar)';
+  if (val.includes('bhagat')) return 'Jodhpur (Bhagat Ki Kothi)';
+  if (val.includes('shantinath')) return 'Jodhpur (Shantinath)';
+  if (val.includes('new yard')) return 'Jodhpur';
+  if (val.includes('sumerpur')) return 'Sumerpur';
+  if (val.includes('pali')) return 'Pali';
+  if (val.includes('jalore')) return 'Jalore';
+  if (val.includes('balotra')) return 'Balotra';
+  if (val.includes('barmer')) return 'Barmer';
+  if (val.includes('bhinmal')) return 'Bhinmal';
+  if (val.includes('jaisalmer')) return 'Jaisalmer';
+  if (val.includes('bilara')) return 'Bilara';
+  if (val.includes('pipar')) return 'Pipar';
+  return locationFallback || yardName || 'Central Stockyard';
+};
+
 export const VehiclesPage: React.FC = () => {
   const { currentBrand } = useAuth();
 
@@ -151,11 +184,12 @@ export const VehiclesPage: React.FC = () => {
     return 'neutral';
   };
 
-  // Distinct Models & Locations for Filter Dropdowns
+  // Distinct Models & Yard Locations for Filter Dropdowns (including In Transit & In OEM Plant)
   const uniqueModels = Array.from(new Set(vehicles.map(v => v.model).filter(Boolean)));
   const activeYards = getActiveStockyards(currentBrand.code).map(y => y.name);
   const vehicleLocations = vehicles.map(v => v.location).filter(Boolean);
-  const uniqueLocations = Array.from(new Set([...activeYards, ...vehicleLocations]));
+  const customYardOptions = ['In Transit', 'In OEM Plant'];
+  const uniqueLocations = Array.from(new Set([...customYardOptions, ...activeYards, ...vehicleLocations]));
 
   const filtered = vehicles.filter(v => {
     const s = searchTerm.toLowerCase();
@@ -268,7 +302,7 @@ export const VehiclesPage: React.FC = () => {
                 onChange={(e) => setLocationFilter(e.target.value)}
                 className="h-7 text-xs bg-canvas border border-line rounded px-2 text-ink focus:outline-none focus:border-accent font-medium"
               >
-                <option value="ALL">All Locations</option>
+                <option value="ALL">All Yards & Status</option>
                 {uniqueLocations.map(l => (
                   <option key={l} value={l}>{l}</option>
                 ))}
@@ -298,41 +332,36 @@ export const VehiclesPage: React.FC = () => {
             <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Purchase Date</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Purchase / Billing Date</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Model</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Variant</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Colour</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Fuel</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">FSC Code</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Dealer</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Plant</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Dealer Code</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Plant Code</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Year</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Vin No</th>
                 <th className="py-2.5 px-3 whitespace-nowrap text-center">Qty</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Location</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Customer Name</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Sales Consultant</th>
-                <th className="py-2.5 px-3 whitespace-nowrap text-right">Acc. Amt</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Yard</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Location (City)</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Vehicle Status</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Delivery Date</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Alloc. Date</th>
-                <th className="py-2.5 px-3 whitespace-nowrap text-center">Days</th>
-                <th className="py-2.5 px-3 whitespace-nowrap text-right">Rec. Amt</th>
+                <th className="py-2.5 px-3 whitespace-nowrap text-center">Ageing (Days)</th>
                 <th className="py-2.5 px-3 whitespace-nowrap text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line text-ink-2 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={23} className="py-12 text-center text-ink-3">
+                  <td colSpan={18} className="py-12 text-center text-ink-3">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-accent" />
                     Loading inventory...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={23}>
+                  <td colSpan={18}>
                     <div className="py-12 text-center space-y-3">
                       <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
                         <Car className="w-6 h-6" />
@@ -404,38 +433,46 @@ export const VehiclesPage: React.FC = () => {
                       <td className="py-2.5 px-3 text-center text-ink-2 tnum whitespace-nowrap">
                         {v.quantity || 1}
                       </td>
+                      <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5">
+                          {v.location === 'In Transit' ? (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-warn/10 text-warn border border-warn/30">
+                              In Transit
+                            </span>
+                          ) : v.location === 'In OEM Plant' ? (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-accent-soft text-accent border border-accent/30">
+                              In OEM Plant
+                            </span>
+                          ) : (
+                            <span>{v.location || 'Central Stockyard'}</span>
+                          )}
+                        </span>
+                      </td>
                       <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
-                        {v.location || 'Central Stockyard'}
-                      </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        {v.customer_name ? (
-                          <span className="font-semibold text-ink">{v.customer_name}</span>
-                        ) : (
-                          <span className="text-ink-3 italic">Unallocated</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
-                        {v.sales_consultant || '—'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-medium text-ink tnum whitespace-nowrap">
-                        ₹{(Number(v.accessories_amount) || 0).toLocaleString('en-IN')}
+                        {getYardLocation(v.location)}
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         <Badge tone={getStatusBadgeTone(v.vehicle_status || v.status) as any}>
                           {v.vehicle_status || v.status}
                         </Badge>
                       </td>
-                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
-                        {formatDate(v.delivery_date)}
-                      </td>
-                      <td className="py-2.5 px-3 text-ink-3 tnum whitespace-nowrap">
-                        {formatDate(v.allocation_date)}
-                      </td>
-                      <td className="py-2.5 px-3 text-center text-ink-2 tnum whitespace-nowrap">
-                        {v.allocated_days ? `${v.allocated_days}d` : '0d'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-semibold text-ink tnum whitespace-nowrap">
-                        ₹{(Number(v.received_amount) || 0).toLocaleString('en-IN')}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        {(() => {
+                          const days = calculateAgeingDays(v.purchase_date, v.allocated_days);
+                          const toneClass = 
+                            days <= 30 
+                              ? 'bg-ok/10 text-ok border-ok/20' 
+                              : days <= 60 
+                              ? 'bg-accent-soft text-accent border-accent/20' 
+                              : days <= 90 
+                              ? 'bg-warn/10 text-warn border-warn/30' 
+                              : 'bg-danger/10 text-danger border-danger/30';
+                          return (
+                            <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold font-mono border ${toneClass}`}>
+                              {days}d
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="py-2.5 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         {v.status === 'YARD_RECEIVING_PENDING' || v.status === 'GATE_INWARD_PENDING' ? (
