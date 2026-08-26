@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { 
   User, Lock, AlertCircle, Loader2, Eye, EyeOff, 
   ShieldCheck, ArrowLeft, CheckCircle2, 
-  Calendar, KeyRound, RefreshCw, Mail
+  Calendar, KeyRound, RefreshCw, Mail, Check
 } from 'lucide-react';
 import { getApiUrl } from '../utils/apiConfig';
 import { Badge } from '../components/ui/primitives';
@@ -55,7 +55,7 @@ export const LoginPage: React.FC = () => {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password) {
-      setError('Please enter both your User ID and Password.');
+      setError('Please enter both your Username and Password.');
       return;
     }
 
@@ -101,7 +101,7 @@ export const LoginPage: React.FC = () => {
 
         const u = users?.[0];
         if (!u) {
-          setError('User ID not recognized. Please check your credentials.');
+          setError('Username not recognized. Please check your credentials.');
           setLoading(false);
           return;
         }
@@ -174,11 +174,11 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // 2. Step 1: Verify User ID + Date of Birth
+  // 2. Step 1: Verify Username + Date of Birth
   const handleStep1IdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotUserId.trim() || !forgotDob) {
-      setError('Please enter both your User ID and Date of Birth.');
+      setError('Please enter both your Username and Date of Birth.');
       return;
     }
 
@@ -186,7 +186,6 @@ export const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      // 1. Try API Worker
       let verifiedData: any = null;
       try {
         const res = await fetch(getApiUrl('/api/v1/auth/forgot/verify-identity'), {
@@ -198,7 +197,7 @@ export const LoginPage: React.FC = () => {
         if (res.ok && json.success) {
           verifiedData = json.data;
         } else {
-          setError(json.error?.message || 'Verification failed. Please check your credentials.');
+          setError(json.error?.message || 'Verification failed. Please check your details.');
           setForgotLoading(false);
           return;
         }
@@ -206,7 +205,6 @@ export const LoginPage: React.FC = () => {
         console.warn('Fallback to direct database DOB check:', workerErr);
       }
 
-      // Direct Database Check Fallback
       if (!verifiedData) {
         const cleanUser = forgotUserId.trim();
         const { data: users, error: dbError } = await supabase
@@ -216,7 +214,7 @@ export const LoginPage: React.FC = () => {
           .limit(1);
 
         if (dbError || !users || users.length === 0) {
-          setError('User ID not found. Please check your User ID.');
+          setError('Username not found in system records.');
           setForgotLoading(false);
           return;
         }
@@ -291,7 +289,7 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     const cleanOtp = inputOtp.trim();
     if (cleanOtp.length !== 6) {
-      setError('Please enter the valid 6-digit OTP code.');
+      setError('Please enter the 6-digit OTP code.');
       return;
     }
 
@@ -339,7 +337,7 @@ export const LoginPage: React.FC = () => {
       if (isValid) {
         setForgotStep('STEP_3_NEW_PASSWORD');
       } else {
-        setError('Incorrect OTP code. Please enter the valid 6-digit code sent to your email.');
+        setError('Incorrect OTP code. Please check the code sent to your email.');
       }
     } catch (err: any) {
       setError(err.message || 'OTP verification error.');
@@ -357,7 +355,7 @@ export const LoginPage: React.FC = () => {
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New Password and Verify Password do not match.');
+      setError('New Password and Confirm Password do not match.');
       return;
     }
 
@@ -403,9 +401,9 @@ export const LoginPage: React.FC = () => {
       {/* Top Container */}
       <div className="w-full max-w-sm flex flex-col items-center">
         
-        {/* Brand Header */}
+        {/* Brand Header: Logo + Dhoot Group Only */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="flex items-center gap-2.5 mb-2">
+          <div className="flex items-center gap-2.5">
             <img
               src="/logo.png"
               alt="Dhoot Group Logo"
@@ -415,12 +413,9 @@ export const LoginPage: React.FC = () => {
               Dhoot Group
             </span>
           </div>
-          <p className="text-xs text-ink-3">
-            Dealership PDI & Inventory Operations Portal
-          </p>
         </div>
 
-        {/* Auth Panel */}
+        {/* Main Card */}
         <div className="w-full bg-surface border border-line rounded-panel shadow-pop p-6 sm:p-7 relative">
           
           {error && (
@@ -431,12 +426,14 @@ export const LoginPage: React.FC = () => {
           )}
 
           {!isForgotPassword ? (
-            /* 1. SIGN IN FORM */
+            /* ========================================================================= */
+            /* 1. SIGN IN FORM                                                           */
+            /* ========================================================================= */
             <form className="space-y-4" onSubmit={handleLoginSubmit}>
               
               <div>
-                <label className="block eyebrow mb-1.5">
-                  User ID / Employee Code
+                <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                  Username
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -444,7 +441,7 @@ export const LoginPage: React.FC = () => {
                     type="text"
                     required
                     autoComplete="username"
-                    placeholder="e.g. DG001 or admin"
+                    placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full h-9 pl-9 pr-3 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:bg-surface focus:border-accent focus:outline-none transition-colors ident"
@@ -454,7 +451,7 @@ export const LoginPage: React.FC = () => {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="eyebrow">
+                  <label className="text-xs font-medium text-ink-2">
                     Password
                   </label>
                   <button
@@ -465,9 +462,9 @@ export const LoginPage: React.FC = () => {
                       setForgotUserId(username);
                       setIsForgotPassword(true);
                     }}
-                    className="text-xs text-accent hover:underline cursor-pointer"
+                    className="text-xs text-accent hover:underline cursor-pointer font-medium"
                   >
-                    Forgot?
+                    Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
@@ -476,7 +473,7 @@ export const LoginPage: React.FC = () => {
                     type={showPassword ? 'text' : 'password'}
                     required
                     autoComplete="current-password"
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full h-9 pl-9 pr-9 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:bg-surface focus:border-accent focus:outline-none transition-colors ident"
@@ -504,7 +501,7 @@ export const LoginPage: React.FC = () => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="rounded border-line text-accent focus:ring-accent h-3.5 w-3.5"
                   />
-                  <span className="text-xs text-ink-2">Remember credentials</span>
+                  <span className="text-xs text-ink-2">Keep me signed in</span>
                 </label>
               </div>
 
@@ -529,32 +526,48 @@ export const LoginPage: React.FC = () => {
               </div>
             </form>
           ) : (
-            /* 2. FORGOT PASSWORD FLOW */
+            /* ========================================================================= */
+            /* 2. PASSWORD RESET FLOW                                                    */
+            /* ========================================================================= */
             <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-line">
-                <button
-                  type="button"
-                  onClick={resetForgotWizard}
-                  className="p-1 rounded hover:bg-canvas text-ink-3 hover:text-ink transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
-                <span className="text-sm font-semibold text-ink">Account Recovery</span>
+              
+              {/* Reset Header with Back button */}
+              <div className="flex items-center justify-between pb-3 border-b border-line">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={resetForgotWizard}
+                    className="p-1 rounded hover:bg-canvas text-ink-3 hover:text-ink transition-colors cursor-pointer"
+                    title="Back to Sign In"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <div>
+                    <h2 className="text-sm font-semibold text-ink">Reset Password</h2>
+                  </div>
+                </div>
+                <span className="text-[11px] text-ink-3 font-mono">
+                  {forgotStep === 'STEP_1_IDENTITY' ? 'Step 1/3' : forgotStep === 'STEP_2_OTP' ? 'Step 2/3' : forgotStep === 'STEP_3_NEW_PASSWORD' ? 'Step 3/3' : 'Complete'}
+                </span>
               </div>
 
-              {/* STEP 1: IDENTITY */}
+              {/* STEP 1: IDENTITY VERIFICATION */}
               {forgotStep === 'STEP_1_IDENTITY' && (
-                <form onSubmit={handleStep1IdentitySubmit} className="space-y-4">
+                <form onSubmit={handleStep1IdentitySubmit} className="space-y-3.5">
+                  <p className="text-xs text-ink-3">
+                    Verify your registered account details to receive an OTP.
+                  </p>
+
                   <div>
-                    <label className="block eyebrow mb-1.5">
-                      User ID / Employee Code
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                      Username
                     </label>
                     <div className="relative">
                       <User className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         required
-                        placeholder="e.g. DG001"
+                        placeholder="Enter your username"
                         value={forgotUserId}
                         onChange={(e) => setForgotUserId(e.target.value)}
                         className="w-full h-9 pl-9 pr-3 text-xs bg-canvas border border-line rounded text-ink focus:bg-surface focus:border-accent focus:outline-none transition-colors ident"
@@ -563,7 +576,7 @@ export const LoginPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block eyebrow mb-1.5">
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5">
                       Date of Birth
                     </label>
                     <div className="relative">
@@ -578,27 +591,29 @@ export const LoginPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    className="w-full h-9 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {forgotLoading ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Verifying...</span>
-                      </>
-                    ) : (
-                      'Send OTP to Registered Email'
-                    )}
-                  </button>
+                  <div className="pt-1">
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-full h-9 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Verifying Records...</span>
+                        </>
+                      ) : (
+                        'Verify & Send Email OTP'
+                      )}
+                    </button>
+                  </div>
                 </form>
               )}
 
-              {/* STEP 2: OTP */}
+              {/* STEP 2: OTP VERIFICATION */}
               {forgotStep === 'STEP_2_OTP' && (
-                <form onSubmit={handleStep2OtpSubmit} className="space-y-4">
-                  <div className="p-2.5 bg-canvas border border-line rounded flex items-center gap-2.5">
+                <form onSubmit={handleStep2OtpSubmit} className="space-y-3.5">
+                  <div className="p-3 bg-canvas border border-line rounded flex items-center gap-2.5">
                     <Mail className="w-4 h-4 text-accent shrink-0" />
                     <div className="text-xs text-ink-2">
                       <span className="text-ink-3 text-[10px] block uppercase font-medium">OTP Sent To</span>
@@ -607,8 +622,8 @@ export const LoginPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block eyebrow mb-1.5">
-                      Enter 6-Digit Email OTP
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                      6-Digit OTP Code
                     </label>
                     <div className="relative">
                       <KeyRound className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -624,11 +639,11 @@ export const LoginPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs px-1">
+                  <div className="flex items-center justify-between text-xs px-0.5">
                     <span className="text-ink-3">Didn't receive code?</span>
                     {resendTimer > 0 ? (
                       <span className="font-mono text-ink-3 tnum">
-                        00:{resendTimer < 10 ? `0${resendTimer}` : resendTimer}
+                        Resend in 00:{resendTimer < 10 ? `0${resendTimer}` : resendTimer}
                       </span>
                     ) : (
                       <button
@@ -643,28 +658,34 @@ export const LoginPage: React.FC = () => {
                     )}
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={forgotLoading || inputOtp.length !== 6}
-                    className="w-full h-9 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {forgotLoading ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Validating...</span>
-                      </>
-                    ) : (
-                      'Verify OTP'
-                    )}
-                  </button>
+                  <div className="pt-1">
+                    <button
+                      type="submit"
+                      disabled={forgotLoading || inputOtp.length !== 6}
+                      className="w-full h-9 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Validating OTP...</span>
+                        </>
+                      ) : (
+                        'Verify OTP Code'
+                      )}
+                    </button>
+                  </div>
                 </form>
               )}
 
-              {/* STEP 3: NEW PASSWORD */}
+              {/* STEP 3: SET NEW PASSWORD */}
               {forgotStep === 'STEP_3_NEW_PASSWORD' && (
-                <form onSubmit={handleStep3PasswordSubmit} className="space-y-4">
+                <form onSubmit={handleStep3PasswordSubmit} className="space-y-3.5">
+                  <p className="text-xs text-ink-3">
+                    Enter your new secure password below.
+                  </p>
+
                   <div>
-                    <label className="block eyebrow mb-1.5">
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5">
                       New Password
                     </label>
                     <div className="relative">
@@ -688,7 +709,7 @@ export const LoginPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block eyebrow mb-1.5">
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -696,7 +717,7 @@ export const LoginPage: React.FC = () => {
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         required
-                        placeholder="Re-enter password"
+                        placeholder="Re-enter new password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="w-full h-9 pl-9 pr-9 text-xs bg-canvas border border-line rounded text-ink focus:bg-surface focus:border-accent focus:outline-none transition-colors ident"
@@ -711,33 +732,35 @@ export const LoginPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={forgotLoading || !newPassword || !confirmPassword}
-                    className="w-full h-9 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {forgotLoading ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Updating Password...</span>
-                      </>
-                    ) : (
-                      'Update Password'
-                    )}
-                  </button>
+                  <div className="pt-1">
+                    <button
+                      type="submit"
+                      disabled={forgotLoading || !newPassword || !confirmPassword}
+                      className="w-full h-9 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Updating Password...</span>
+                        </>
+                      ) : (
+                        'Save Password & Sign In'
+                      )}
+                    </button>
+                  </div>
                 </form>
               )}
 
-              {/* STEP 4: SUCCESS */}
+              {/* STEP 4: SUCCESS CONFIRMATION */}
               {forgotStep === 'STEP_4_SUCCESS' && (
-                <div className="space-y-4 text-center py-2">
+                <div className="space-y-4 text-center py-3">
                   <div className="w-10 h-10 rounded-full bg-ok/10 text-ok flex items-center justify-center mx-auto border border-ok/20">
-                    <CheckCircle2 className="w-5 h-5" />
+                    <Check className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-ink">Password Updated</h3>
-                    <p className="text-xs text-ink-3 mt-1">
-                      You can now sign in with your updated password.
+                    <h3 className="text-sm font-semibold text-ink">Password Updated Successfully</h3>
+                    <p className="text-xs text-ink-3 mt-1 leading-relaxed">
+                      Your password has been changed. You can now sign in with your updated credentials.
                     </p>
                   </div>
                   <button
@@ -755,10 +778,10 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Footer attribution */}
+          {/* Bottom Attribution */}
           <div className="mt-5 pt-3 border-t border-line text-center">
             <span className="text-[11px] text-ink-3">
-              Protected by Enterprise Dual-Layer Authentication
+              Designed & Developed for Dhoot Group
             </span>
           </div>
 
