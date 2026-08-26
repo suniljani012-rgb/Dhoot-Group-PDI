@@ -34,7 +34,20 @@ export const DashboardPage: React.FC = () => {
   const [variantFilter, setVariantFilter] = useState<string>('ALL');
   const [colourFilter, setColourFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [viewingVinList, setViewingVinList] = useState<{ variant: string; colour: string; vins: string[] } | null>(null);
+  const [viewingVinList, setViewingVinList] = useState<{ 
+    variant: string; 
+    colour: string; 
+    vehicles: Array<{
+      vin: string;
+      model: string;
+      variant: string;
+      color: string;
+      location: string;
+      status: string;
+      purchase_date: string;
+      ageing_days: number;
+    }> 
+  } | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -147,6 +160,16 @@ export const DashboardPage: React.FC = () => {
         vna: number;
         freeStock: number;
         matchedVins: string[];
+        freeVehiclesDetails: Array<{
+          vin: string;
+          model: string;
+          variant: string;
+          color: string;
+          location: string;
+          status: string;
+          purchase_date: string;
+          ageing_days: number;
+        }>;
       }> = {};
 
       const allCombos = new Set<string>();
@@ -190,7 +213,21 @@ export const DashboardPage: React.FC = () => {
           pbna: subPbna,
           vna: subVna,
           freeStock: subFreeVehicles.length,
-          matchedVins: subFreeVehicles.map(v => `${v.vin} (${v.location || 'Basni Yard'})`)
+          matchedVins: subFreeVehicles.map(v => `${v.vin} (${v.location || 'Basni Yard'})`),
+          freeVehiclesDetails: subFreeVehicles.map(v => {
+            const pDate = v.purchase_date || v.created_at || '';
+            const ageing = pDate ? Math.max(0, Math.floor((Date.now() - new Date(pDate).getTime()) / (1000 * 60 * 60 * 24))) : 0;
+            return {
+              vin: v.vin,
+              model: v.model,
+              variant: v.variant || variant,
+              color: v.color || v.colour || colour,
+              location: v.location || 'Basni Yard',
+              status: v.status || v.vehicle_status || 'RECEIVED',
+              purchase_date: pDate,
+              ageing_days: ageing
+            };
+          })
         };
       });
 
@@ -972,19 +1009,19 @@ export const DashboardPage: React.FC = () => {
                                 )}
                               </td>
                               <td className="py-2.5 px-3 whitespace-nowrap">
-                                {row.matchedVins.length > 0 ? (
+                                {((row as any).freeVehiclesDetails || []).length > 0 ? (
                                   <button
                                     type="button"
                                     onClick={() => setViewingVinList({
                                       variant: row.variant,
                                       colour: row.colour,
-                                      vins: row.matchedVins
+                                      vehicles: (row as any).freeVehiclesDetails
                                     })}
-                                    className="px-2.5 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                                    title="Click to view free stock VIN numbers"
+                                    className="px-2.5 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer hover:bg-accent/5"
+                                    title="Click to view full live vehicle stock details & yard locations"
                                   >
                                     <Eye className="w-3.5 h-3.5 text-accent" />
-                                    <span>{row.matchedVins.length} Free VINs</span>
+                                    <span>{((row as any).freeVehiclesDetails || []).length} Stock Units</span>
                                   </button>
                                 ) : (
                                   <span className="text-ink-3 font-mono text-xs">—</span>
