@@ -112,6 +112,19 @@ export const VehiclesPage: React.FC = () => {
     }
   };
 
+  // Instant update of Vehicle Yard from Table Dropdown
+  const handleUpdateVehicleYard = (vin: string, newYard: string) => {
+    const updated = vehicles.map(v => {
+      if (v.vin === vin) {
+        return { ...v, location: newYard };
+      }
+      return v;
+    });
+    setVehicles(updated);
+    localStorage.setItem('dhoot_stock_inventory', JSON.stringify(updated));
+    window.dispatchEvent(new Event('stock-updated'));
+  };
+
 
 
   // Export 21-Column Stock CSV
@@ -433,20 +446,28 @@ export const VehiclesPage: React.FC = () => {
                       <td className="py-2.5 px-3 text-center text-ink-2 tnum whitespace-nowrap">
                         {v.quantity || 1}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5">
-                          {v.location === 'In Transit' ? (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-warn/10 text-warn border border-warn/30">
-                              In Transit
-                            </span>
-                          ) : v.location === 'In OEM Plant' ? (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-accent-soft text-accent border border-accent/30">
-                              In OEM Plant
-                            </span>
-                          ) : (
-                            <span>{v.location || 'Central Stockyard'}</span>
-                          )}
-                        </span>
+                      <td className="py-2.5 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={v.location || (activeYards[0] || 'Basni Yard')}
+                          onChange={(e) => handleUpdateVehicleYard(v.vin, e.target.value)}
+                          className={`h-7 text-xs font-semibold rounded px-2.5 border cursor-pointer focus:outline-none focus:border-accent transition-colors shadow-xs ${
+                            v.location === 'In Transit'
+                              ? 'bg-warn/10 text-warn border-warn/30 hover:bg-warn/20 font-bold'
+                              : v.location === 'In OEM Plant'
+                              ? 'bg-accent-soft text-accent border-accent/30 hover:bg-accent-soft/80 font-bold'
+                              : 'bg-canvas text-ink border-line hover:border-line-strong'
+                          }`}
+                        >
+                          <optgroup label="Transit & OEM Factory">
+                            <option value="In Transit">🚚 In Transit</option>
+                            <option value="In OEM Plant">🏭 In OEM Plant</option>
+                          </optgroup>
+                          <optgroup label="Active Dealership Stockyards">
+                            {activeYards.map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </optgroup>
+                        </select>
                       </td>
                       <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
                         {getYardLocation(v.location)}
