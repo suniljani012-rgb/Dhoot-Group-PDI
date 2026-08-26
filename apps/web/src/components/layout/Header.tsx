@@ -39,26 +39,15 @@ export const Header: React.FC<HeaderProps> = ({ isMobileMenuOpen, onToggleMobile
         </button>
 
         {/* Dhoot Group Brand Identity */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <img 
             src="/logo.png" 
             alt="Dhoot Group Logo" 
-            className="h-10 w-10 object-contain rounded-2xl shrink-0"
+            className="h-9 w-9 object-contain rounded-xl shrink-0"
           />
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm sm:text-base font-black text-slate-900 leading-none">
-                Dhoot Group
-              </span>
-              <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
-                HQ
-              </span>
-            </div>
-            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mt-0.5">
-              Official Dealership Portal
-            </span>
-          </div>
+          <span className="text-base font-bold text-slate-900 leading-none">
+            Dhoot Group
+          </span>
         </div>
       </div>
 
