@@ -6,7 +6,7 @@ import { useFleetCounts } from '../hooks/useFleetCounts';
 import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards } from '../data/seedData';
 import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
 import { 
-  Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, 
+  Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, Eye, 
   ArrowRight, Search, Download, X, Sliders, ShieldCheck, Layers, Palette, Filter, User, Phone, IndianRupee, Calendar
 } from 'lucide-react';
 
@@ -34,6 +34,7 @@ export const DashboardPage: React.FC = () => {
   const [variantFilter, setVariantFilter] = useState<string>('ALL');
   const [colourFilter, setColourFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [viewingVinList, setViewingVinList] = useState<{ variant: string; colour: string; vins: string[] } | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -970,17 +971,23 @@ export const DashboardPage: React.FC = () => {
                                   <span className="text-ink-3 text-[11px]">All Settled</span>
                                 )}
                               </td>
-                              <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap">
+                              <td className="py-2.5 px-3 whitespace-nowrap">
                                 {row.matchedVins.length > 0 ? (
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    {row.matchedVins.map((vinStr, vIdx) => (
-                                      <span key={vIdx} className="px-1.5 py-0.5 bg-accent-soft text-accent rounded border border-accent/20 font-semibold text-[10px]">
-                                        {vinStr}
-                                      </span>
-                                    ))}
-                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingVinList({
+                                      variant: row.variant,
+                                      colour: row.colour,
+                                      vins: row.matchedVins
+                                    })}
+                                    className="px-2.5 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                                    title="Click to view free stock VIN numbers"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-accent" />
+                                    <span>{row.matchedVins.length} Free VINs</span>
+                                  </button>
                                 ) : (
-                                  <span className="text-ink-3">—</span>
+                                  <span className="text-ink-3 font-mono text-xs">—</span>
                                 )}
                               </td>
                             </tr>
