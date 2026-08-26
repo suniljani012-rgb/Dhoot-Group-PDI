@@ -30,7 +30,7 @@ export interface BranchItem {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
-// 1. Tata & Hyundai Stockyards as specified by Dealership network
+// 1. Tata & Hyundai Stockyards
 export const SEED_STOCKYARDS: YardItem[] = [
   // Tata Yards
   { id: 'yrd-t-1', code: 'YRD-BASNI', name: 'Basni Yard', brand: 'Tata Motors', city: 'Jodhpur', state: 'Rajasthan', capacity: '200 Cars', manager: 'Ramesh Choudhary', phone: '+91 98290 10001', status: 'ACTIVE' },
@@ -54,7 +54,7 @@ export const SEED_STOCKYARDS: YardItem[] = [
   { id: 'yrd-h-6', code: 'YRD-JAISAL', name: 'Jaisalmer', brand: 'Hyundai', city: 'Jaisalmer', state: 'Rajasthan', capacity: '90 Cars', manager: 'Bhanwar Singh', phone: '+91 98291 20006', status: 'ACTIVE' }
 ];
 
-// 2. Tata & Hyundai Branches / Showrooms
+// 2. Tata & Hyundai Branches
 export const SEED_BRANCHES: BranchItem[] = [
   // Tata Branches
   { id: 'br-t-1', code: 'BR-PNAGAR-T', name: 'Pratap Nagar', brand: 'Tata Motors', type: 'Main Showroom', city: 'Jodhpur', state: 'Rajasthan', capacity: '50 Cars', manager: 'Rajesh Sharma', phone: '+91 98290 10008', status: 'ACTIVE' },
@@ -137,7 +137,7 @@ export const saveBranches = (branches: BranchItem[]) => {
 };
 
 // ============================================================================
-// SMART BRAND CLASSIFICATION ENGINE (TATA VS HYUNDAI VS ALL)
+// SMART BRAND CLASSIFICATION ENGINE
 // ============================================================================
 export const isTataItem = (item: any): boolean => {
   if (!item) return false;
@@ -165,6 +165,9 @@ export const isHyundaiItem = (item: any): boolean => {
   return hyundaiKeywords.some(kw => m.includes(kw));
 };
 
+// ============================================================================
+// STOCK INVENTORY METHODS
+// ============================================================================
 export const getVehiclesForBrand = (brandCode: string) => {
   try {
     const saved = localStorage.getItem('dhoot_stock_inventory');
@@ -196,6 +199,9 @@ export const clearStockInventory = () => {
   window.dispatchEvent(new Event('stock-updated'));
 };
 
+// ============================================================================
+// CUSTOMER BOOKINGS METHODS
+// ============================================================================
 export const getBookingsForBrand = (brandCode: string) => {
   try {
     const saved = localStorage.getItem('dhoot_bookings_inventory');
@@ -227,6 +233,9 @@ export const clearBookingsInventory = () => {
   window.dispatchEvent(new Event('bookings-updated'));
 };
 
+// ============================================================================
+// CHALLANS METHODS
+// ============================================================================
 export const getChallansForBrand = (brandCode: string) => {
   try {
     const saved = localStorage.getItem('dhoot_challans_inventory');
@@ -259,49 +268,95 @@ export const clearChallansInventory = () => {
 };
 
 // ============================================================================
-// BIDIRECTIONAL REALTIME SUPABASE CLOUD SYNCHRONIZATION
+// BIDIRECTIONAL REALTIME CLOUD SYNCHRONIZATION (SUPABASE + WORKER API)
 // ============================================================================
 export const syncWithSupabase = async () => {
   try {
-    // 1. Fetch Live Bookings from Supabase
-    const { data: dbBookings, error: bErr } = await supabase.from('bookings').select('*');
-    if (!bErr && dbBookings && Array.isArray(dbBookings) && dbBookings.length > 0) {
+    const API_BASE = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:8787'
+      : 'https://dhoot-group-pdi-api.sunilbishnoi.workers.dev';
+
+    // 1. Fetch Live Bookings
+    let fetchedBookings: any[] = [];
+    try {
+      const { data: dbBookings, error: bErr } = await supabase.from('bookings').select('*');
+      if (!bErr && dbBookings && Array.isArray(dbBookings) && dbBookings.length > 0) {
+        fetchedBookings = dbBookings;
+      }
+    } catch (e) {}
+
+    if (fetchedBookings.length === 0) {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/bookings`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+            fetchedBookings = json.data;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (fetchedBookings.length > 0) {
       const local = getBookingsForBrand('DHOOT-ALL');
       const mergedMap = new Map();
       local.forEach((b: any) => mergedMap.set(b.id || b.receipt_no, b));
-      dbBookings.forEach((b: any) => mergedMap.set(b.id || b.receipt_no, b));
+      fetchedBookings.forEach((b: any) => mergedMap.set(b.id || b.receipt_no, b));
       const merged = Array.from(mergedMap.values());
       localStorage.setItem('dhoot_bookings_inventory', JSON.stringify(merged));
       window.dispatchEvent(new Event('bookings-updated'));
     }
 
-    // 2. Fetch Live Vehicles from Supabase
-    const { data: dbVehicles, error: vErr } = await supabase.from('vehicles').select('*');
-    if (!vErr && dbVehicles && Array.isArray(dbVehicles) && dbVehicles.length > 0) {
+    // 2. Fetch Live Vehicles
+    let fetchedVehicles: any[] = [];
+    try {
+      const { data: dbVehicles, error: vErr } = await supabase.from('vehicles').select('*');
+      if (!vErr && dbVehicles && Array.isArray(dbVehicles) && dbVehicles.length > 0) {
+        fetchedVehicles = dbVehicles;
+      }
+    } catch (e) {}
+
+    if (fetchedVehicles.length === 0) {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/stock`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+            fetchedVehicles = json.data;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (fetchedVehicles.length > 0) {
       const local = getVehiclesForBrand('DHOOT-ALL');
       const mergedMap = new Map();
       local.forEach((v: any) => mergedMap.set(v.id || v.vin, v));
-      dbVehicles.forEach((v: any) => mergedMap.set(v.id || v.vin, v));
+      fetchedVehicles.forEach((v: any) => mergedMap.set(v.id || v.vin, v));
       const merged = Array.from(mergedMap.values());
       localStorage.setItem('dhoot_stock_inventory', JSON.stringify(merged));
       window.dispatchEvent(new Event('stock-updated'));
     }
 
-    // 3. Fetch Live Stockyards from Supabase
-    const { data: dbYards, error: yErr } = await supabase.from('stockyards').select('*');
-    if (!yErr && dbYards && Array.isArray(dbYards) && dbYards.length > 0) {
-      localStorage.setItem('autoprime_stockyards', JSON.stringify(dbYards));
-      window.dispatchEvent(new Event('stockyards-updated'));
-    }
+    // 3. Fetch Stockyards & Branches
+    try {
+      const { data: dbYards } = await supabase.from('stockyards').select('*');
+      if (dbYards && Array.isArray(dbYards) && dbYards.length > 0) {
+        localStorage.setItem('autoprime_stockyards', JSON.stringify(dbYards));
+        window.dispatchEvent(new Event('stockyards-updated'));
+      }
+    } catch (e) {}
 
-    // 4. Fetch Live Branches from Supabase
-    const { data: dbBranches, error: brErr } = await supabase.from('branches').select('*');
-    if (!brErr && dbBranches && Array.isArray(dbBranches) && dbBranches.length > 0) {
-      localStorage.setItem('autoprime_branches', JSON.stringify(dbBranches));
-      window.dispatchEvent(new Event('branches-updated'));
-    }
+    try {
+      const { data: dbBranches } = await supabase.from('branches').select('*');
+      if (dbBranches && Array.isArray(dbBranches) && dbBranches.length > 0) {
+        localStorage.setItem('autoprime_branches', JSON.stringify(dbBranches));
+        window.dispatchEvent(new Event('branches-updated'));
+      }
+    } catch (e) {}
+
   } catch (e) {
-    console.warn('Sync with Supabase note:', e);
+    console.warn('Sync with cloud note:', e);
   }
 };
 
