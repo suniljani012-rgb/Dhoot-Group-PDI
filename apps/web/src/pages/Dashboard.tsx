@@ -30,6 +30,8 @@ export const DashboardPage: React.FC = () => {
   // Dedicated Model Variant & Colour Modal state
   const [selectedModalModel, setSelectedModalModel] = useState<string | null>(null);
   const [drilldownSearch, setDrilldownSearch] = useState('');
+  const [variantFilter, setVariantFilter] = useState<string>('ALL');
+  const [colourFilter, setColourFilter] = useState<string>('ALL');
 
   useEffect(() => {
     fetchDashboardData();
@@ -212,16 +214,28 @@ export const DashboardPage: React.FC = () => {
     return modelMatrix.find(m => m.name === selectedModalModel) || null;
   }, [selectedModalModel, modelMatrix]);
 
-  // Filtered Drilldown rows for active modal
+    // Filtered Drilldown rows for active modal
+  const uniqueVariantsForModel = useMemo(() => {
+    if (!activeModalData) return [];
+    return Array.from(new Set(activeModalData.drilldown.map(d => d.variant).filter(Boolean))).sort();
+  }, [activeModalData]);
+
+  const uniqueColoursForModel = useMemo(() => {
+    if (!activeModalData) return [];
+    return Array.from(new Set(activeModalData.drilldown.map(d => d.colour).filter(Boolean))).sort();
+  }, [activeModalData]);
+
   const filteredModalDrilldown = useMemo(() => {
     if (!activeModalData) return [];
     const q = drilldownSearch.trim().toLowerCase();
-    if (!q) return activeModalData.drilldown;
-    return activeModalData.drilldown.filter(d => 
-      d.variant.toLowerCase().includes(q) || 
-      d.colour.toLowerCase().includes(q)
-    );
-  }, [activeModalData, drilldownSearch]);
+    
+    return activeModalData.drilldown.filter(d => {
+      const matchesSearch = !q || d.variant.toLowerCase().includes(q) || d.colour.toLowerCase().includes(q);
+      const matchesVariant = variantFilter === 'ALL' || d.variant === variantFilter;
+      const matchesColour = colourFilter === 'ALL' || d.colour === colourFilter;
+      return matchesSearch && matchesVariant && matchesColour;
+    });
+  }, [activeModalData, drilldownSearch, variantFilter, colourFilter]);
 
   // Export Variant/Colour CSV
   const handleExportDrilldownCSV = () => {
@@ -437,6 +451,8 @@ export const DashboardPage: React.FC = () => {
                   onClick={() => {
                     setSelectedModalModel(item.name);
                     setDrilldownSearch('');
+                    setVariantFilter('ALL');
+                    setColourFilter('ALL');
                   }}
                   className="hover:bg-accent/5 cursor-pointer transition-colors group"
                 >
@@ -487,6 +503,8 @@ export const DashboardPage: React.FC = () => {
                         e.stopPropagation();
                         setSelectedModalModel(item.name);
                         setDrilldownSearch('');
+                        setVariantFilter('ALL');
+                        setColourFilter('ALL');
                       }}
                       className="px-2 py-1 rounded bg-surface border border-line hover:border-accent text-accent text-[11px] font-semibold flex items-center gap-1 mx-auto shadow-xs"
                     >
@@ -534,6 +552,8 @@ export const DashboardPage: React.FC = () => {
                     onChange={(e) => {
                       setSelectedModalModel(e.target.value);
                       setDrilldownSearch('');
+                      setVariantFilter('ALL');
+                      setColourFilter('ALL');
                     }}
                     className="text-xs font-bold text-ink bg-transparent focus:outline-none cursor-pointer"
                   >
@@ -584,29 +604,114 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Filter / Search Bar */}
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Filter by Variant (e.g. Fearless, Creative) or Colour (e.g. White, Grey)..."
-                    value={drilldownSearch}
-                    onChange={(e) => setDrilldownSearch(e.target.value)}
-                    className="w-full h-8 pl-9 pr-3 text-xs bg-canvas border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
-                  />
+              {/* Filter / Dropdown Bar: Model Variants & Colours */}
+              <div className="p-3 bg-canvas border border-line rounded space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  
+                  {/* 1. Variant Dropdown Filter */}
+                  <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+                    <Layers className="w-4 h-4 text-accent shrink-0" />
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-wider mb-0.5">
+                        Select Variant ({uniqueVariantsForModel.length} Available)
+                      </label>
+                      <select
+                        value={variantFilter}
+                        onChange={(e) => setVariantFilter(e.target.value)}
+                        className="w-full h-8 text-xs font-semibold bg-surface border border-line rounded px-2.5 text-ink focus:outline-none focus:border-accent shadow-xs cursor-pointer"
+                      >
+                        <option value="ALL">All Variants ({uniqueVariantsForModel.length})</option>
+                        {uniqueVariantsForModel.map(vName => (
+                          <option key={vName} value={vName}>{vName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 2. Colour Dropdown Filter */}
+                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <Palette className="w-4 h-4 text-accent shrink-0" />
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-wider mb-0.5">
+                        Select Colour ({uniqueColoursForModel.length} Available)
+                      </label>
+                      <select
+                        value={colourFilter}
+                        onChange={(e) => setColourFilter(e.target.value)}
+                        className="w-full h-8 text-xs font-semibold bg-surface border border-line rounded px-2.5 text-ink focus:outline-none focus:border-accent shadow-xs cursor-pointer"
+                      >
+                        <option value="ALL">All Colours ({uniqueColoursForModel.length})</option>
+                        {uniqueColoursForModel.map(cName => (
+                          <option key={cName} value={cName}>{cName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 3. Free Text Search */}
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-[10px] font-semibold text-ink-3 uppercase tracking-wider mb-0.5">
+                      Keyword Search
+                    </label>
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search specifications..."
+                        value={drilldownSearch}
+                        onChange={(e) => setDrilldownSearch(e.target.value)}
+                        className="w-full h-8 pl-8 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Reset Filters */}
+                  {(variantFilter !== 'ALL' || colourFilter !== 'ALL' || drilldownSearch) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVariantFilter('ALL');
+                        setColourFilter('ALL');
+                        setDrilldownSearch('');
+                      }}
+                      className="self-end h-8 px-3 bg-surface border border-line hover:border-line-strong text-xs font-semibold text-ink-2 rounded shadow-xs cursor-pointer"
+                    >
+                      Reset All
+                    </button>
+                  )}
                 </div>
-                {drilldownSearch && (
-                  <button
-                    onClick={() => setDrilldownSearch('')}
-                    className="h-8 px-2.5 bg-canvas border border-line text-xs font-medium text-ink-3 rounded"
-                  >
-                    Clear
-                  </button>
+
+                {/* Quick Variant Pills (1-Click Selection) */}
+                {uniqueVariantsForModel.length > 1 && (
+                  <div className="pt-2 border-t border-line flex items-center gap-1.5 overflow-x-auto pb-1">
+                    <span className="text-[10px] uppercase font-bold text-ink-3 shrink-0 mr-1">Quick Select:</span>
+                    <button
+                      type="button"
+                      onClick={() => setVariantFilter('ALL')}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors shrink-0 shadow-xs cursor-pointer ${
+                        variantFilter === 'ALL'
+                          ? 'bg-accent text-white'
+                          : 'bg-surface border border-line text-ink-2 hover:bg-canvas'
+                      }`}
+                    >
+                      All ({uniqueVariantsForModel.length})
+                    </button>
+                    {uniqueVariantsForModel.map(vName => (
+                      <button
+                        key={vName}
+                        type="button"
+                        onClick={() => setVariantFilter(vName)}
+                        className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors shrink-0 shadow-xs cursor-pointer ${
+                          variantFilter === vName
+                            ? 'bg-accent text-white'
+                            : 'bg-surface border border-line text-ink-2 hover:bg-canvas'
+                        }`}
+                      >
+                        {vName}
+                      </button>
+                    ))}
+                  </div>
                 )}
-                <span className="text-xs text-ink-3 font-semibold">
-                  Showing {filteredModalDrilldown.length} of {activeModalData.drilldown.length} Configurations
-                </span>
               </div>
 
               {/* Variant & Colour Matrix Table */}
