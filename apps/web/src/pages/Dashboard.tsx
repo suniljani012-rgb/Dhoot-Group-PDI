@@ -49,64 +49,16 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // 7 Executive DMS KPI Cards (Exact User Requested Metrics)
+  // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
   const kpis = [
-    { 
-      label: 'Total Stock', 
-      value: counts.totalStock, 
-      sub: 'All Units in Fleet', 
-      link: '/vehicles', 
-      accent: 'border-l-4 border-l-blue-500',
-      numColor: 'text-blue-900'
-    },
-    { 
-      label: 'Total Booking', 
-      value: counts.totalBookings, 
-      sub: 'Customer Orders', 
-      link: '/bookings', 
-      accent: 'border-l-4 border-l-indigo-500',
-      numColor: 'text-indigo-900'
-    },
-    { 
-      label: 'Total Physical Stock', 
-      value: counts.totalPhysicalStock, 
-      sub: 'On-Site in Yard', 
-      link: '/vehicles', 
-      accent: 'border-l-4 border-l-emerald-500',
-      numColor: 'text-emerald-900'
-    },
-    { 
-      label: 'Total Alloted Stock', 
-      value: counts.totalAllotedStock, 
-      sub: 'Tagged to Orders', 
-      link: '/bookings', 
-      accent: 'border-l-4 border-l-purple-500',
-      numColor: 'text-purple-900'
-    },
-    { 
-      label: 'Total Free Vehicle', 
-      value: counts.totalFreeVehicle, 
-      sub: 'Available for Sale', 
-      link: '/vehicles', 
-      accent: 'border-l-4 border-l-teal-500',
-      numColor: 'text-teal-900'
-    },
-    { 
-      label: 'Total PBNA Vehicle', 
-      value: counts.totalPbnaVehicle, 
-      sub: 'Booking Not Allotted', 
-      link: '/bookings', 
-      accent: 'border-l-4 border-l-amber-500',
-      numColor: 'text-amber-900'
-    },
-    { 
-      label: 'Order Required', 
-      value: counts.orderRequired, 
-      sub: 'Plant Indent Needed', 
-      link: '/bookings', 
-      accent: 'border-l-4 border-l-rose-500',
-      numColor: 'text-rose-900'
-    }
+    { label: 'Total Vehicle', value: counts.totalStock, change: `${counts.totalStock} Units`, isUp: true, link: '/vehicles', color: 'text-blue-700', bg: 'bg-blue-50/50' },
+    { label: 'Gate Inward', value: counts.receivingPending, change: `${counts.receivingPending} En-route`, isUp: true, link: '/receiving', color: 'text-amber-700', bg: 'bg-amber-50/50', alert: counts.receivingPending > 0 },
+    { label: 'Yard Stock', value: counts.inYard, change: `${counts.inYard} On-site`, isUp: true, link: '/vehicles', color: 'text-slate-800', bg: 'bg-slate-50' },
+    { label: 'PDI Pending', value: counts.pdiPending, change: `${counts.pdiPending} Ready`, isUp: false, link: '/pdi', color: 'text-orange-700', bg: 'bg-orange-50/50', alert: counts.pdiPending > 0 },
+    { label: 'PDI Certified', value: counts.pdiDone, change: `${counts.pdiDone} Certified`, isUp: true, link: '/pdi', color: 'text-emerald-700', bg: 'bg-emerald-50/50' },
+    { label: 'Bookings', value: counts.totalBookings, change: `${counts.totalBookings} Orders`, isUp: true, link: '/bookings', color: 'text-indigo-700', bg: 'bg-indigo-50/50' },
+    { label: 'VIN Allocated', value: counts.allocatedVehicles, change: `${counts.allocatedVehicles} Tagged`, isUp: true, link: '/bookings', color: 'text-purple-700', bg: 'bg-purple-50/50' },
+    { label: 'In Workshop', value: counts.inRepair, change: `${counts.inRepair} Repairs`, isUp: false, link: '/repairs', color: 'text-rose-700', bg: 'bg-rose-50/50' }
   ];
 
   // Dynamic Multi-Franchise Model Distribution
@@ -200,29 +152,25 @@ export const DashboardPage: React.FC = () => {
         </h1>
       </div>
 
-      {/* 2. Executive 7-Metric KPI Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+      {/* 2. Executive 8-Metric KPI Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
         {kpis.map((kpi, idx) => (
           <Link
             key={idx}
             to={kpi.link}
-            className={`bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between ${kpi.accent}`}
+            className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between"
           >
-            <div>
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
-                {kpi.label}
-              </span>
-              <div className="mt-1 mb-0.5">
-                <span className={`text-xl font-bold font-mono tracking-tight ${kpi.numColor}`}>
-                  {kpi.value}
-                </span>
-              </div>
-            </div>
-            <div className="mt-1 pt-1.5 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[10px] font-medium text-slate-400 truncate">
-                {kpi.sub}
+            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+              {kpi.label}
+            </span>
+            <div className="my-1">
+              <span className="text-lg font-bold font-mono text-slate-900">
+                {kpi.value}
               </span>
             </div>
+            <span className="text-[10px] font-medium text-slate-500 truncate block">
+              {kpi.change}
+            </span>
           </Link>
         ))}
       </div>
