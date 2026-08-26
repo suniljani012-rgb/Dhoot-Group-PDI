@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFleetCounts } from '../hooks/useFleetCounts';
 import { getVehiclesForBrand, getBookingsForBrand, getActiveStockyards, syncWithSupabase, isTataItem, isHyundaiItem } from '../data/seedData';
 import { Panel, Stat, Badge, Bar, PageHeader } from '../components/ui/primitives';
+import { isSmartPbnaMatch } from '../utils/matchingUtils';
 import { 
   Warehouse, Car, Bookmark, Truck, CheckCircle2, AlertTriangle, Eye, 
   ArrowRight, Search, Download, X, Sliders, ShieldCheck, Layers, Palette, Filter, User, Phone, IndianRupee, Calendar
@@ -250,9 +251,6 @@ export const DashboardPage: React.FC = () => {
           const foundVeh = fleetList.find(v => v.vin === b.allocated_vin_no);
           matchedLocation = foundVeh?.location || 'Basni Yard';
         } else {
-          const bVariantClean = cleanStr(b.variant);
-          const bColorClean = cleanStr(b.colour);
-
           const freeMatch = modelVehicles.find(v => {
             if (matchedVinSet.has(v.vin)) return false;
             const isFree = (!v.customer_name || String(v.customer_name).toLowerCase() === 'unallocated') &&
@@ -260,13 +258,7 @@ export const DashboardPage: React.FC = () => {
                            v.location !== 'In Transit';
             if (!isFree) return false;
 
-            const vVariantClean = cleanStr(v.variant);
-            const vColorClean = cleanStr(v.color || v.colour);
-
-            const vMatch = !bVariantClean || !vVariantClean || vVariantClean === bVariantClean || vVariantClean.includes(bVariantClean) || bVariantClean.includes(vVariantClean);
-            const cMatch = !bColorClean || !vColorClean || vColorClean === bColorClean || vColorClean.includes(bColorClean) || bColorClean.includes(vColorClean);
-
-            return vMatch && cMatch;
+            return isSmartPbnaMatch(b, v);
           });
 
           if (freeMatch) {

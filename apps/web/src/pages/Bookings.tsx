@@ -20,6 +20,7 @@ import {
 } from '../data/seedData';
 import { supabase } from '../lib/supabase';
 import { Panel, Stat, Badge, Empty, PageHeader } from '../components/ui/primitives';
+import { isSmartPbnaMatch } from '../utils/matchingUtils';
 
 export interface BookingRecord {
   id: string;
@@ -40,23 +41,6 @@ export interface BookingRecord {
   organization_id?: string;
   created_at?: string;
 }
-
-
-
-// Strict 3-Way PBNA/VNA Matcher: ALL 3 (Model, Variant, Colour) must match exactly
-const norm = (str?: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-
-const isExact3WayMatch = (booking: BookingRecord, stock: any): boolean => {
-  const bModel = norm(booking.model);
-  const bVariant = norm(booking.variant);
-  const bColor = norm(booking.colour);
-
-  const sModel = norm(stock.model);
-  const sVariant = norm(stock.variant);
-  const sColor = norm(stock.color || stock.colour);
-
-  return bModel === sModel && bVariant === sVariant && bColor === sColor;
-};
 
 export const BookingsPage: React.FC = () => {
   const { currentBrand } = useAuth();
@@ -609,8 +593,8 @@ export const BookingsPage: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Total Bookings" value={brandScopedBookings.length} note="Customer Ledger" />
         <Stat label="VIN Allocated" value={allocatedCount} note="Ready for Invoicing" tone="ok" />
-        <Stat label="PBNA (In Stock)" value={brandScopedBookings.filter(b => !b.allocated_vin_no && stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Ready for Allotment" tone="warn" />
-        <Stat label="Not in Stock (VNA)" value={brandScopedBookings.filter(b => !b.allocated_vin_no && !stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v))).length} note="Factory Indent Needed" tone="danger" />
+        <Stat label="PBNA (In Stock)" value={brandScopedBookings.filter(b => !b.allocated_vin_no && stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isSmartPbnaMatch(b, v))).length} note="Ready for Allotment" tone="warn" />
+        <Stat label="Not in Stock (VNA)" value={brandScopedBookings.filter(b => !b.allocated_vin_no && !stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isSmartPbnaMatch(b, v))).length} note="Factory Indent Needed" tone="danger" />
         <Stat label="Total Advance Collected" value={`₹${(totalAmountReceived / 100000).toFixed(2)} L`} note="Receipts Total" tone="accent" />
       </div>
 
@@ -744,7 +728,7 @@ export const BookingsPage: React.FC = () => {
                             {b.allocated_vin_no}
                           </span>
                         ) : (() => {
-                          const hasStock = stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isExact3WayMatch(b, v));
+                          const hasStock = stockVehicles.some(v => !v.customer_name && v.status !== 'ALLOCATED' && isSmartPbnaMatch(b, v));
                           return hasStock ? (
                             <span className="font-semibold text-warn bg-warn/10 px-2 py-0.5 rounded border border-warn/30 text-[11px]">
                               PBNA (In Stock)
@@ -1144,8 +1128,8 @@ export const BookingsPage: React.FC = () => {
                 </label>
                 {(() => {
                   const unallocated = stockVehicles.filter(v => !v.customer_name && v.status !== 'ALLOCATED');
-                  const exactMatches = unallocated.filter(v => isExact3WayMatch(allocatingBooking, v));
-                  const otherStock = unallocated.filter(v => !isExact3WayMatch(allocatingBooking, v));
+                  const exactMatches = unallocated.filter(v => isSmartPbnaMatch(allocatingBooking, v));
+                  const otherStock = unallocated.filter(v => !isSmartPbnaMatch(allocatingBooking, v));
 
                   return (
                     <select

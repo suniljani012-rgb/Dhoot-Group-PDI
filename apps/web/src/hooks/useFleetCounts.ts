@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getVehiclesForBrand, getBookingsForBrand } from '../data/seedData';
+import { isSmartPbnaMatch } from '../utils/matchingUtils';
 
 export interface FleetCounts {
   totalStock: number;
@@ -104,22 +105,7 @@ export const useFleetCounts = (): FleetCounts => {
       let totalVnaVehicle = 0;  // Booking pending, matching vehicle IS NOT in stock
 
       unallocatedBookings.forEach(b => {
-        const bModel = cleanStr(b.model);
-        const bVariant = cleanStr(b.variant);
-        const bColor = cleanStr(b.colour);
-
-        const matchingVeh = freeVehicles.find(v => {
-          if (matchedVinSet.has(v.vin)) return false;
-          const vModel = cleanStr(v.model);
-          const vVariant = cleanStr(v.variant);
-          const vColor = cleanStr(v.color || v.colour);
-
-          const modelMatch = vModel === bModel || vModel.includes(bModel) || bModel.includes(vModel);
-          const variantMatch = !bVariant || !vVariant || vVariant === bVariant || vVariant.includes(bVariant) || bVariant.includes(vVariant);
-          const colorMatch = !bColor || !vColor || vColor === bColor || vColor.includes(bColor) || bColor.includes(vColor);
-
-          return modelMatch && variantMatch && colorMatch;
-        });
+        const matchingVeh = freeVehicles.find(v => !matchedVinSet.has(v.vin) && isSmartPbnaMatch(b, v));
 
         if (matchingVeh) {
           matchedVinSet.add(matchingVeh.vin);
