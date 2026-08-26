@@ -152,7 +152,7 @@ export const AdminMasterPanel: React.FC = () => {
     code: '',
     name: '',
     brand: 'Tata Motors',
-    type: '3S Showroom & Service',
+    type: 'Main Showroom',
     city: 'Jodhpur',
     state: 'Rajasthan',
     capacity: '80 Cars',
@@ -180,7 +180,7 @@ export const AdminMasterPanel: React.FC = () => {
       code: `BR-${Date.now().toString().slice(-4)}`,
       name: '',
       brand: currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai' : 'Tata Motors',
-      type: '3S Showroom & Service',
+      type: 'Main Showroom',
       city: 'Jodhpur',
       state: 'Rajasthan',
       capacity: '60 Cars',
@@ -633,8 +633,10 @@ export const AdminMasterPanel: React.FC = () => {
                             {b.brand}
                           </Badge>
                         </td>
-                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
-                          {b.type}
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <Badge tone={b.type === 'Main Showroom' ? 'accent' : 'neutral'}>
+                            {b.type}
+                          </Badge>
                         </td>
                         <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
                           {b.city}, {b.state}
@@ -993,9 +995,8 @@ export const AdminMasterPanel: React.FC = () => {
                     onChange={(e) => setBranchForm({ ...branchForm, type: e.target.value })}
                     className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
                   >
-                    <option value="3S Showroom & Service">3S Showroom & Service</option>
-                    <option value="1S Showroom">1S Showroom</option>
-                    <option value="2S Workshop">2S Workshop</option>
+                    <option value="Main Showroom">Main Showroom</option>
+                    <option value="RSO">RSO (Regional / Rural Sales Outlet)</option>
                   </select>
                 </div>
 
