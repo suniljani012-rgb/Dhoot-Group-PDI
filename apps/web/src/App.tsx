@@ -111,6 +111,14 @@ export const App: React.FC = () => {
             }
           />
           <Route
+            path="/challans"
+            element={
+              <ProtectedRoute>
+                <ChallanInvoicingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/certificates/:id"
             element={
               <ProtectedRoute>

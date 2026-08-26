@@ -100,7 +100,12 @@ challansRouter.post('/bulk-import', async (c) => {
       organization_id: r.organization_id || '11111111-1111-1111-1111-111111111111'
     }));
 
-    await supabase.from('challan_invoices').upsert(sanitized, { onConflict: 'challan_no' });
+    // Clean upsert in Supabase
+    const challanNos = sanitized.map(s => s.challan_no).filter(Boolean);
+    if (challanNos.length > 0) {
+      await supabase.from('challan_invoices').delete().in('challan_no', challanNos);
+    }
+    await supabase.from('challan_invoices').insert(sanitized);
   } catch (e) {}
 
   return c.json({ success: true, data: { imported_count: items.length, total_count: localChallansStore.length } }, 201);

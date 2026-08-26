@@ -554,9 +554,16 @@ export const ChallanInvoicingPage: React.FC = () => {
       }));
 
       // Async persistence to Cloud Database & Worker API
-      supabase.from('challan_invoices').upsert(rowsToSync, { onConflict: 'challan_no' }).then(({ error }) => {
-        if (error) console.warn('Supabase Challan Upsert Error:', error);
-      });
+      const challanNos = rowsToSync.map(s => s.challan_no).filter(Boolean);
+      if (challanNos.length > 0) {
+        supabase.from('challan_invoices').delete().in('challan_no', challanNos).then(() => {
+          supabase.from('challan_invoices').insert(rowsToSync).then(({ error }) => {
+            if (error) console.warn('Supabase Challan Insert Error:', error);
+          });
+        });
+      } else {
+        supabase.from('challan_invoices').insert(rowsToSync).then();
+      }
 
       fetch(getApiUrl('/api/v1/challans/bulk-import'), {
         method: 'POST',
