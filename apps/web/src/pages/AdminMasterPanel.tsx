@@ -455,10 +455,9 @@ export const AdminMasterPanel: React.FC = () => {
                     <th className="py-2.5 px-3 whitespace-nowrap">Stockyard Name</th>
                     <th className="py-2.5 px-3 whitespace-nowrap">Brand Dealership</th>
                     <th className="py-2.5 px-3 whitespace-nowrap">Location / City</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Capacity</th>
                     <th className="py-2.5 px-3 whitespace-nowrap">Yard In-Charge</th>
                     <th className="py-2.5 px-3 whitespace-nowrap">Contact Phone</th>
-                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Active Status (Click to Toggle)</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Status</th>
                     <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
@@ -484,9 +483,6 @@ export const AdminMasterPanel: React.FC = () => {
                         <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
                           {y.city}, {y.state}
                         </td>
-                        <td className="py-2.5 px-3 font-medium text-ink whitespace-nowrap">
-                          {y.capacity}
-                        </td>
                         <td className="py-2.5 px-3 text-ink whitespace-nowrap">
                           {y.manager || 'Yard Supervisor'}
                         </td>
@@ -508,12 +504,12 @@ export const AdminMasterPanel: React.FC = () => {
                             {isActive ? (
                               <>
                                 <CheckCircle2 className="w-3 h-3 text-ok" />
-                                <span>ACTIVE (Visible in Dropdowns)</span>
+                                <span>ACTIVE</span>
                               </>
                             ) : (
                               <>
                                 <XCircle className="w-3 h-3 text-danger" />
-                                <span>INACTIVE (Hidden)</span>
+                                <span>INACTIVE</span>
                               </>
                             )}
                           </button>
@@ -614,7 +610,7 @@ export const AdminMasterPanel: React.FC = () => {
                     <th className="py-2.5 px-3 whitespace-nowrap">City</th>
                     <th className="py-2.5 px-3 whitespace-nowrap">Branch Manager</th>
                     <th className="py-2.5 px-3 whitespace-nowrap">Contact Phone</th>
-                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Active Status (Click to Toggle)</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Status</th>
                     <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
@@ -664,12 +660,12 @@ export const AdminMasterPanel: React.FC = () => {
                             {isActive ? (
                               <>
                                 <CheckCircle2 className="w-3 h-3 text-ok" />
-                                <span>ACTIVE (Visible in Dropdowns)</span>
+                                <span>ACTIVE</span>
                               </>
                             ) : (
                               <>
                                 <XCircle className="w-3 h-3 text-danger" />
-                                <span>INACTIVE (Hidden)</span>
+                                <span>INACTIVE</span>
                               </>
                             )}
                           </button>
