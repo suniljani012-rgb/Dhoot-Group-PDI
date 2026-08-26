@@ -21,7 +21,14 @@ export interface FleetCounts {
   loading: boolean;
 }
 
-const norm = (s?: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const cleanStr = (s?: string) => {
+  if (!s) return '';
+  return String(s)
+    .toLowerCase()
+    .replace(/\b(tata|hyundai)\b/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+};
 
 export const useFleetCounts = (): FleetCounts => {
   const { currentBrand } = useAuth();
@@ -60,7 +67,7 @@ export const useFleetCounts = (): FleetCounts => {
 
       vehicles.forEach((v: any) => {
         const status = (v.status || v.vehicle_status || '').toUpperCase();
-        const isAllocated = !!v.customer_name || status === 'ALLOCATED';
+        const isAllocated = (!!v.customer_name && String(v.customer_name).trim() !== '' && String(v.customer_name).toLowerCase() !== 'unallocated') || status === 'ALLOCATED';
 
         if (status === 'YARD_RECEIVING_PENDING' || status === 'GATE_INWARD_PENDING' || status === 'IN_TRANSIT' || v.location === 'In Transit') {
           receivingPending++;
@@ -81,10 +88,12 @@ export const useFleetCounts = (): FleetCounts => {
       const totalFreeVehicle = Math.max(0, totalPhysicalStock - totalAllotedStock);
       const totalBookings = bookings.length;
       
-      // Calculate PBNA vs VNA based on matching Model + Variant + Colour in free stock
-      const unallocatedBookings = bookings.filter(b => !b.allocated_vin_no && (b.status || '').toUpperCase() !== 'DELIVERED');
+      // Separate allocated vs unallocated customer bookings
+      const allocatedBookings = bookings.filter(b => !!b.allocated_vin_no && String(b.allocated_vin_no).trim() !== '');
+      const unallocatedBookings = bookings.filter(b => !b.allocated_vin_no || String(b.allocated_vin_no).trim() === '');
+      
       const freeVehicles = vehicles.filter(v => 
-        !v.customer_name && 
+        (!v.customer_name || String(v.customer_name).trim() === '' || String(v.customer_name).toLowerCase() === 'unallocated') && 
         v.status !== 'ALLOCATED' && 
         v.status !== 'YARD_RECEIVING_PENDING' && 
         v.location !== 'In Transit'
@@ -95,20 +104,21 @@ export const useFleetCounts = (): FleetCounts => {
       let totalVnaVehicle = 0;  // Booking pending, matching vehicle IS NOT in stock
 
       unallocatedBookings.forEach(b => {
-        const bModel = norm(b.model);
-        const bVariant = norm(b.variant);
-        const bColor = norm(b.colour);
+        const bModel = cleanStr(b.model);
+        const bVariant = cleanStr(b.variant);
+        const bColor = cleanStr(b.colour);
 
         const matchingVeh = freeVehicles.find(v => {
           if (matchedVinSet.has(v.vin)) return false;
-          const vModel = norm(v.model);
-          const vVariant = norm(v.variant);
-          const vColor = norm(v.color || v.colour);
+          const vModel = cleanStr(v.model);
+          const vVariant = cleanStr(v.variant);
+          const vColor = cleanStr(v.color || v.colour);
 
-          if (vModel === bModel && vVariant === bVariant && vColor === bColor) return true;
-          if (vModel === bModel && vVariant === bVariant) return true;
-          if (vModel === bModel && (!vVariant || !bVariant)) return true;
-          return false;
+          const modelMatch = vModel === bModel || vModel.includes(bModel) || bModel.includes(vModel);
+          const variantMatch = !bVariant || !vVariant || vVariant === bVariant || vVariant.includes(bVariant) || bVariant.includes(vVariant);
+          const colorMatch = !bColor || !vColor || vColor === bColor || vColor.includes(bColor) || bColor.includes(vColor);
+
+          return modelMatch && variantMatch && colorMatch;
         });
 
         if (matchingVeh) {
@@ -132,7 +142,7 @@ export const useFleetCounts = (): FleetCounts => {
         inYard,
         pdiPending,
         pdiDone,
-        allocatedVehicles: totalAllotedStock,
+        allocatedVehicles: allocatedBookings.length,
         inRepair,
         qaPending,
         loading: false,
