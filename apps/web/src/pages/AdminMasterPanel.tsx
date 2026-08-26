@@ -220,7 +220,7 @@ export const AdminMasterPanel: React.FC = () => {
   };
 
   // =========================================================================
-  // 3. PDI Rules State
+  // 3. PDI Rules State & Handlers
   // =========================================================================
   const [pdiRules, setPdiRules] = useState<PdiRuleItem[]>(() => {
     const saved = localStorage.getItem('autoprime_pdi_rules');
@@ -240,8 +240,74 @@ export const AdminMasterPanel: React.FC = () => {
     ];
   });
 
+  const [pdiSearch, setPdiSearch] = useState('');
+  const [showPdiModal, setShowPdiModal] = useState(false);
+  const [editingPdiRule, setEditingPdiRule] = useState<PdiRuleItem | null>(null);
+  const [pdiForm, setPdiForm] = useState<PdiRuleItem>({
+    id: '',
+    stage: 'Exterior',
+    category: 'Body Panels',
+    code: '',
+    title: '',
+    description: '',
+    mandatory: true,
+    photosRequired: 1,
+    videoRequired: false,
+    severity: 'MAJOR',
+    toolRequired: 'Visual'
+  });
+
+  const savePdiRules = (rules: PdiRuleItem[]) => {
+    setPdiRules(rules);
+    localStorage.setItem('autoprime_pdi_rules', JSON.stringify(rules));
+  };
+
+  const handleOpenAddPdi = () => {
+    setEditingPdiRule(null);
+    setPdiForm({
+      id: `RULE-${Date.now().toString().slice(-4)}`,
+      stage: 'Exterior',
+      category: 'General',
+      code: `CHK-${Date.now().toString().slice(-3)}`,
+      title: '',
+      description: '',
+      mandatory: true,
+      photosRequired: 1,
+      videoRequired: false,
+      severity: 'MAJOR',
+      toolRequired: 'Visual'
+    });
+    setShowPdiModal(true);
+  };
+
+  const handleOpenEditPdi = (rule: PdiRuleItem) => {
+    setEditingPdiRule(rule);
+    setPdiForm({ ...rule });
+    setShowPdiModal(true);
+  };
+
+  const handleSavePdi = (e: React.FormEvent) => {
+    e.preventDefault();
+    let updated: PdiRuleItem[];
+    if (editingPdiRule) {
+      updated = pdiRules.map(r => r.id === editingPdiRule.id ? { ...pdiForm, id: editingPdiRule.id } : r);
+    } else {
+      updated = [{ ...pdiForm, id: `RULE-${Date.now()}` }, ...pdiRules];
+    }
+    savePdiRules(updated);
+    setShowPdiModal(false);
+    setEditingPdiRule(null);
+  };
+
+  const handleDeletePdi = (id: string) => {
+    if (confirm('Are you sure you want to remove this PDI checkpoint?')) {
+      const updated = pdiRules.filter(r => r.id !== id);
+      savePdiRules(updated);
+    }
+  };
+
   // =========================================================================
-  // 4. Vehicle Models State
+  // 4. Vehicle Models State & Handlers
   // =========================================================================
   const [vehicleModels, setVehicleModels] = useState<any[]>(() => {
     const saved = localStorage.getItem('autoprime_models');
@@ -261,8 +327,75 @@ export const AdminMasterPanel: React.FC = () => {
     ];
   });
 
+  const [modelSearch, setModelSearch] = useState('');
+  const [modelBrandFilter, setModelBrandFilter] = useState<'ALL' | 'Tata Motors' | 'Hyundai'>('ALL');
+  const [showModelModal, setShowModelModal] = useState(false);
+  const [editingModel, setEditingModel] = useState<any | null>(null);
+  const [modelForm, setModelForm] = useState<any>({
+    id: '',
+    brand: 'Tata Motors',
+    model_name: '',
+    body_type: 'Compact SUV',
+    base_ex_showroom: 800000,
+    fuel_types: ['PETROL'],
+    transmission: '6MT / 6AT',
+    seating_capacity: '5 Seater',
+    variants: ['Smart', 'Pure', 'Adventure'],
+    colors: ['White', 'Grey', 'Black'],
+    gst_rate: 28
+  });
+
+  const saveVehicleModels = (models: any[]) => {
+    setVehicleModels(models);
+    localStorage.setItem('autoprime_models', JSON.stringify(models));
+  };
+
+  const handleOpenAddModel = () => {
+    setEditingModel(null);
+    setModelForm({
+      id: `m-${Date.now()}`,
+      brand: currentBrand.code === 'DHOOT-HYUNDAI' ? 'Hyundai' : 'Tata Motors',
+      model_name: '',
+      body_type: 'SUV',
+      base_ex_showroom: 900000,
+      fuel_types: ['PETROL', 'DIESEL'],
+      transmission: '6MT / 6AT',
+      seating_capacity: '5 Seater',
+      variants: ['Standard', 'Luxury'],
+      colors: ['White', 'Black'],
+      gst_rate: 28
+    });
+    setShowModelModal(true);
+  };
+
+  const handleOpenEditModel = (m: any) => {
+    setEditingModel(m);
+    setModelForm({ ...m });
+    setShowModelModal(true);
+  };
+
+  const handleSaveModel = (e: React.FormEvent) => {
+    e.preventDefault();
+    let updated: any[];
+    if (editingModel) {
+      updated = vehicleModels.map(m => m.id === editingModel.id ? { ...modelForm, id: editingModel.id } : m);
+    } else {
+      updated = [{ ...modelForm, id: `m-${Date.now()}` }, ...vehicleModels];
+    }
+    saveVehicleModels(updated);
+    setShowModelModal(false);
+    setEditingModel(null);
+  };
+
+  const handleDeleteModel = (id: string) => {
+    if (confirm('Are you sure you want to remove this vehicle model?')) {
+      const updated = vehicleModels.filter(m => m.id !== id);
+      saveVehicleModels(updated);
+    }
+  };
+
   // =========================================================================
-  // 5. Financiers State
+  // 5. Financiers State & Handlers
   // =========================================================================
   const [financiers, setFinanciers] = useState<FinancierItem[]>(() => {
     const saved = localStorage.getItem('autoprime_financiers');
@@ -277,6 +410,72 @@ export const AdminMasterPanel: React.FC = () => {
       { id: 'fin-5', name: 'Bajaj Finance Ltd', category: 'NBFC', code: 'FIN-BFL-05', contactPerson: 'Sunil Mehta (Regional Manager)', designation: 'Regional Manager Auto Loans', phone: '+91 20 7157 6064', email: 'auto@bajajfinserv.in', maxLtv: 85, processingFee: 0.75, activeStatus: 'Active Tie-Up' },
     ];
   });
+
+  const [financeSearch, setFinanceSearch] = useState('');
+  const [showFinanceModal, setShowFinanceModal] = useState(false);
+  const [editingFinance, setEditingFinance] = useState<FinancierItem | null>(null);
+  const [financeForm, setFinanceForm] = useState<FinancierItem>({
+    id: '',
+    name: '',
+    category: 'PRIVATE_BANK',
+    code: '',
+    contactPerson: '',
+    designation: '',
+    phone: '+91 ',
+    email: '',
+    maxLtv: 90,
+    processingFee: 0.5,
+    activeStatus: 'Active Tie-Up'
+  });
+
+  const saveFinanciers = (list: FinancierItem[]) => {
+    setFinanciers(list);
+    localStorage.setItem('autoprime_financiers', JSON.stringify(list));
+  };
+
+  const handleOpenAddFinance = () => {
+    setEditingFinance(null);
+    setFinanceForm({
+      id: `fin-${Date.now()}`,
+      name: '',
+      category: 'PRIVATE_BANK',
+      code: `FIN-${Date.now().toString().slice(-4)}`,
+      contactPerson: '',
+      designation: 'Auto Loans Desk',
+      phone: '+91 ',
+      email: '',
+      maxLtv: 90,
+      processingFee: 0.5,
+      activeStatus: 'Active Tie-Up'
+    });
+    setShowFinanceModal(true);
+  };
+
+  const handleOpenEditFinance = (item: FinancierItem) => {
+    setEditingFinance(item);
+    setFinanceForm({ ...item });
+    setShowFinanceModal(true);
+  };
+
+  const handleSaveFinance = (e: React.FormEvent) => {
+    e.preventDefault();
+    let updated: FinancierItem[];
+    if (editingFinance) {
+      updated = financiers.map(f => f.id === editingFinance.id ? { ...financeForm, id: editingFinance.id } : f);
+    } else {
+      updated = [{ ...financeForm, id: `fin-${Date.now()}` }, ...financiers];
+    }
+    saveFinanciers(updated);
+    setShowFinanceModal(false);
+    setEditingFinance(null);
+  };
+
+  const handleDeleteFinance = (id: string) => {
+    if (confirm('Are you sure you want to remove this banking partner?')) {
+      const updated = financiers.filter(f => f.id !== id);
+      saveFinanciers(updated);
+    }
+  };
 
   // =========================================================================
   // 6. Insurance Providers State & Handlers
@@ -790,40 +989,235 @@ export const AdminMasterPanel: React.FC = () => {
       )}
 
       {activeTab === 'MODELS' && (
-        <Panel title="Vehicle Models Catalog">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
-            {vehicleModels.map(m => (
-              <div key={m.id} className="p-3.5 bg-canvas border border-line rounded space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-ink text-sm">{m.model_name}</span>
-                  <Badge tone={m.brand?.includes('Hyundai') ? 'accent' : 'neutral'}>{m.brand}</Badge>
-                </div>
-                <div className="text-xs text-ink-2 space-y-0.5">
-                  <p>Type: {m.body_type}</p>
-                  <p>Base Ex-Showroom: ₹{Number(m.base_ex_showroom).toLocaleString('en-IN')}</p>
-                  <p>Transmission: {m.transmission}</p>
-                </div>
+        <div className="space-y-3">
+          <div className="p-3 bg-canvas border border-line rounded flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search Model Name, Body Type, Transmission, Variants..."
+                  value={modelSearch}
+                  onChange={(e) => setModelSearch(e.target.value)}
+                  className="w-full h-8 pl-9 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+                />
               </div>
-            ))}
+              <select
+                value={modelBrandFilter}
+                onChange={(e) => setModelBrandFilter(e.target.value as any)}
+                className="h-8 text-xs bg-surface border border-line rounded px-2.5 text-ink focus:outline-none focus:border-accent font-medium shadow-xs"
+              >
+                <option value="ALL">All Brands</option>
+                <option value="Tata Motors">Tata Motors</option>
+                <option value="Hyundai">Hyundai</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleOpenAddModel}
+              className="h-8 px-3.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Vehicle Model</span>
+            </button>
           </div>
-        </Panel>
+
+          <Panel
+            title={
+              <div className="flex items-center gap-2">
+                <Car className="w-4 h-4 text-accent" />
+                <span>Vehicle Models Catalog</span>
+                <Badge tone="accent">{vehicleModels.length} Models</Badge>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Model Name</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Brand</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Body Type</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Base Ex-Showroom</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Transmission</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Fuel Types</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Seating</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line text-ink-2 text-xs">
+                  {vehicleModels
+                    .filter(m => {
+                      const matchesBrand = modelBrandFilter === 'ALL' || m.brand === modelBrandFilter;
+                      const q = modelSearch.toLowerCase().trim();
+                      const matchesSearch = !q || m.model_name.toLowerCase().includes(q) || m.body_type.toLowerCase().includes(q) || m.transmission.toLowerCase().includes(q);
+                      return matchesBrand && matchesSearch;
+                    })
+                    .map((m, idx) => (
+                      <tr key={m.id || idx} className="hover:bg-canvas transition-colors">
+                        <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">{idx + 1}</td>
+                        <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">{m.model_name}</td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <Badge tone={m.brand === 'Tata Motors' ? 'neutral' : 'accent'}>{m.brand}</Badge>
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">{m.body_type}</td>
+                        <td className="py-2.5 px-3 text-right font-bold text-ink tnum whitespace-nowrap">
+                          ₹{Number(m.base_ex_showroom).toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">{m.transmission}</td>
+                        <td className="py-2.5 px-3 text-ink-3 whitespace-nowrap">
+                          {(m.fuel_types || []).join(', ')}
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">{m.seating_capacity}</td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModel(m)}
+                              className="w-7 h-7 rounded hover:bg-canvas border border-line hover:border-line-strong text-ink flex items-center justify-center transition-colors cursor-pointer"
+                              title="Edit Model"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-ink-2" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteModel(m.id)}
+                              className="w-7 h-7 rounded hover:bg-danger-soft border border-line hover:border-danger/40 text-danger flex items-center justify-center transition-colors cursor-pointer"
+                              title="Delete Model"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </div>
       )}
 
       {activeTab === 'FINANCE' && (
-        <Panel title="Banking & Financier Partners">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-            {financiers.map(f => (
-              <div key={f.id} className="p-3.5 bg-canvas border border-line rounded space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-ink">{f.name}</span>
-                  <Badge tone="ok">{f.activeStatus}</Badge>
-                </div>
-                <p className="text-xs text-ink-2">Contact: {f.contactPerson} ({f.phone})</p>
-                <p className="text-xs text-ink-3">Max LTV: {f.maxLtv}% • Fee: {f.processingFee}%</p>
+        <div className="space-y-3">
+          <div className="p-3 bg-canvas border border-line rounded flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-accent absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search Bank Name, Contact Officer, Phone or Category..."
+                  value={financeSearch}
+                  onChange={(e) => setFinanceSearch(e.target.value)}
+                  className="w-full h-8 pl-9 pr-3 text-xs bg-surface border border-line rounded text-ink placeholder:text-ink-3 focus:outline-none focus:border-accent font-medium shadow-xs"
+                />
               </div>
-            ))}
+              {financeSearch && (
+                <button
+                  onClick={() => setFinanceSearch('')}
+                  className="h-8 px-2.5 bg-surface border border-line hover:bg-canvas text-xs font-medium text-ink-3 rounded transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleOpenAddFinance}
+              className="h-8 px-3.5 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Banking Partner</span>
+            </button>
           </div>
-        </Panel>
+
+          <Panel
+            title={
+              <div className="flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-accent" />
+                <span>Banking & Financier Partners</span>
+                <Badge tone="accent">{financiers.length} Partners</Badge>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#EEF2F8] border-b border-[#C9D6E8] text-[#1A3A6B] font-semibold uppercase tracking-[0.06em] text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Bank / Financier Name</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Category</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Contact Lead</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Phone Number</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Max LTV</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Processing Fee</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Status</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line text-ink-2 text-xs">
+                  {financiers
+                    .filter(f => {
+                      const q = financeSearch.toLowerCase().trim();
+                      if (!q) return true;
+                      return (
+                        f.name.toLowerCase().includes(q) ||
+                        f.contactPerson.toLowerCase().includes(q) ||
+                        f.phone.toLowerCase().includes(q) ||
+                        f.category.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((f, idx) => (
+                      <tr key={f.id || idx} className="hover:bg-canvas transition-colors">
+                        <td className="py-2.5 px-3 text-center text-ink-3 tnum whitespace-nowrap">{idx + 1}</td>
+                        <td className="py-2.5 px-3 font-semibold text-ink whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Landmark className="w-3.5 h-3.5 text-accent" />
+                            <span>{f.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-ink-2 whitespace-nowrap">
+                          <Badge tone="neutral">{f.category.replace(/_/g, ' ')}</Badge>
+                        </td>
+                        <td className="py-2.5 px-3 text-ink whitespace-nowrap">{f.contactPerson}</td>
+                        <td className="py-2.5 px-3 font-mono text-ink-2 whitespace-nowrap">{f.phone}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-ink whitespace-nowrap">{f.maxLtv}%</td>
+                        <td className="py-2.5 px-3 text-center text-ink-3 whitespace-nowrap">{f.processingFee}%</td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <span className="text-ok font-semibold text-[11px] bg-ok/10 px-2 py-0.5 rounded border border-ok/20">
+                            {f.activeStatus}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditFinance(f)}
+                              className="w-7 h-7 rounded hover:bg-canvas border border-line hover:border-line-strong text-ink flex items-center justify-center transition-colors cursor-pointer"
+                              title="Edit Financier"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-ink-2" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteFinance(f.id)}
+                              className="w-7 h-7 rounded hover:bg-danger-soft border border-line hover:border-danger/40 text-danger flex items-center justify-center transition-colors cursor-pointer"
+                              title="Remove Partner"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </div>
       )}
 
       {activeTab === 'INSURANCE' && (
@@ -1249,6 +1643,381 @@ export const AdminMasterPanel: React.FC = () => {
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>{editingBranch ? 'Save Changes' : 'Create Branch'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD / EDIT PDI CHECKPOINT                                          */}
+      {/* ========================================================================= */}
+      {showPdiModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Sliders className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">
+                    {editingPdiRule ? 'Edit PDI Checkpoint' : 'Add PDI Checkpoint'}
+                  </h2>
+                  <p className="text-xs text-ink-3">Configure inspection criteria, stage, severity, and photo/video evidence</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPdiModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePdi} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">Checkpoint Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Body Panel Alignment, Paint Gloss..."
+                    value={pdiForm.title}
+                    onChange={(e) => setPdiForm({ ...pdiForm, title: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Inspection Stage *</label>
+                  <select
+                    value={pdiForm.stage}
+                    onChange={(e) => setPdiForm({ ...pdiForm, stage: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="Exterior">Exterior</option>
+                    <option value="Electricals">Electricals</option>
+                    <option value="Interior">Interior</option>
+                    <option value="Engine Bay">Engine Bay</option>
+                    <option value="Underbody">Underbody</option>
+                    <option value="Road Test">Road Test</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Severity Rating *</label>
+                  <select
+                    value={pdiForm.severity}
+                    onChange={(e) => setPdiForm({ ...pdiForm, severity: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="MAJOR">MAJOR</option>
+                    <option value="MINOR">MINOR</option>
+                    <option value="OBSERVATION">OBSERVATION</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Photos Required</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={pdiForm.photosRequired}
+                    onChange={(e) => setPdiForm({ ...pdiForm, photosRequired: Number(e.target.value) })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Special Tool Required</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Feeler Gauge, Multimeter, Visual"
+                    value={pdiForm.toolRequired}
+                    onChange={(e) => setPdiForm({ ...pdiForm, toolRequired: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">Inspection Instructions *</label>
+                  <textarea
+                    required
+                    rows={2}
+                    placeholder="Detailed inspection checklist steps for the engineer..."
+                    value={pdiForm.description}
+                    onChange={(e) => setPdiForm({ ...pdiForm, description: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowPdiModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingPdiRule ? 'Save Changes' : 'Create Checkpoint'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD / EDIT VEHICLE MODEL                                           */}
+      {/* ========================================================================= */}
+      {showModelModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Car className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">
+                    {editingModel ? 'Edit Vehicle Model' : 'Add Vehicle Model'}
+                  </h2>
+                  <p className="text-xs text-ink-3">Configure model name, brand, body type, and base pricing</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModelModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveModel} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Model Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Tata Safari, Hyundai Creta..."
+                    value={modelForm.model_name}
+                    onChange={(e) => setModelForm({ ...modelForm, model_name: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Brand Dealership *</label>
+                  <select
+                    value={modelForm.brand}
+                    onChange={(e) => setModelForm({ ...modelForm, brand: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="Tata Motors">Tata Motors</option>
+                    <option value="Hyundai">Hyundai</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Body Type *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Compact SUV, Sedan..."
+                    value={modelForm.body_type}
+                    onChange={(e) => setModelForm({ ...modelForm, body_type: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Base Ex-Showroom (₹) *</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 1099000"
+                    value={modelForm.base_ex_showroom}
+                    onChange={(e) => setModelForm({ ...modelForm, base_ex_showroom: Number(e.target.value) })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-bold text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Transmission</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 6MT / 6AT / DCA"
+                    value={modelForm.transmission}
+                    onChange={(e) => setModelForm({ ...modelForm, transmission: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Seating Capacity</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 5 Seater, 7 Seater"
+                    value={modelForm.seating_capacity}
+                    onChange={(e) => setModelForm({ ...modelForm, seating_capacity: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowModelModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingModel ? 'Save Changes' : 'Create Model'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD / EDIT BANKING & FINANCIER PARTNER                             */}
+      {/* ========================================================================= */}
+      {showFinanceModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 select-none">
+          <div className="bg-surface text-ink w-full max-w-lg rounded-panel overflow-hidden border border-line shadow-pop flex flex-col">
+            <div className="px-5 py-4 border-b border-line flex items-center justify-between bg-canvas">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-accent text-white flex items-center justify-center shadow-xs">
+                  <Landmark className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-ink">
+                    {editingFinance ? 'Edit Banking Partner' : 'Add Banking Partner'}
+                  </h2>
+                  <p className="text-xs text-ink-3">Configure bank name, partner category, loan desk officer, and LTV</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFinanceModal(false)}
+                className="w-8 h-8 rounded hover:bg-canvas text-ink-3 hover:text-ink flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFinance} className="p-5 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">Bank / Financier Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. State Bank of India, HDFC Bank Ltd..."
+                    value={financeForm.name}
+                    onChange={(e) => setFinanceForm({ ...financeForm, name: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Institution Category *</label>
+                  <select
+                    value={financeForm.category}
+                    onChange={(e) => setFinanceForm({ ...financeForm, category: e.target.value as any })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                  >
+                    <option value="NATIONALISED_BANK">Nationalised Bank</option>
+                    <option value="PRIVATE_BANK">Private Bank</option>
+                    <option value="OEM_CAPTIVE_NBFC">OEM Captive NBFC</option>
+                    <option value="NBFC">NBFC</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Max LTV (%) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={50}
+                    max={100}
+                    value={financeForm.maxLtv}
+                    onChange={(e) => setFinanceForm({ ...financeForm, maxLtv: Number(e.target.value) })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-bold text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-ink mb-1">Contact Officer / Lead *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Anil Kumar (Chief Manager Auto Loans)"
+                    value={financeForm.contactPerson}
+                    onChange={(e) => setFinanceForm({ ...financeForm, contactPerson: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Phone Number *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+91 141 223 9011"
+                    value={financeForm.phone}
+                    onChange={(e) => setFinanceForm({ ...financeForm, phone: e.target.value })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-ink mb-1">Processing Fee (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.50"
+                    value={financeForm.processingFee}
+                    onChange={(e) => setFinanceForm({ ...financeForm, processingFee: Number(e.target.value) })}
+                    className="w-full p-2 bg-canvas border border-line rounded text-xs font-medium text-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setShowFinanceModal(false)}
+                  className="h-8 px-3.5 rounded bg-surface border border-line text-xs font-semibold text-ink cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-8 px-4 rounded bg-accent hover:bg-accent-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingFinance ? 'Save Changes' : 'Create Partner'}</span>
                 </button>
               </div>
             </form>
