@@ -49,28 +49,6 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  // Dynamic Franchise Title & Context
-  const getBrandHeader = () => {
-    if (currentBrand.code === 'DHOOT-TATA') {
-      return {
-        title: 'Tata Motors Dealership',
-        subtitle: 'Fleet tracking, PDI inspection pipeline, and yard inventory'
-      };
-    }
-    if (currentBrand.code === 'DHOOT-HYUNDAI') {
-      return {
-        title: 'Hyundai Dealership',
-        subtitle: 'Fleet tracking, PDI inspection pipeline, and yard inventory'
-      };
-    }
-    return {
-      title: 'Operations Dashboard',
-      subtitle: 'Live vehicle tracking, inspection pipeline, and inventory status'
-    };
-  };
-
-  const brandInfo = getBrandHeader();
-
   // 8 High-Density KPI Metrics (100% Real Database Exact Counts)
   const kpis = [
     { label: 'Total Vehicle', value: counts.totalStock, change: `${counts.totalStock} Units`, isUp: true, link: '/vehicles', color: 'text-blue-700', bg: 'bg-blue-50/50' },
@@ -167,21 +145,11 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-4 pb-16 select-none max-w-[1600px] mx-auto">
       
-      {/* 1. Header Toolbar */}
-      <div className="bg-white border border-slate-200/80 rounded-xl px-5 py-3.5 shadow-xs flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-bold text-slate-900">
-              {brandInfo.title}
-            </h1>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Live Connected
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {brandInfo.subtitle}
-          </p>
-        </div>
+      {/* 1. Page Title */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+          Dashboard
+        </h1>
       </div>
 
       {/* 2. Executive 8-Metric KPI Grid */}
