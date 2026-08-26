@@ -154,8 +154,9 @@ export const RepairsPage: React.FC = () => {
         {/* Excel Data Grid */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Ticket ID</th>
                 <th className="py-2.5 px-3">VIN Number</th>
                 <th className="py-2.5 px-3">Vehicle Model</th>
@@ -168,10 +169,10 @@ export const RepairsPage: React.FC = () => {
                 <th className="py-2.5 px-3 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
               {filteredTickets.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400">
+                  <td colSpan={11} className="py-10 text-center text-slate-400">
                     <div className="space-y-1">
                       <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
                       <div className="font-bold text-slate-600">0 Active Repair Tickets in Database</div>
@@ -180,56 +181,71 @@ export const RepairsPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredTickets.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
-                      {t.id}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
-                      {t.vin}
-                    </td>
-                    <td className="py-2.5 px-3 font-bold text-slate-900">
-                      {t.model}
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-700">
-                      {t.area || t.finding_area || 'General'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border ${getSeverityBadge(t.severity)}`}>
-                        {t.severity}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={t.description}>
-                      {t.description}
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-700 font-semibold">
-                      {t.assignedTo || t.assigned_to || 'Technician'}
-                    </td>
-                    <td className="py-2.5 px-3 font-bold text-slate-800">
-                      {t.bay || 'Bay 1'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] border ${getStatusBadge(t.status)}`}>
-                        {t.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      {t.status !== 'COMPLETED' ? (
-                        <button
-                          onClick={() => markComplete(t.id)}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                        >
-                          <Check className="w-3 h-3 stroke-[3]" />
-                          <span>Repaired</span>
-                        </button>
-                      ) : (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> QA Ready
+                filteredTickets.map((t, idx) => {
+                  const isHyundai = t.model.toLowerCase().includes('hyundai') || t.vin.startsWith('MAL');
+                  return (
+                    <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        {t.id}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
+                        {t.vin}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isHyundai 
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isHyundai ? 'Hyundai' : 'Tata'}
+                          </span>
+                          <span className="font-bold text-slate-900">{t.model}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-700">
+                        {t.area || t.finding_area || 'General'}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getSeverityBadge(t.severity)}`}>
+                          {t.severity}
                         </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={t.description}>
+                        {t.description}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-700 font-semibold">
+                        {t.assignedTo || t.assigned_to || 'Technician'}
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-slate-800">
+                        {t.bay || 'Bay 1'}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusBadge(t.status)}`}>
+                          {t.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        {t.status !== 'COMPLETED' ? (
+                          <button
+                            onClick={() => markComplete(t.id)}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                          >
+                            <Check className="w-3 h-3 stroke-[3]" />
+                            <span>Repaired</span>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> QA Ready
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

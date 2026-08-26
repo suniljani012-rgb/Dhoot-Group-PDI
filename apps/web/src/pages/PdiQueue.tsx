@@ -167,23 +167,24 @@ export const PdiQueuePage: React.FC = () => {
         {/* Excel Data Grid */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">VIN Number</th>
                 <th className="py-2.5 px-3">Model & Variant</th>
                 <th className="py-2.5 px-3">Colour</th>
                 <th className="py-2.5 px-3">Assigned Inspector</th>
                 <th className="py-2.5 px-3">Staging Bay</th>
                 <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 w-40">Checklist Progress</th>
+                <th className="py-2.5 px-3 w-36">Checklist Progress</th>
                 <th className="py-2.5 px-3">Duration</th>
                 <th className="py-2.5 px-3 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
               {filteredSessions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-10 text-center text-slate-400">
+                  <td colSpan={10} className="py-10 text-center text-slate-400">
                     <div className="space-y-1">
                       <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
                       <div className="font-bold text-slate-600">0 Inspection Sessions in Database</div>
@@ -199,15 +200,28 @@ export const PdiQueuePage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredSessions.map((s) => {
+                filteredSessions.map((s, idx) => {
                   const badge = getStatusBadge(s.status, s.failed);
+                  const isHyundai = s.model.toLowerCase().includes('hyundai') || s.vin.startsWith('MAL');
                   return (
                     <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
                       <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
                         {s.vin}
                       </td>
                       <td className="py-2.5 px-3">
-                        <div className="font-bold text-slate-900">{s.model}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isHyundai 
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isHyundai ? 'Hyundai' : 'Tata'}
+                          </span>
+                          <span className="font-bold text-slate-900">{s.model}</span>
+                        </div>
                         <div className="text-[10px] text-slate-400 font-medium">{s.variant}</div>
                       </td>
                       <td className="py-2.5 px-3">
@@ -225,7 +239,7 @@ export const PdiQueuePage: React.FC = () => {
                         {s.yardLocation}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badge.class}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badge.class}`}>
                           {badge.text}
                         </span>
                       </td>
@@ -251,7 +265,7 @@ export const PdiQueuePage: React.FC = () => {
                       <td className="py-2.5 px-3 text-center">
                         <Link
                           to={`/pdi/${s.id}`}
-                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
                         >
                           <span>{s.progress > 0 ? 'Resume' : 'Start PDI'}</span>
                           <ChevronRight className="w-3 h-3" />

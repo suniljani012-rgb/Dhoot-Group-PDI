@@ -274,129 +274,128 @@ export const VehiclesPage: React.FC = () => {
       </div>
 
       {/* Stock Table with Full 21 Columns */}
-      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto max-h-[600px]">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50/90 sticky top-0 z-10 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+            <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
               <tr>
-                <th className="py-3 px-4">VIN Number</th>
-                <th className="py-3 px-4">Model & Variant</th>
-                <th className="py-3 px-4">Colour</th>
-                <th className="py-3 px-4">Fuel</th>
-                <th className="py-3 px-4">FSC Code</th>
-                <th className="py-3 px-4">Dealer / Plant</th>
-                <th className="py-3 px-4">Location</th>
-                <th className="py-3 px-4">Allocated Customer</th>
-                <th className="py-3 px-4">Sales Consultant</th>
-                <th className="py-3 px-4">Purchase Date</th>
-                <th className="py-3 px-4">Delivery Date</th>
-                <th className="py-3 px-4">Days</th>
-                <th className="py-3 px-4">Rec. Amount</th>
-                <th className="py-3 px-4">Vehicle Status</th>
-                <th className="py-3 px-4 text-center">Action</th>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
+                <th className="py-2.5 px-3">VIN / Chassis Number</th>
+                <th className="py-2.5 px-3">Brand & Model</th>
+                <th className="py-2.5 px-3">Variant & Color</th>
+                <th className="py-2.5 px-3">Fuel</th>
+                <th className="py-2.5 px-3">Yard Bay</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3">Customer Link</th>
+                <th className="py-2.5 px-3">Inward Date</th>
+                <th className="py-2.5 px-3 text-center">Ageing</th>
+                <th className="py-2.5 px-3 text-right">Rec. Amount</th>
+                <th className="py-2.5 px-3 text-center">Quick Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
+            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
               {loading ? (
                 <tr>
-                  <td colSpan={15} className="py-12 text-center text-slate-400">
+                  <td colSpan={12} className="py-12 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-500" />
                     Loading Stock Inventory...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={15} className="py-12 text-center text-slate-400">
+                  <td colSpan={12} className="py-12 text-center text-slate-400">
                     No vehicles found matching criteria.
                   </td>
                 </tr>
               ) : (
-                filtered.map((v) => (
-                  <tr 
-                    key={v.id} 
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                    onClick={() => setSelectedStock(v)}
-                  >
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                      <div className="flex items-center gap-1.5">
-                        <Car className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{v.vin}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{v.model}</div>
-                      <div className="text-[11px] text-slate-500">{v.variant}</div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
-                        {v.color}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-[11px] text-slate-600">
-                      {v.fuel_type || 'PETROL'}
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px]">
-                      {v.fsc_code || '-'}
-                    </td>
-                    <td className="py-3.5 px-4 text-[11px] text-slate-500">
-                      {v.dealer_code || '-'}/{v.plant_code || '-'}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-700">
-                      {v.location || 'Central Stockyard'}
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
-                      {v.customer_name || <span className="text-slate-400 font-normal italic">Unallocated</span>}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600">
-                      {v.sales_consultant || '-'}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                      {v.purchase_date || '-'}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                      {v.delivery_date || 'TBD'}
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-center">
-                      {v.allocated_days || 0}d
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-emerald-700">
-                      ₹{(Number(v.received_amount) || 0).toLocaleString('en-IN')}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusBadge(v.status)}`}>
-                        {v.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      {v.status === 'YARD_RECEIVING_PENDING' ? (
-                        <Link
-                          to="/receiving"
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition-all inline-flex items-center gap-1 shadow-xs"
-                        >
-                          <span>Receive</span>
-                        </Link>
-                      ) : v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY' ? (
-                        <Link
-                          to="/certificates/cert-101"
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all inline-flex items-center gap-1 shadow-xs"
-                        >
-                          <span>Certified</span>
-                        </Link>
-                      ) : (
-                        <Link
-                          to="/pdi/88888888-8888-8888-8888-888888888881"
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition-all inline-flex items-center gap-1 shadow-xs"
-                        >
-                          <span>PDI Sheet</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                filtered.map((v, idx) => {
+                  const isHyundai = ((v as any).brand || '').toLowerCase().includes('hyundai') || (v.vin || '').startsWith('MAL') || (v.model || '').toLowerCase().includes('hyundai');
+                  return (
+                    <tr 
+                      key={v.id} 
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      onClick={() => setSelectedStock(v)}
+                    >
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        {v.vin}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isHyundai 
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isHyundai ? 'Hyundai' : 'Tata'}
+                          </span>
+                          <span className="font-bold text-slate-900">{v.model}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-medium text-slate-800">{v.variant || 'Standard'}</div>
+                        <div className="text-[11px] text-slate-500">{v.color}</div>
+                      </td>
+                      <td className="py-2.5 px-3 font-semibold text-slate-700">
+                        {v.fuel_type || 'PETROL'}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-800 font-medium">
+                        {v.location || 'Central Stockyard'}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusBadge(v.status)}`}>
+                          {v.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {v.customer_name ? (
+                          <div>
+                            <div className="font-bold text-slate-900">{v.customer_name}</div>
+                            <div className="text-[10px] text-slate-400">{v.sales_consultant || 'Sales Desk'}</div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">Unallocated</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
+                        {v.purchase_date || '-'}
+                      </td>
+                      <td className="py-2.5 px-3 font-bold text-center font-mono">
+                        {v.allocated_days || 0}d
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 text-right">
+                        ₹{(Number(v.received_amount) || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        {v.status === 'YARD_RECEIVING_PENDING' ? (
+                          <Link
+                            to="/receiving"
+                            className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Receive</span>
+                          </Link>
+                        ) : v.status === 'PDI_APPROVED' || v.status === 'DELIVERY_READY' ? (
+                          <Link
+                            to="/certificates/cert-101"
+                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Certified</span>
+                          </Link>
+                        ) : (
+                          <Link
+                            to="/pdi"
+                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Inspect</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

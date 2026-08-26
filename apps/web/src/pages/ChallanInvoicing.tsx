@@ -393,24 +393,25 @@ const SEED_CHALLANS: ChallanRecord[] = [
         {/* Excel Data Grid */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">Challan / Invoice No</th>
                 <th className="py-2.5 px-3">VIN / Chassis</th>
                 <th className="py-2.5 px-3">Customer Name</th>
                 <th className="py-2.5 px-3">Vehicle Model</th>
                 <th className="py-2.5 px-3">Financier</th>
-                <th className="py-2.5 px-3">Ex-Showroom</th>
-                <th className="py-2.5 px-3">Net On-Road</th>
+                <th className="py-2.5 px-3 text-right">Ex-Showroom</th>
+                <th className="py-2.5 px-3 text-right">Net On-Road</th>
                 <th className="py-2.5 px-3">Invoice Date</th>
                 <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3 text-center">Handover Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400">
+                  <td colSpan={11} className="py-10 text-center text-slate-400">
                     <div className="space-y-1">
                       <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
                       <div className="font-bold text-slate-600">0 Billing & Delivery Records in Database</div>
@@ -426,59 +427,73 @@ const SEED_CHALLANS: ChallanRecord[] = [
                   </td>
                 </tr>
               ) : (
-                filteredRecords.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
-                      <div>{r.challan_no}</div>
-                      <div className="text-[10px] text-slate-400 font-normal">{r.invoice_no}</div>
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
-                      {r.vin_no}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-slate-900">{r.customer_name}</div>
-                      <div className="text-[10px] text-slate-400">{r.city || 'Dealership'}</div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-slate-900">{r.model}</div>
-                      <div className="text-[10px] text-slate-400">{r.variant}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600">
-                      {r.financier_name || 'Self-Funded'}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-700">
-                      ₹{(r.ex_showroom || 0).toLocaleString('en-IN')}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
-                      ₹{(r.net_amount || (Number(r.ex_showroom) + 150000)).toLocaleString('en-IN')}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px]">
-                      {r.invoice_date || '2026-08-25'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        r.status === 'DELIVERED'
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                          : 'bg-blue-50 text-blue-800 border-blue-200'
-                      }`}>
-                        {r.status === 'DELIVERED' ? 'Vehicle Delivered' : 'Invoiced / Ready'}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => setInvoicePreviewRecord(r)}
-                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                        >
-                          <FileText className="w-3 h-3 text-emerald-400" />
-                          <span>Tax Invoice</span>
-                        </button>
-
-                        {r.status !== 'DELIVERED' ? (
+                filteredRecords.map((r, idx) => {
+                  const isHyundai = r.model.toLowerCase().includes('hyundai') || r.vin_no.startsWith('MAL');
+                  return (
+                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        <div>{r.challan_no}</div>
+                        <div className="text-[10px] text-slate-400 font-normal">{r.invoice_no}</div>
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                        {r.vin_no}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-slate-900">{r.customer_name}</div>
+                        <div className="text-[10px] text-slate-400">{r.city || 'Dealership'}</div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isHyundai 
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isHyundai ? 'Hyundai' : 'Tata'}
+                          </span>
+                          <span className="font-bold text-slate-900">{r.model}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">{r.variant}</div>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600">
+                        {r.financier_name || 'Self-Funded'}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-700 text-right">
+                        ₹{(r.ex_showroom || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 text-right">
+                        ₹{(r.net_amount || (Number(r.ex_showroom) + 150000)).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px]">
+                        {r.invoice_date || '2026-08-25'}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          r.status === 'DELIVERED'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-blue-50 text-blue-800 border-blue-200'
+                        }`}>
+                          {r.status === 'DELIVERED' ? 'Vehicle Delivered' : 'Invoiced / Ready'}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
-                            onClick={() => setGatepassRecord(r)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                            onClick={() => setInvoicePreviewRecord(r)}
+                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
                           >
+                            <FileText className="w-3 h-3 text-emerald-400" />
+                            <span>Tax Invoice</span>
+                          </button>
+
+                          {r.status !== 'DELIVERED' ? (
+                            <button
+                              onClick={() => setGatepassRecord(r)}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                            >
                             <Key className="w-3 h-3" />
                             <span>Gatepass</span>
                           </button>
@@ -490,7 +505,8 @@ const SEED_CHALLANS: ChallanRecord[] = [
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+                })
               )}
             </tbody>
           </table>

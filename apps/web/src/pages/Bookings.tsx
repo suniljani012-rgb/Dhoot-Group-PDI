@@ -480,21 +480,21 @@ export const BookingsPage: React.FC = () => {
         {/* Excel Data Grid */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
-                <th className="py-2.5 px-3">Receipt No</th>
-                <th className="py-2.5 px-3">Customer Name</th>
-                <th className="py-2.5 px-3">Phone</th>
-                <th className="py-2.5 px-3">Requested Model & Variant</th>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
+                <th className="py-2.5 px-3">Receipt / Booking #</th>
+                <th className="py-2.5 px-3">Customer & Contact</th>
+                <th className="py-2.5 px-3">Booked Model & Variant</th>
                 <th className="py-2.5 px-3">Colour</th>
-                <th className="py-2.5 px-3">Advance Paid</th>
+                <th className="py-2.5 px-3 text-right">Advance Paid</th>
                 <th className="py-2.5 px-3">Promised Delivery</th>
                 <th className="py-2.5 px-3">Allocated Chassis / VIN</th>
-                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3">Allocation Status</th>
                 <th className="py-2.5 px-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
               {filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-10 text-center text-slate-400">
@@ -513,43 +513,54 @@ export const BookingsPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
-                      {b.receipt_no}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-slate-900">{b.customer_name}</div>
-                      <div className="text-[10px] text-slate-400">{b.sales_consultant || 'Sales Executive'}</div>
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-600">
-                      {b.mobile_number}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-slate-900">{b.model}</div>
-                      <div className="text-[10px] text-slate-400">{b.variant}</div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-700">
-                        {b.colour}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
-                      ₹{(b.receipt_amt || 25000).toLocaleString('en-IN')}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-600 text-[11px]">
-                      {b.promise_delivery_date || 'Within 7 Days'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      {b.allocated_vin_no ? (
-                        <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-900 border border-purple-200 font-mono font-bold text-[10px]">
-                          {b.allocated_vin_no}
+                filteredBookings.map((b, idx) => {
+                  const isHyundai = b.model.toLowerCase().includes('hyundai');
+                  return (
+                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        {b.receipt_no}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-slate-900">{b.customer_name}</div>
+                        <div className="text-[10px] text-slate-500 font-mono">{b.mobile_number}</div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isHyundai 
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isHyundai ? 'Hyundai' : 'Tata'}
+                          </span>
+                          <span className="font-bold text-slate-900">{b.model}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">{b.variant}</div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-700">
+                          {b.colour}
                         </span>
-                      ) : (
-                        <span className="text-amber-700 italic text-[11px]">Unallocated</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3">
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 text-right">
+                        ₹{(b.receipt_amt || 25000).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600 text-[11px]">
+                        {b.promise_delivery_date || 'Within 7 Days'}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {b.allocated_vin_no ? (
+                          <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-900 border border-purple-200 font-mono font-bold text-[10px]">
+                            {b.allocated_vin_no}
+                          </span>
+                        ) : (
+                          <span className="text-amber-700 italic text-[11px]">Pending Allocation</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                         b.allocated_vin_no
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
@@ -608,7 +619,8 @@ export const BookingsPage: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

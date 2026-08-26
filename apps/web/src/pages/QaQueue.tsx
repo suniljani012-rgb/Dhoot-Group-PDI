@@ -135,8 +135,9 @@ export const QaQueuePage: React.FC = () => {
         {/* Excel Data Grid */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
+                <th className="py-2.5 px-3 w-10 text-center">#</th>
                 <th className="py-2.5 px-3">VIN Number</th>
                 <th className="py-2.5 px-3">Brand / Model</th>
                 <th className="py-2.5 px-3">Colour</th>
@@ -147,10 +148,10 @@ export const QaQueuePage: React.FC = () => {
                 <th className="py-2.5 px-3 text-center">Quality Review Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
               {filteredQueue.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-slate-400">
+                  <td colSpan={9} className="py-10 text-center text-slate-400">
                     <div className="space-y-1">
                       <FolderOpen className="w-6 h-6 mx-auto text-slate-300" />
                       <div className="font-bold text-slate-600">0 QA Submissions in Database</div>
@@ -159,15 +160,28 @@ export const QaQueuePage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredQueue.map((item) => {
+                filteredQueue.map((item, idx) => {
                   const isApproved = approvedList.includes(item.id) || item.status === 'APPROVED';
+                  const isHyundai = item.model.toLowerCase().includes('hyundai') || item.vin.startsWith('MAL');
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
                       <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
                         {item.vin}
                       </td>
                       <td className="py-2.5 px-3">
-                        <div className="font-bold text-slate-900">{item.model}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isHyundai 
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isHyundai ? 'Hyundai' : 'Tata'}
+                          </span>
+                          <span className="font-bold text-slate-900">{item.model}</span>
+                        </div>
                         <div className="text-[10px] text-slate-400 font-medium">{item.variant}</div>
                       </td>
                       <td className="py-2.5 px-3">
@@ -185,7 +199,7 @@ export const QaQueuePage: React.FC = () => {
                         {item.submittedAt}
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                           isApproved
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : 'bg-blue-50 text-blue-800 border-blue-200'
@@ -199,14 +213,14 @@ export const QaQueuePage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleApprove(item.id)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs cursor-pointer"
                             >
                               <Check className="w-3 h-3 stroke-[3]" />
                               <span>Approve</span>
                             </button>
                             <button
                               type="button"
-                              className="px-2.5 py-1 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                              className="px-2.5 py-1 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg text-[10px] font-semibold transition-all cursor-pointer"
                             >
                               <span>Reject</span>
                             </button>
@@ -214,11 +228,10 @@ export const QaQueuePage: React.FC = () => {
                         ) : (
                           <Link
                             to={`/certificates/${item.certId}`}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-xs"
+                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-semibold transition-all inline-flex items-center gap-1 shadow-xs"
                           >
                             <FileText className="w-3 h-3 text-emerald-400" />
                             <span>Certificate</span>
-                            <ChevronRight className="w-3 h-3" />
                           </Link>
                         )}
                       </td>
