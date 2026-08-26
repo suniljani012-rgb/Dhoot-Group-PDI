@@ -835,8 +835,7 @@ export const AdminMasterPanel: React.FC = () => {
                   >
                     <option value="Tata Motors">Tata Motors</option>
                     <option value="Hyundai">Hyundai</option>
-                    <option value="Shared">Dhoot Group Shared</option>
-                  </select>
+                                      </select>
                 </div>
 
                 <div>
@@ -875,8 +874,8 @@ export const AdminMasterPanel: React.FC = () => {
                     onChange={(e) => setYardForm({ ...yardForm, status: e.target.value as any })}
                     className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
                   >
-                    <option value="ACTIVE">ACTIVE (Visible in Dropdowns)</option>
-                    <option value="INACTIVE">INACTIVE (Hidden)</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
                   </select>
                 </div>
 
@@ -982,8 +981,7 @@ export const AdminMasterPanel: React.FC = () => {
                   >
                     <option value="Tata Motors">Tata Motors</option>
                     <option value="Hyundai">Hyundai</option>
-                    <option value="Shared">Dhoot Group Shared</option>
-                  </select>
+                                      </select>
                 </div>
 
                 <div>
@@ -1023,8 +1021,8 @@ export const AdminMasterPanel: React.FC = () => {
                     onChange={(e) => setBranchForm({ ...branchForm, status: e.target.value as any })}
                     className="w-full p-2 bg-canvas border border-line rounded text-xs font-semibold text-ink focus:outline-none focus:border-accent"
                   >
-                    <option value="ACTIVE">ACTIVE (Visible in Dropdowns)</option>
-                    <option value="INACTIVE">INACTIVE (Hidden)</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
                   </select>
                 </div>
 
