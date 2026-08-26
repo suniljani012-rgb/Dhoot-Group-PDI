@@ -225,7 +225,7 @@ export const DashboardPage: React.FC = () => {
     return Array.from(new Set(activeModalData.drilldown.map(d => d.colour).filter(Boolean))).sort();
   }, [activeModalData]);
 
-  const filteredModalDrilldown = useMemo(() => {
+    const filteredModalDrilldown = useMemo(() => {
     if (!activeModalData) return [];
     const q = drilldownSearch.trim().toLowerCase();
     
@@ -237,13 +237,24 @@ export const DashboardPage: React.FC = () => {
     });
   }, [activeModalData, drilldownSearch, variantFilter, colourFilter]);
 
-  // Export Variant/Colour CSV
+  // Dynamic KPI stats calculated strictly based on active filter
+  const modalFilteredStats = useMemo(() => {
+    const totalBookings = filteredModalDrilldown.reduce((sum, d) => sum + d.bookings, 0);
+    const allocated = filteredModalDrilldown.reduce((sum, d) => sum + d.allocated, 0);
+    const pbna = filteredModalDrilldown.reduce((sum, d) => sum + d.pbna, 0);
+    const vna = filteredModalDrilldown.reduce((sum, d) => sum + d.vna, 0);
+    const freeStock = filteredModalDrilldown.reduce((sum, d) => sum + d.freeStock, 0);
+    return { totalBookings, allocated, pbna, vna, freeStock };
+  }, [filteredModalDrilldown]);
+
+  // Export filtered Variant/Colour CSV
   const handleExportDrilldownCSV = () => {
-    if (!activeModalData) return;
-    const headers = ['Variant', 'Colour', 'Customer Bookings', 'VIN Allocated', 'PBNA (In Stock)', 'Not in Stock (VNA)', 'Free Yard Stock', 'Status'];
+    if (!activeModalData || filteredModalDrilldown.length === 0) return;
+    const headers = ['Model', 'Variant', 'Colour', 'Customer Bookings', 'VIN Allocated', 'PBNA (In Stock)', 'Not in Stock (VNA)', 'Free Yard Stock', 'Status', 'Matched Free VINs'];
     const rows = [
       headers.join(','),
-      ...activeModalData.drilldown.map(d => [
+      ...filteredModalDrilldown.map(d => [
+        `"${activeModalData.name}"`,
         `"${d.variant}"`,
         `"${d.colour}"`,
         d.bookings,
@@ -251,7 +262,8 @@ export const DashboardPage: React.FC = () => {
         d.pbna,
         d.vna,
         d.freeStock,
-        `"${d.vna > 0 ? 'Indent Needed' : d.pbna > 0 ? 'Ready to Allot' : d.freeStock > 0 ? 'Available Free' : 'Settled'}"`
+        `"${d.vna > 0 ? 'Indent Needed' : d.pbna > 0 ? 'Ready to Allot' : d.freeStock > 0 ? 'Available Free' : 'Settled'}"`,
+        `"${(d.matchedVins || []).join('; ')}"`
       ].join(','))
     ].join('\n');
 
@@ -259,7 +271,7 @@ export const DashboardPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `${activeModalData.name}_Variant_Colour_Report.csv`);
+    link.setAttribute('download', `${activeModalData.name}_${variantFilter !== 'ALL' ? variantFilter + '_' : ''}Report.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -576,31 +588,32 @@ export const DashboardPage: React.FC = () => {
             {/* Modal Body */}
             <div className="p-5 overflow-y-auto space-y-4 text-xs">
               
-              {/* Summary KPIs Banner */}
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+              {/* Filter / Dropdown Bar on TOP */}
+
+              {/* Dynamic Summary KPIs Banner (Reflects Active Filter) */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 <div className="p-2.5 bg-canvas border border-line rounded">
-                  <span className="eyebrow block">Total Bookings</span>
-                  <span className="text-base font-bold text-ink tnum">{activeModalData.totalBookings}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="eyebrow block">Bookings</span>
+                    {variantFilter !== 'ALL' && <span className="text-[10px] text-accent font-semibold">Filtered</span>}
+                  </div>
+                  <span className="text-base font-bold text-ink tnum">{modalFilteredStats.totalBookings}</span>
                 </div>
                 <div className="p-2.5 bg-ok/5 border border-ok/20 rounded">
                   <span className="eyebrow block text-ok">VIN Allocated</span>
-                  <span className="text-base font-bold text-ok tnum">{activeModalData.allocatedBookings}</span>
+                  <span className="text-base font-bold text-ok tnum">{modalFilteredStats.allocated}</span>
                 </div>
                 <div className="p-2.5 bg-warn/5 border border-warn/20 rounded">
                   <span className="eyebrow block text-warn">PBNA (In Stock)</span>
-                  <span className="text-base font-bold text-warn tnum">{activeModalData.pbna}</span>
+                  <span className="text-base font-bold text-warn tnum">{modalFilteredStats.pbna}</span>
                 </div>
                 <div className="p-2.5 bg-danger/5 border border-danger/20 rounded">
                   <span className="eyebrow block text-danger">Not in Stock (VNA)</span>
-                  <span className="text-base font-bold text-danger tnum">{activeModalData.vna}</span>
-                </div>
-                <div className="p-2.5 bg-canvas border border-line rounded">
-                  <span className="eyebrow block">Physical In Yard</span>
-                  <span className="text-base font-bold text-ink tnum">{activeModalData.physicalInYard}</span>
+                  <span className="text-base font-bold text-danger tnum">{modalFilteredStats.vna}</span>
                 </div>
                 <div className="p-2.5 bg-ok/5 border border-ok/20 rounded">
                   <span className="eyebrow block text-ok">Free Yard Stock</span>
-                  <span className="text-base font-bold text-ok tnum">{activeModalData.freeYardStock}</span>
+                  <span className="text-base font-bold text-ok tnum">{modalFilteredStats.freeStock}</span>
                 </div>
               </div>
 
