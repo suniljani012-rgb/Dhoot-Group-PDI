@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Car, ClipboardCheck, ShieldCheck,
-  Bookmark, Wrench, Receipt, FileCheck, Settings2,
+  Bookmark, Wrench, Receipt, FileCheck, Settings2, PieChart
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       heading: 'Operations',
       items: [
         { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, roles: ['ALL'] },
+        { label: 'Reports', path: '/reports', icon: PieChart, roles: ['ALL'] },
         { label: 'Inward', path: '/receiving', icon: Truck, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER'] },
         { label: 'Stock', path: '/vehicles', icon: Car, roles: ['ALL'] },
         { label: 'Inspections', path: '/pdi', icon: ClipboardCheck, roles: ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'YARD_MANAGER', 'PDI_ENGINEER', 'QA_MANAGER'] },

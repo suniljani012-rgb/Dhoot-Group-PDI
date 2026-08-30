@@ -14,6 +14,7 @@ import { QaQueuePage } from './pages/QaQueue';
 import { ChallanInvoicingPage } from './pages/ChallanInvoicing';
 import { CertificateViewPage } from './pages/CertificateView';
 import { AdminMasterPanelPage } from './pages/AdminMasterPanel';
+import { ReportsPage } from './pages/Reports';
 import { AppShell } from './components/layout/AppShell';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -131,6 +132,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <AdminMasterPanelPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <ReportsPage />
               </ProtectedRoute>
             }
           />
